@@ -6,11 +6,18 @@ export default function Login() {
 
   const navigate = useNavigate()
 
+  const [isRegister, setIsRegister] = useState(false)
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
 
+  /* =============================
+     LOGIN
+  ============================= */
+
   async function handleLogin(e) {
+
     e.preventDefault()
     setLoading(true)
 
@@ -25,8 +32,35 @@ export default function Login() {
       return
     }
 
-    // ✅ Redirigir a Home automáticamente
     navigate("/")
+    setLoading(false)
+
+  }
+
+  /* =============================
+     REGISTER
+  ============================= */
+
+  async function handleRegister(e) {
+
+    e.preventDefault()
+    setLoading(true)
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: "https://ppv-draft.vercel.app"
+      }
+    })
+
+    if (error) {
+      alert(error.message)
+      setLoading(false)
+      return
+    }
+
+    alert("Check your email to confirm your account")
 
     setLoading(false)
   }
@@ -35,11 +69,12 @@ export default function Login() {
     <div className="flex justify-center mt-20">
 
       <form
-        onSubmit={handleLogin}
+        onSubmit={isRegister ? handleRegister : handleLogin}
         className="bg-white p-8 rounded-2xl shadow-xl w-96"
       >
-        <h2 className="text-2xl font-bold mb-6">
-          Login
+
+        <h2 className="text-2xl font-bold mb-6 text-center">
+          {isRegister ? "Create Account" : "Login"}
         </h2>
 
         <input
@@ -48,6 +83,7 @@ export default function Login() {
           className="border p-3 w-full mb-4 rounded"
           value={email}
           onChange={e => setEmail(e.target.value)}
+          required
         />
 
         <input
@@ -56,6 +92,7 @@ export default function Login() {
           className="border p-3 w-full mb-6 rounded"
           value={password}
           onChange={e => setPassword(e.target.value)}
+          required
         />
 
         <button
@@ -63,8 +100,34 @@ export default function Login() {
           disabled={loading}
           className="bg-blue-600 text-white w-full py-3 rounded-lg"
         >
-          {loading ? "Logging in..." : "Login"}
+          {loading
+            ? "Loading..."
+            : isRegister
+            ? "Create Account"
+            : "Login"}
         </button>
+
+        <div className="text-center mt-4 text-sm">
+
+          {isRegister ? (
+            <button
+              type="button"
+              onClick={() => setIsRegister(false)}
+              className="text-blue-600 hover:underline"
+            >
+              Already have an account? Login
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsRegister(true)}
+              className="text-blue-600 hover:underline"
+            >
+              Create account
+            </button>
+          )}
+
+        </div>
 
       </form>
 
