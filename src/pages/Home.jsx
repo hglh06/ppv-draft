@@ -50,7 +50,7 @@ export default function Home() {
 
         <video
           className="absolute inset-0 w-full h-full object-cover"
-          src="/videos/home-bg.mp4"
+          src="https://ftqjbvtivchkcotgljbc.supabase.co/storage/v1/object/sign/assets/home-bg.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mYTcyNjVjYi0wYjE1LTQ0NzktYWYzZS0zM2M5NGYwMDA5ZjAiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJhc3NldHMvaG9tZS1iZy5tcDQiLCJpYXQiOjE3NzI3NTA2NjgsImV4cCI6MTgwNDI4NjY2OH0.pIvBetHPwrg-fg4-m8RIIl4zvJk8iQ7KiBtrBPlgzPc"
           autoPlay
           muted
           loop
