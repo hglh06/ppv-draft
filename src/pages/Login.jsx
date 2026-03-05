@@ -10,6 +10,8 @@ export default function Login() {
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+
   const [loading, setLoading] = useState(false)
 
   /* =============================
@@ -44,6 +46,12 @@ export default function Login() {
   async function handleRegister(e) {
 
     e.preventDefault()
+
+    if (password !== confirmPassword) {
+      alert("Passwords do not match")
+      return
+    }
+
     setLoading(true)
 
     const { error } = await supabase.auth.signUp({
@@ -63,6 +71,7 @@ export default function Login() {
     alert("Check your email to confirm your account")
 
     setLoading(false)
+
   }
 
   return (
@@ -89,11 +98,22 @@ export default function Login() {
         <input
           type="password"
           placeholder="Password"
-          className="border p-3 w-full mb-6 rounded"
+          className="border p-3 w-full mb-4 rounded"
           value={password}
           onChange={e => setPassword(e.target.value)}
           required
         />
+
+        {isRegister && (
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            className="border p-3 w-full mb-6 rounded"
+            value={confirmPassword}
+            onChange={e => setConfirmPassword(e.target.value)}
+            required
+          />
+        )}
 
         <button
           type="submit"
