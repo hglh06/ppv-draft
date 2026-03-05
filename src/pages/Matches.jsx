@@ -1,0 +1,298 @@
+import { useEffect, useState } from "react"
+import { supabase } from "../lib/supabase"
+import ReportMatch from "./ReportMatch"
+
+export default function Matches() {
+
+  const [schedule, setSchedule] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [selectedMatch, setSelectedMatch] = useState(null)
+  const [reportingMatch, setReportingMatch] = useState(null)
+
+  useEffect(() => {
+    fetchMatches()
+  }, [])
+
+  async function fetchMatches() {
+
+    const { data, error } = await supabase
+      .from("matches")
+      .select(`
+        *,
+        teamA:team_a ( id, name ),
+        teamB:team_b ( id, name )
+      `)
+      .eq("stage", "regular")
+      .order("week", { ascending: true })
+
+    if (!error) setSchedule(data || [])
+
+    setLoading(false)
+  }
+
+  if (loading) return <div className="text-center mt-20">Cargando calendario...</div>
+
+  const groupedByWeek = schedule.reduce((acc, match) => {
+    if (!acc[match.week]) acc[match.week] = []
+    acc[match.week].push(match)
+    return acc
+  }, {})
+
+  const sortedWeeks = Object.keys(groupedByWeek)
+    .map(Number)
+    .sort((a, b) => a - b)
+
+  return (
+  <div
+    className="min-h-screen -mt-24 pt-32 px-12 pb-16"
+    style={{
+      backgroundImage: "url('/hex-bg.png')",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat"
+    }}
+  >
+
+      <div className="grid grid-cols-2 mb-10 relative">
+
+        <div className="text-center text-2xl font-bold text-slate-800">
+          Kanto Conference
+        </div>
+
+        <div className="text-center text-2xl font-bold text-slate-800">
+          Johto Conference
+        </div>
+
+        <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-slate-300"></div>
+
+      </div>
+
+      {sortedWeeks.map(week => {
+
+        const weekMatches = groupedByWeek[week]
+
+        const kantoMatches = weekMatches.filter(m => m.conference === "Kanto")
+        const johtoMatches = weekMatches.filter(m => m.conference === "Johto")
+
+        return (
+          <div key={week} className="mb-12">
+
+            <div className="text-center text-lg font-semibold mb-5 text-slate-600">
+              Week {week}
+            </div>
+
+            <div className="grid grid-cols-2 gap-8 items-start relative">
+
+              <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-slate-200"></div>
+
+              <div className="flex flex-wrap gap-4 justify-center pr-6">
+                {kantoMatches.map(match => (
+                  <MatchCard
+                    key={match.id}
+                    match={match}
+                    onClick={() => setSelectedMatch(match)}
+                  />
+                ))}
+              </div>
+
+              <div className="flex flex-wrap gap-4 justify-center pl-6">
+                {johtoMatches.map(match => (
+                  <MatchCard
+                    key={match.id}
+                    match={match}
+                    onClick={() => setSelectedMatch(match)}
+                  />
+                ))}
+              </div>
+
+            </div>
+
+          </div>
+        )
+      })}
+
+      {selectedMatch && (
+        <MatchModal
+          match={selectedMatch}
+          onClose={() => setSelectedMatch(null)}
+          onReport={(match) => {
+            setSelectedMatch(null)
+            setReportingMatch(match)
+          }}
+        />
+      )}
+
+      {reportingMatch && (
+        <ReportModal
+          match={reportingMatch}
+          onClose={() => setReportingMatch(null)}
+        />
+      )}
+
+    </div>
+  )
+}
+
+/* =========================
+   MATCH CARD
+========================= */
+
+function MatchCard({ match, onClick }) {
+
+  let scoreDisplay = "vs"
+
+  if (match.status === "completed" && match.games?.length > 0) {
+
+    const winsA = match.games.filter(
+      g => g.winner === match.teamA?.name
+    ).length
+
+    const winsB = match.games.filter(
+      g => g.winner === match.teamB?.name
+    ).length
+
+    scoreDisplay = `${winsA} - ${winsB}`
+  }
+
+  return (
+    <div
+      onClick={onClick}
+      className="w-44 bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-center cursor-pointer hover:shadow-md transition"
+    >
+      <div className="font-medium text-slate-700 text-sm">{match.teamA?.name}</div>
+      <div className="font-bold text-base my-2 text-slate-900">{scoreDisplay}</div>
+      <div className="font-medium text-slate-700 text-sm">{match.teamB?.name}</div>
+
+      {match.status === "completed" && (
+        <div className="text-green-600 text-xs mt-2">
+          Completed
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* =========================
+   MATCH MODAL
+========================= */
+
+function MatchModal({ match, onClose, onReport }) {
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+
+      <div className="bg-white rounded-xl p-8 w-[650px] max-w-[95%]">
+
+        <div className="flex justify-between items-center mb-6">
+
+          <h2 className="text-xl font-semibold">
+            {match.teamA?.name} vs {match.teamB?.name}
+          </h2>
+
+          <button
+            onClick={onClose}
+            className="text-slate-500 hover:text-black"
+          >
+            ✕
+          </button>
+
+        </div>
+
+        {match.games?.length > 0 ? (
+
+          <div className="space-y-3 mb-6">
+
+            {match.games.map((game, i) => (
+
+              <div key={i} className="flex justify-between items-center border rounded-lg px-4 py-2">
+
+                <div className="font-medium text-slate-700">
+                  Game {i + 1}
+                </div>
+
+                <div className="text-slate-800 font-semibold">
+                  {game.winner}
+                </div>
+
+                {match.replays?.[i] && (
+                  <a
+                    href={match.replays[i]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 text-sm hover:underline"
+                  >
+                    Replay
+                  </a>
+                )}
+
+              </div>
+
+            ))}
+
+          </div>
+
+        ) : (
+
+          <div className="text-center text-slate-500 mb-6">
+            No games reported yet
+          </div>
+
+        )}
+
+        <div className="flex justify-center gap-4">
+
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-slate-200 rounded-lg hover:bg-slate-300"
+          >
+            Close
+          </button>
+
+          <button
+            onClick={() => onReport(match)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Report Result
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+  )
+}
+
+/* =========================
+   REPORT MODAL
+========================= */
+
+function ReportModal({ match, onClose }) {
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+
+      <div className="bg-white rounded-xl p-8 w-[1000px] max-w-[95vw] max-h-[90vh] overflow-y-auto shadow-xl">
+
+        <div className="flex justify-between items-center mb-6">
+
+          <h2 className="text-xl font-semibold">
+            Report Match
+          </h2>
+
+          <button
+            onClick={onClose}
+            className="text-slate-500 hover:text-black"
+          >
+            ✕
+          </button>
+
+        </div>
+
+        <ReportMatch match={match} onClose={onClose} />
+
+      </div>
+
+    </div>
+  )
+}

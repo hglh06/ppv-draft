@@ -1,0 +1,11 @@
+Agrega posters con los siguientes nombres:
+
+wc1
+wc2
+sf1
+sf2
+final
+
+Ancho: 600px  
+Alto: 1600px  
+Formato: JPG alta calidad (80–85%)
