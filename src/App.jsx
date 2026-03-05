@@ -120,7 +120,7 @@ export default function App() {
             </NavLink>
           )}
 
-          {user && team && (
+          {user && (
             <div className="relative">
 
               {/* TEAM ICON */}
@@ -128,24 +128,32 @@ export default function App() {
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="flex items-center"
               >
-                <img
-                  src={team.logo}
-                  alt={team.name}
-                  className="w-9 h-9 object-contain hover:scale-110 transition"
-                />
+
+                {team ? (
+                  <img
+                    src={team.logo}
+                    alt={team.name}
+                    className="w-9 h-9 object-contain hover:scale-110 transition"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-slate-300 animate-pulse"></div>
+                )}
+
               </button>
 
-              {/* DROPDOWN */}
+              {/* DROPDOWN MENU */}
               {menuOpen && (
                 <div className="absolute right-0 mt-3 w-40 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
 
-                  <NavLink
-                    to={`/teams/${team.id}`}
-                    onClick={() => setMenuOpen(false)}
-                    className="block px-4 py-2 text-sm hover:bg-slate-100"
-                  >
-                    Ir a Equipo
-                  </NavLink>
+                  {team && (
+                    <NavLink
+                      to={`/teams/${team.id}`}
+                      onClick={() => setMenuOpen(false)}
+                      className="block px-4 py-2 text-sm hover:bg-slate-100"
+                    >
+                      Ir a Equipo
+                    </NavLink>
+                  )}
 
                   <button
                     onClick={() => {
