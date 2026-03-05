@@ -16,9 +16,11 @@ import AdminReports from "./pages/AdminReports"
 
 export default function App() {
 
-  const { isAdmin, user, logout } = useAuth()
+  const { isAdmin, user, team, logout } = useAuth()
   const location = useLocation()
+
   const [scrolled, setScrolled] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const isHome = location.pathname === "/"
 
@@ -98,10 +100,10 @@ export default function App() {
           </NavLink>
 
           {user && (
-  <NavLink to="/trades" className={navItem}>
-    Trades
-  </NavLink>
-)}
+            <NavLink to="/trades" className={navItem}>
+              Trades
+            </NavLink>
+          )}
 
           {isAdmin && (
             <NavLink to="/admin/reports" className={navItem}>
@@ -118,13 +120,47 @@ export default function App() {
             </NavLink>
           )}
 
-          {user && (
-            <button
-              onClick={logout}
-              className="hover:opacity-70 transition"
-            >
-              Logout
-            </button>
+          {user && team && (
+            <div className="relative">
+
+              {/* TEAM ICON */}
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="flex items-center"
+              >
+                <img
+                  src={team.logo}
+                  alt={team.name}
+                  className="w-9 h-9 object-contain hover:scale-110 transition"
+                />
+              </button>
+
+              {/* DROPDOWN */}
+              {menuOpen && (
+                <div className="absolute right-0 mt-3 w-40 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
+
+                  <NavLink
+                    to={`/teams/${team.id}`}
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-4 py-2 text-sm hover:bg-slate-100"
+                  >
+                    Ir a Equipo
+                  </NavLink>
+
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false)
+                      logout()
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    Logout
+                  </button>
+
+                </div>
+              )}
+
+            </div>
           )}
 
         </div>
