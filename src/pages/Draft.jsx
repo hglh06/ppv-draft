@@ -62,14 +62,17 @@ const {data:draftPicks}=await supabase
 .select(`
 *,
 team:team_id ( name ),
-season_pokemon:season_pokemon_id ( points ),
 pokedex:pokemon_id (
 name,
 sprite,
 type1,
 type2
+),
+season_pokemon (
+points
 )
 `)
+.eq("season_id", state.season_id)
 .order("pick_number",{ascending:true})
 
 if(draftPicks?.length > previousPickCount.current){
@@ -106,6 +109,12 @@ ability2,
 hiddenability
 )
 `)
+
+const pointsMap = {}
+
+seasonPokemon.forEach(p => {
+  pointsMap[p.pokemon_id] = p.points
+})
 .eq("season_id",state.season_id)
 .eq("available",true)
 
@@ -307,7 +316,7 @@ Fairy:"#D685AD"
 
 
 const pointsUsed = teamPicks.reduce((sum,p)=>{
-  return sum + (p.season_pokemon?.points || 0)
+  return sum + (pointsMap[p.pokemon_id] || 0)
 },0)
 
 const MAX_POINTS = 130
