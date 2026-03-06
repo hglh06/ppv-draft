@@ -75,7 +75,7 @@ type2
 if(draftPicks?.length > previousPickCount.current){
 
 const audio=new Audio("/sounds/pick.mp3")
-audio.volume=0.5
+audio.volume=1
 audio.play()
 
 }
