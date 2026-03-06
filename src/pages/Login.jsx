@@ -58,7 +58,7 @@ export default function Login() {
       email,
       password,
       options: {
-        emailRedirectTo: "https://ppv-draft.vercel.app"
+        emailRedirectTo: "https://ppvdraftleague.com"
       }
     })
 
@@ -68,9 +68,14 @@ export default function Login() {
       return
     }
 
-    alert("Check your email to confirm your account")
+    alert("✔ Account created. Check your email to verify.")
 
-    setLoading(false)
+setEmail("")
+setPassword("")
+setConfirmPassword("")
+setIsRegister(false)
+
+setLoading(false)
 
   }
 
