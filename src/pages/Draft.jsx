@@ -61,15 +61,13 @@ const {data:draftPicks}=await supabase
 .from("draft_picks")
 .select(`
 *,
-points,
 team:team_id ( name ),
+season_pokemon:season_pokemon_id ( points ),
 pokedex:pokemon_id (
 name,
 sprite,
 type1,
-type2,
-type1image,
-type2image
+type2
 )
 `)
 .order("pick_number",{ascending:true})
@@ -302,13 +300,9 @@ Steel:"#B7B7CE",
 Fairy:"#D685AD"
 }
 
-const teamPicks =
-myTeamId
-? picks.filter(p=>p.team_id===myTeamId)
-: []
 
 const pointsUsed = teamPicks.reduce((sum,p)=>{
-  return sum + (p.points || 0)
+  return sum + (p.season_pokemon?.points || 0)
 },0)
 
 const pointsRemaining = 130 - pointsUsed
