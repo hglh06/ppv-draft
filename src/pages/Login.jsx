@@ -15,6 +15,17 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
 
   /* =============================
+     PASSWORD MATCH CHECK
+  ============================= */
+
+  const passwordsMatch =
+    password && confirmPassword && password === confirmPassword
+
+  const passwordsDontMatch =
+    confirmPassword && password !== confirmPassword
+
+
+  /* =============================
      LOGIN
   ============================= */
 
@@ -38,6 +49,7 @@ export default function Login() {
     setLoading(false)
 
   }
+
 
   /* =============================
      REGISTER
@@ -70,14 +82,15 @@ export default function Login() {
 
     alert("✔ Account created. Check your email to verify.")
 
-setEmail("")
-setPassword("")
-setConfirmPassword("")
-setIsRegister(false)
+    setEmail("")
+    setPassword("")
+    setConfirmPassword("")
+    setIsRegister(false)
 
-setLoading(false)
+    setLoading(false)
 
   }
+
 
   return (
     <div className="flex justify-center mt-20">
@@ -110,20 +123,36 @@ setLoading(false)
         />
 
         {isRegister && (
-          <input
-            type="password"
-            placeholder="Confirm Password"
-            className="border p-3 w-full mb-6 rounded"
-            value={confirmPassword}
-            onChange={e => setConfirmPassword(e.target.value)}
-            required
-          />
+          <div className="relative mb-6">
+
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              className="border p-3 w-full rounded pr-10"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              required
+            />
+
+            {passwordsMatch && (
+              <span className="absolute right-3 top-3 text-green-500 font-bold">
+                ✓
+              </span>
+            )}
+
+            {passwordsDontMatch && (
+              <span className="absolute right-3 top-3 text-red-500 font-bold">
+                ✕
+              </span>
+            )}
+
+          </div>
         )}
 
         <button
           type="submit"
-          disabled={loading}
-          className="bg-blue-600 text-white w-full py-3 rounded-lg"
+          disabled={loading || (isRegister && !passwordsMatch)}
+          className="bg-blue-600 text-white w-full py-3 rounded-lg disabled:opacity-50"
         >
           {loading
             ? "Loading..."

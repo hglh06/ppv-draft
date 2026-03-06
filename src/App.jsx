@@ -1,6 +1,6 @@
 import { Routes, Route, NavLink, useLocation } from "react-router-dom"
 import { useAuth } from "./context/AuthContext"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 
 import Home from "./pages/Home"
 import Standings from "./pages/Standings"
@@ -22,6 +22,8 @@ export default function App() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
+  const menuRef = useRef(null)
+
   const isHome = location.pathname === "/"
 
   useEffect(() => {
@@ -32,6 +34,28 @@ export default function App() {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+
+  /* ======================
+     CLOSE MENU ON OUTSIDE CLICK
+  ====================== */
+
+  useEffect(() => {
+
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+
+  }, [])
+
 
   /* ======================
      NAV LINK STYLE
@@ -121,7 +145,7 @@ export default function App() {
           )}
 
           {user && (
-            <div className="relative">
+            <div ref={menuRef} className="relative">
 
               {/* TEAM ICON */}
               <button
@@ -174,7 +198,6 @@ export default function App() {
         </div>
       </nav>
 
-      {/* HOME no necesita padding */}
       <main className={isHome ? "" : "pt-24"}>
 
         <Routes>
