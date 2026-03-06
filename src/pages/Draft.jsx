@@ -21,6 +21,7 @@ const [sortPoints,setSortPoints]=useState("desc")
 const [showPanel,setShowPanel]=useState(false)
 
 const previousPickCount=useRef(0)
+const [pointsMap,setPointsMap]=useState({})
 
 /* FETCH */
 
@@ -107,6 +108,14 @@ hiddenability
 `)
 .eq("season_id",state.season_id)
 .eq("available",true)
+
+const map={}
+
+seasonPokemon?.forEach(p=>{
+map[p.pokemon_id]=p.points
+})
+
+setPointsMap(map)
 
 const pickedIds=draftPicks?.map(p=>p.pokemon_id) || []
 
@@ -305,11 +314,7 @@ myTeamId
 : []
 
 const pointsUsed = teamPicks.reduce((sum,p)=>{
-
-const poke = pokemon.find(x=>x.pokemon_id===p.pokemon_id)
-
-return sum + (poke?.points || 0)
-
+return sum + (pointsMap[p.pokemon_id] || 0)
 },0)
 
 const pointsRemaining = 130 - pointsUsed
