@@ -22,10 +22,14 @@ const [showPanel,setShowPanel]=useState(false)
 
 const previousPickCount=useRef(0)
 const [pointsMap,setPointsMap]=useState({})
+const fetching = useRef(false)
 
 /* FETCH */
 
 async function fetchDraft(){
+
+if(fetching.current) return
+fetching.current = true
 
 const {data:state}=await supabase
 .from("draft_state")
@@ -84,6 +88,12 @@ previousPickCount.current=draftPicks?.length || 0
 
 setPicks(draftPicks || [])
 
+const picksMap = {}
+
+draftPicks?.forEach(p=>{
+picksMap[`${p.round}-${p.team_id}`] = p
+})
+
 if(!state?.season_id){
 setLoading(false)
 return
@@ -125,6 +135,7 @@ seasonPokemon
 setPokemon(availablePokemon)
 
 setLoading(false)
+fetching.current = false
 }
 
 /* REALTIME */
@@ -170,13 +181,9 @@ useEffect(() => {
 
     setTimeLeft(remaining)
 
-    if (remaining === 0) {
-      try {
-        await supabase.rpc("force_auto_pick")
-      } catch (err) {
-        console.error("Autopick error:", err)
-      }
-    }
+    if (remaining === 0 && draftState?.currentTeam?.user_id !== user?.id) {
+await supabase.rpc("force_auto_pick")
+}
 
   }, 1000)
 
@@ -548,9 +555,7 @@ round%2===1
 
 const team=teams[teamIndex]
 
-const pick=picks.find(
-p=>p.round===round && p.team_id===team?.id
-)
+const pick = picksMap[`${round}-${team?.id}`]
 
 const pickPosition =
 round % 2 === 1
