@@ -279,6 +279,11 @@ image: p.pokedex.type1image
 
 const myTeamId = teams.find(t => t.user_id === user?.id)?.id
 
+const teamPicks =
+myTeamId
+? picks.filter(p => p.team_id === myTeamId)
+: []
+
 const typeColors = {
 Normal:"#A8A77A",
 Fire:"#EE8130",
@@ -305,7 +310,8 @@ const pointsUsed = teamPicks.reduce((sum,p)=>{
   return sum + (p.season_pokemon?.points || 0)
 },0)
 
-const pointsRemaining = 130 - pointsUsed
+const MAX_POINTS = 130
+const pointsRemaining = MAX_POINTS - pointsUsed
 
 return(
 
@@ -839,11 +845,6 @@ Puntos restantes:
 <div className="grid grid-cols-5 gap-2 mb-6">
 
 {Array.from({length:10}).map((_,i)=>{
-
-const teamPicks =
-myTeamId
-? picks.filter(p=>p.team_id===myTeamId)
-: []
 
 const pick = teamPicks[i]
 
