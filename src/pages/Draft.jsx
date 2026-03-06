@@ -107,7 +107,6 @@ hiddenability
 )
 `)
 .eq("season_id",state.season_id)
-.eq("available",true)
 
 const map={}
 
