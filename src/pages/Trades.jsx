@@ -18,6 +18,7 @@ export default function Trades() {
   const [tradePartner, setTradePartner] = useState("")
   const [tradeGive, setTradeGive] = useState([""])
   const [tradeReceive, setTradeReceive] = useState([""])
+  const [partnerRoster, setPartnerRoster] = useState([])
 
   const [myRoster, setMyRoster] = useState([])
 const [pointsRemaining, setPointsRemaining] = useState(130)
@@ -28,6 +29,39 @@ const [pointsRemaining, setPointsRemaining] = useState(130)
   useEffect(() => {
     fetchData()
   }, [])
+
+  useEffect(() => {
+
+  async function loadPartnerRoster() {
+
+    if (!tradePartner) {
+      setPartnerRoster([])
+      return
+    }
+
+    const { data: seasonData } = await supabase
+      .from("seasons")
+      .select("id")
+      .eq("is_active", true)
+      .single()
+
+    const { data: rosterData } = await supabase
+      .from("rosters")
+      .select(`
+        pokedex(name)
+      `)
+      .eq("team_id", tradePartner)
+      .eq("season_id", seasonData.id)
+
+    const names = rosterData?.map(r => r.pokedex?.name) || []
+
+    setPartnerRoster(names)
+
+  }
+
+  loadPartnerRoster()
+
+}, [tradePartner])
 
   async function fetchData() {
 
@@ -137,35 +171,59 @@ taken.add(r.pokedex?.name)
 
   async function sendFreeAgent() {
 
-    if (!team) return
+  if (!team) return
 
-    await supabase.rpc("request_free_agent", {
-      p_team_id: team.id,
-      p_give: selectedGiveFA ? [selectedGiveFA] : [],
-      p_receive: selectedReceiveFA ? [selectedReceiveFA] : []
-    })
+  const confirmFA = window.confirm(
+    `Confirm Free Agency move?\n\nDrop: ${selectedGiveFA || "None"}\nPick up: ${selectedReceiveFA || "None"}`
+  )
 
-    setSelectedGiveFA("")
-    setSelectedReceiveFA("")
-    fetchData()
-  }
+  if (!confirmFA) return
 
-  async function sendTrade() {
+  await supabase.rpc("request_free_agent", {
+    p_team_id: team.id,
+    p_give: selectedGiveFA ? [selectedGiveFA] : [],
+    p_receive: selectedReceiveFA ? [selectedReceiveFA] : []
+  })
 
-    if (!team || !tradePartner) return
+  setSelectedGiveFA("")
+  setSelectedReceiveFA("")
+  fetchData()
+}
 
-    await supabase.rpc("request_trade", {
-      p_team_a: team.id,
-      p_team_b: tradePartner,
-      p_give: tradeGive.filter(Boolean),
-      p_receive: tradeReceive.filter(Boolean)
-    })
+ async function sendTrade() {
 
-    setTradePartner("")
-    setTradeGive([""])
-    setTradeReceive([""])
-    fetchData()
-  }
+  if (!team || !tradePartner) return
+
+  const partnerName =
+    teams.find(t => t.id === tradePartner)?.name || "Unknown"
+
+  const confirmTrade = window.confirm(
+`Send this trade?
+
+Partner: ${partnerName}
+
+You give:
+${tradeGive.filter(Boolean).join(", ") || "Nothing"}
+
+You receive:
+${tradeReceive.filter(Boolean).join(", ") || "Nothing"}
+`
+  )
+
+  if (!confirmTrade) return
+
+  await supabase.rpc("request_trade", {
+    p_team_a: team.id,
+    p_team_b: tradePartner,
+    p_give: tradeGive.filter(Boolean),
+    p_receive: tradeReceive.filter(Boolean)
+  })
+
+  setTradePartner("")
+  setTradeGive([""])
+  setTradeReceive([""])
+  fetchData()
+}
 
   async function acceptTrade(id) {
 
@@ -472,11 +530,9 @@ taken.add(r.pokedex?.name)
 
               <option value="">Recibir</option>
 
-              {teams
-                .find(t => t.id === tradePartner)
-                ?.roster?.map(p => (
-                  <option key={p}>{p}</option>
-                ))}
+              {partnerRoster.map(p => (
+  <option key={p}>{p}</option>
+))}
 
             </select>
 
