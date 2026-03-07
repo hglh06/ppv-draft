@@ -36,6 +36,17 @@ return
 
 setTeam(teamData)
 
+
+// obtener season actual
+const { data: seasonState } = await supabase
+.from("draft_state")
+.select("season_id")
+.single()
+
+const seasonId = seasonState?.season_id
+
+
+// obtener roster
 const {data:rosterData}=await supabase
 .from("rosters")
 .select(`
@@ -48,11 +59,26 @@ type2,
 ability1,
 ability2,
 hiddenability
-),
-season_pokemon(points)
+)
 `)
-.eq("team_id",teamData.id)
+.eq("team_id",teamId)
+.eq("season_id",seasonId)
 
+
+// obtener puntos
+const {data:pointsData}=await supabase
+.from("season_pokemon")
+.select("pokemon_id,points")
+.eq("season_id",seasonId)
+
+const pointsMap={}
+
+pointsData?.forEach(p=>{
+pointsMap[p.pokemon_id]=p.points
+})
+
+
+// formatear roster
 const formatted=(rosterData||[]).map(r=>({
 
 name:r.pokedex?.name,
@@ -62,13 +88,15 @@ type2:r.pokedex?.type2,
 ability1:r.pokedex?.ability1,
 ability2:r.pokedex?.ability2,
 hidden:r.pokedex?.hiddenability,
-points:r.season_pokemon?.points||0,
+points:pointsMap[r.pokemon_id] || 0,
 obtained:"Draft"
 
 }))
 
 setRoster(formatted)
 
+
+// matches
 const {data:matchData}=await supabase
 .from("matches")
 .select(`
@@ -76,11 +104,13 @@ const {data:matchData}=await supabase
 teamA:team_a(name),
 teamB:team_b(name)
 `)
-.or(`team_a.eq.${teamData.id},team_b.eq.${teamData.id}`)
+.or(`team_a.eq.${teamId},team_b.eq.${teamId}`)
 .order("week",{ascending:true})
 
 setMatches(matchData||[])
 
+
+// reports
 const {data:reportData}=await supabase
 .from("reports")
 .select("*")
