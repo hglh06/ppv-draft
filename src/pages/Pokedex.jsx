@@ -259,10 +259,10 @@ function PokemonPopup({ pokemon, position }) {
       <div className="flex items-center gap-4 mb-4">
         {pokemon.sprite && (
           <img
-            src={pokemon.sprite}
-            alt={pokemon.name}
-            className="w-20"
-          />
+  src={pokemon.sprite}
+  alt={pokemon.name}
+  className="w-20 pokemon-bounce"
+/>
         )}
 
         <h3 className="text-xl font-bold text-slate-800">
