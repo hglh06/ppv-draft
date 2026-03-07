@@ -8,6 +8,8 @@ export default function Pokedex() {
   const [hoveredPokemon, setHoveredPokemon] = useState(null)
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 })
   const [takenPokemon, setTakenPokemon] = useState([])
+  const [search, setSearch] = useState("")
+  const [hoverTimer, setHoverTimer] = useState(null)
 
   useEffect(() => {
     loadPokedex()
@@ -62,15 +64,15 @@ export default function Pokedex() {
 
     }).filter(Boolean)
 
-    const { data: teamsData } = await supabase
-      .from("teams")
-      .select("roster")
+   const { data: rosterData } = await supabase
+  .from("rosters")
+  .select(`
+    pokedex(name)
+  `)
 
-    const taken = teamsData
-      ?.flatMap(t => t.roster || [])
-      .filter(Boolean)
+const taken = rosterData?.map(r => r.pokedex?.name)
 
-    setTakenPokemon(taken || [])
+setTakenPokemon(taken || [])
     setPokemon(merged)
     setLoading(false)
   }
@@ -121,6 +123,18 @@ export default function Pokedex() {
         </p>
       </div>
 
+      <div className="max-w-md mx-auto mb-8">
+
+  <input
+    type="text"
+    placeholder="Search Pokémon..."
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    className="w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+  />
+
+</div>
+
       <div className="w-full overflow-x-auto pb-6">
         <div className="flex gap-4 min-w-max">
 
@@ -138,10 +152,13 @@ export default function Pokedex() {
               <div className="overflow-y-auto flex-1 p-2 space-y-1">
 
                 {grouped[points]
-                  .sort((a, b) =>
-                    a.pokedex.name.localeCompare(b.pokedex.name)
-                  )
-                  .map(p => {
+                  .filter(p =>
+  p.pokedex.name.toLowerCase().includes(search.toLowerCase())
+)
+.sort((a, b) =>
+  a.pokedex.name.localeCompare(b.pokedex.name)
+)
+.map(p => {
 
                     const poke = p.pokedex
                     const isTaken = takenPokemon.includes(poke.name)
@@ -156,18 +173,34 @@ export default function Pokedex() {
                       `}
                         onMouseEnter={(e) => {
 
-                          if (isTaken) return
+  if (isTaken) return
 
-                          const rect = e.currentTarget.getBoundingClientRect()
+  const rect = e.currentTarget.getBoundingClientRect()
 
-                          setPopupPosition({
-                            x: rect.right + 8,
-                            y: rect.top
-                          })
+  const timer = setTimeout(() => {
 
-                          setHoveredPokemon(poke)
-                        }}
-                        onMouseLeave={() => setHoveredPokemon(null)}
+    let x = rect.right + 8
+
+    if (x + 320 > window.innerWidth) {
+      x = rect.left - 330
+    }
+
+    setPopupPosition({
+      x,
+      y: rect.top
+    })
+
+    setHoveredPokemon(poke)
+
+  }, 1000)
+
+  setHoverTimer(timer)
+
+}}
+                        onMouseLeave={() => {
+  clearTimeout(hoverTimer)
+  setHoveredPokemon(null)
+}}
                       >
 
                         {poke.sprite && (
@@ -178,9 +211,15 @@ export default function Pokedex() {
                           />
                         )}
 
-                        <span className="text-xs font-medium truncate">
-                          {poke.name}
-                        </span>
+                        <div className="flex justify-between w-full text-xs font-medium">
+  <span className="truncate">{poke.name}</span>
+
+  {isTaken && (
+    <span className="text-[10px] font-semibold text-red-500">
+      Drafted
+    </span>
+  )}
+</div>
 
                       </div>
                     )
@@ -242,7 +281,7 @@ function PokemonPopup({ pokemon, position }) {
           </div>
         )}
 
-        {pokemon.type2 && (
+        {pokemon.type2 && pokemon.type2 !== "None" && (
           <div className="flex items-center gap-2 bg-slate-100 px-3 py-1 rounded-full">
             <img src={pokemon.type2image} className="w-5"/>
             <span className="text-sm font-semibold">
@@ -259,11 +298,11 @@ function PokemonPopup({ pokemon, position }) {
           <div><strong>Ability 1:</strong> {pokemon.ability1}</div>
         )}
 
-        {pokemon.ability2 && (
+        {pokemon.ability2 && pokemon.ability2 !== "None" && (
           <div><strong>Ability 2:</strong> {pokemon.ability2}</div>
         )}
 
-        {pokemon.hiddenability && (
+        {pokemon.hiddenability && pokemon.hiddenability !== "None" && (
           <div><strong>Hidden:</strong> {pokemon.hiddenability}</div>
         )}
 
