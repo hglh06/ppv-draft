@@ -19,21 +19,18 @@ html {
   scroll-behavior: smooth;
 }
 
-@keyframes pokemonBounce {
+@keyframes pokemonFloat {
   0% {
-    transform: translateY(0);
+    transform: translateY(0px);
   }
-  40% {
-    transform: translateY(-8px);
-  }
-  60% {
-    transform: translateY(-4px);
+  50% {
+    transform: translateY(-6px);
   }
   100% {
-    transform: translateY(0);
+    transform: translateY(0px);
   }
 }
 
-.pokemon-bounce {
-  animation: pokemonBounce 0.6s ease-out;
+.pokemon-float {
+  animation: pokemonFloat 1.6s ease-in-out infinite;
 }
