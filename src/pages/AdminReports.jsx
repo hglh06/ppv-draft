@@ -8,6 +8,7 @@ export default function AdminReports() {
 
   const [reports, setReports] = useState([])
   const [transactions, setTransactions] = useState([])
+  const [groupedFA, setGroupedFA] = useState({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -20,7 +21,10 @@ export default function AdminReports() {
 
   async function fetchData() {
 
-    // 🔹 Match Reports
+    /* ===============================
+       MATCH REPORTS
+    ============================== */
+
     const { data: reportsData } = await supabase
       .from("reports")
       .select(`
@@ -35,7 +39,10 @@ export default function AdminReports() {
       `)
       .eq("status", "pending")
 
-    // 🔹 Trades pendientes de admin
+    /* ===============================
+       TRANSACTIONS
+    ============================== */
+
     const { data: txData } = await supabase
       .from("transactions")
       .select(`
@@ -46,8 +53,62 @@ export default function AdminReports() {
       .eq("status", "pending_admin")
       .order("created_at", { ascending: true })
 
+    /* ===============================
+       WAIVER ORDER
+    ============================== */
+
+    const { data: seasonData } = await supabase
+      .from("seasons")
+      .select("id")
+      .eq("is_active", true)
+      .single()
+
+    const { data: waiverData } = await supabase
+      .from("waiver_order")
+      .select("*")
+      .eq("season_id", seasonData.id)
+
+    const waiverMap = {}
+
+    waiverData?.forEach(w=>{
+      waiverMap[w.team_id] = w.position
+    })
+
+    const enrichedTx = txData?.map(tx => ({
+      ...tx,
+      waiverPosition: waiverMap[tx.team_a] || null
+    }))
+
+    /* ===============================
+       GROUP FREE AGENTS
+    ============================== */
+
+    const faRequests = enrichedTx?.filter(tx => tx.type === "free_agent") || []
+
+    const grouped = {}
+
+    faRequests.forEach(tx => {
+
+      const pokemon = tx.receive?.[0]
+
+      if (!grouped[pokemon]) grouped[pokemon] = []
+
+      grouped[pokemon].push(tx)
+
+    })
+
+    Object.keys(grouped).forEach(pokemon => {
+
+      grouped[pokemon].sort((a,b)=>
+        (a.waiverPosition || 999) - (b.waiverPosition || 999)
+      )
+
+    })
+
+    setGroupedFA(grouped)
+
     setReports(reportsData || [])
-    setTransactions(txData || [])
+    setTransactions(enrichedTx || [])
     setLoading(false)
   }
 
@@ -93,7 +154,7 @@ export default function AdminReports() {
   }
 
   /* ===============================
-     TRADE APPROVAL
+     TRANSACTION APPROVAL
   ============================== */
 
   async function approveTransaction(id) {
@@ -110,11 +171,10 @@ export default function AdminReports() {
     fetchData()
   }
 
-  if (!isAdmin) {
-    return <div>No autorizado</div>
-  }
-
+  if (!isAdmin) return <div>No autorizado</div>
   if (loading) return <div>Cargando panel admin...</div>
+
+  const trades = transactions.filter(tx => tx.type === "trade")
 
   return (
     <div className="space-y-12">
@@ -160,40 +220,105 @@ export default function AdminReports() {
       </div>
 
       {/* =========================================
-          TRADES & FREE AGENCY
+          FREE AGENCY
       ========================================= */}
 
       <div>
 
         <h3 className="text-2xl font-bold mb-6">
-          Trades & Free Agency Pendientes
+          Free Agency Claims
         </h3>
 
-        {transactions.length === 0 && (
-          <div>No hay solicitudes pendientes</div>
+        {Object.keys(groupedFA).length === 0 && (
+          <div>No hay solicitudes de FA</div>
         )}
 
-        {transactions.map(tx => (
+        {Object.entries(groupedFA).map(([pokemon, requests]) => (
+
+          <div key={pokemon} className="mb-8">
+
+            <h4 className="text-xl font-bold mb-3">
+              {pokemon} ({requests.length} solicitudes)
+            </h4>
+
+            {requests.map((tx, i) => (
+
+              <div
+                key={tx.id}
+                className={`p-4 rounded-lg mb-2 ${
+                  i === 0
+                    ? "bg-green-50 border border-green-300"
+                    : "bg-white border"
+                }`}
+              >
+
+                <div className="font-semibold">
+                  {tx.teamA?.name}
+                  <span className="ml-2 text-sm text-slate-500">
+                    (Waiver #{tx.waiverPosition})
+                  </span>
+                </div>
+
+                <div className="text-sm mb-2">
+                  Drop: {tx.give?.join(", ") || "None"}
+                </div>
+
+                <div className="flex gap-3">
+
+                  <button
+                    onClick={() => approveTransaction(tx.id)}
+                    className="bg-green-600 text-white px-4 py-2 rounded"
+                  >
+                    Aprobar
+                  </button>
+
+                  <button
+                    onClick={() => rejectTransaction(tx.id)}
+                    className="bg-red-600 text-white px-4 py-2 rounded"
+                  >
+                    Rechazar
+                  </button>
+
+                </div>
+
+              </div>
+
+            ))}
+
+          </div>
+
+        ))}
+
+      </div>
+
+      {/* =========================================
+          TRADES
+      ========================================= */}
+
+      <div>
+
+        <h3 className="text-2xl font-bold mb-6">
+          Trades Pendientes
+        </h3>
+
+        {trades.length === 0 && (
+          <div>No hay trades pendientes</div>
+        )}
+
+        {trades.map(tx => (
+
           <div
             key={tx.id}
             className="bg-white p-6 rounded-xl shadow-md mb-6"
           >
 
             <div className="font-bold text-lg mb-2">
-              {tx.type === "free_agent"
-                ? "FREE AGENT"
-                : "TRADE"}
+              TRADE
             </div>
 
             <div className="mb-2">
-              <strong>Equipo A:</strong> {tx.teamA?.name}
+              <strong>{tx.teamA?.name}</strong> ↔ <strong>{tx.teamB?.name}</strong>
             </div>
-
-            {tx.teamB && (
-              <div className="mb-2">
-                <strong>Equipo B:</strong> {tx.teamB?.name}
-              </div>
-            )}
 
             <div className="mb-2">
               <strong>Da:</strong> {tx.give?.join(", ")}
@@ -222,6 +347,7 @@ export default function AdminReports() {
             </div>
 
           </div>
+
         ))}
 
       </div>

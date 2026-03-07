@@ -84,15 +84,22 @@ const [pointsRemaining, setPointsRemaining] = useState(130)
       .eq("is_active", true)
       .single()
 
-    const { data: waiverData } = await supabase
-      .from("waiver_order")
-      .select(`
-        position,
-        fa_used,
-        team:team_id ( name )
-      `)
-      .eq("season_id", seasonData.id)
-      .order("position")
+    const { data: waiverRaw } = await supabase
+  .from("waiver_order")
+  .select("*")
+  .eq("season_id", seasonData.id)
+  .order("position")
+
+const teamMap = {}
+
+teamsData?.forEach(t => {
+  teamMap[t.id] = t.name
+})
+
+const waiverData = waiverRaw?.map(w => ({
+  ...w,
+  team: { name: teamMap[w.team_id] }
+}))
 
     const { data: seasonPokemon } = await supabase
 
@@ -387,8 +394,13 @@ function removeReceiveSlot(index) {
               <div key={tx.id} className="border-b py-3 text-sm">
 
                 <div className="font-semibold">
-                  {tx.type.toUpperCase()}
-                </div>
+  {tx.type.toUpperCase()}
+</div>
+
+<div className="text-xs text-gray-500">
+  {tx.status === "pending_player" && "Esperando respuesta del otro jugador"}
+  {tx.status === "pending_admin" && "Esperando aprobación del admin"}
+</div>
 
                 <div>
                   {tx.teamA?.name}
@@ -622,7 +634,12 @@ function removeReceiveSlot(index) {
 
               return (
 
-                <tr key={i} className="border-b border-slate-100">
+                <tr
+  key={i}
+  className={`border-b border-slate-100 ${
+    w?.team?.name === team?.name ? "bg-blue-50 font-semibold" : ""
+  }`}
+>
 
                   <td className="p-2">{i + 1}</td>
 
