@@ -56,6 +56,8 @@ name,
 sprite,
 type1,
 type2,
+type1image,
+type2image,
 ability1,
 ability2,
 hiddenability
@@ -85,6 +87,8 @@ name:r.pokedex?.name,
 sprite:r.pokedex?.sprite,
 type1:r.pokedex?.type1,
 type2:r.pokedex?.type2,
+type1image:r.pokedex?.type1image,
+type2image:r.pokedex?.type2image,
 ability1:r.pokedex?.ability1,
 ability2:r.pokedex?.ability2,
 hidden:r.pokedex?.hiddenability,
@@ -92,7 +96,6 @@ points:pointsMap[r.pokemon_id] || 0,
 obtained:"Draft"
 
 }))
-
 setRoster(formatted)
 
 
@@ -239,22 +242,24 @@ return(
 
 <tr key={i} className="border-b h-10 text-center align-middle">
 
-<td className="flex items-center justify-center gap-2">
+<td className="h-10">
+  <div className="flex items-center justify-center gap-2 h-full">
 
-<img src={p.sprite} className="w-7"/>
+<img src={p.sprite} className="w-8"/>
 
 {p.name}
 
+     </div>
 </td>
 
 <td>{p.points}</td>
 
-<td className="flex justify-center gap-1">
+<td className="flex justify-center items-center gap-1">
 
-<img src={`/types/${p.type1}.png`} className="h-5"/>
+<img src={p.type1image} className="h-5"/>
 
-{p.type2 &&
-<img src={`/types/${p.type2}.png`} className="h-5"/>
+{p.type2image &&
+<img src={p.type2image} className="h-5"/>
 }
 
 </td>

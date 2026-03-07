@@ -135,7 +135,7 @@ return(
 <td className="flex items-center justify-center gap-2">
 
 {pokemon && (
-<img src={pokemon.sprite} className="w-6"/>
+<img src={pokemon.sprite} className="w-8"/>
 )}
 
 </td>

@@ -100,7 +100,7 @@ return(
 
 <img
 src={p.sprite}
-className="w-6"
+className="w-8"
 />
 
 {p.name}
