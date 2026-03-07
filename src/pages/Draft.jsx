@@ -298,6 +298,12 @@ if(loading) return <div className="p-10">Cargando Draft...</div>
 const teamCount = teams.length || 16
 const rounds = 10
 
+const picksMap = {}
+
+picks.forEach(p=>{
+picksMap[`${p.round}-${p.team_id}`] = p
+})
+
 const uniqueTypes = [
 ...new Map(
 pokemon.map(p => [
