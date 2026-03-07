@@ -167,10 +167,10 @@ className="w-36 mb-4"
 <div className="grid grid-cols-2 gap-y-2 text-sm mt-auto">
 
 <div>Coach</div>
-<div>{team.coach||"-"}</div>
+<div>{team.coach_name||"-"}</div>
 
 <div>Title</div>
-<div>{team.title||"-"}</div>
+<div>{team.coach_title||"-"}</div>
 
 <div>Wins</div>
 <div>{team.wins||0}</div>
@@ -185,7 +185,7 @@ className="w-36 mb-4"
 <div>{team.fa_moves||0}</div>
 
 <div>Favorite</div>
-<div>{team.favorite||"-"}</div>
+<div>{team.favorite_pokemon||"-"}</div>
 
 </div>
 
