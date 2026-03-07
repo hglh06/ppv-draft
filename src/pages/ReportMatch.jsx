@@ -38,23 +38,46 @@ export default function ReportMatch({ match, onClose }) {
 
     async function fetchRosters() {
 
-      if (!match) return
+  if (!match) return
 
-      const { data: teamAData } = await supabase
-        .from("teams")
-        .select("roster")
-        .eq("id", match.teamA.id)
-        .single()
+  const { data: seasonState } = await supabase
+    .from("draft_state")
+    .select("season_id")
+    .single()
 
-      const { data: teamBData } = await supabase
-        .from("teams")
-        .select("roster")
-        .eq("id", match.teamB.id)
-        .single()
+  const seasonId = seasonState?.season_id
 
-      setTeamARoster(teamAData?.roster || [])
-      setTeamBRoster(teamBData?.roster || [])
-    }
+  /* TEAM A */
+
+  const { data: teamARosterData } = await supabase
+    .from("rosters")
+    .select(`
+      pokemon_id,
+      pokedex(name)
+    `)
+    .eq("team_id", match.teamA.id)
+    .eq("season_id", seasonId)
+
+  /* TEAM B */
+
+  const { data: teamBRosterData } = await supabase
+    .from("rosters")
+    .select(`
+      pokemon_id,
+      pokedex(name)
+    `)
+    .eq("team_id", match.teamB.id)
+    .eq("season_id", seasonId)
+
+  setTeamARoster(
+    teamARosterData?.map(r => r.pokedex?.name) || []
+  )
+
+  setTeamBRoster(
+    teamBRosterData?.map(r => r.pokedex?.name) || []
+  )
+
+}
 
     fetchRosters()
 
