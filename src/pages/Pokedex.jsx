@@ -149,7 +149,7 @@ setTakenPokemon(taken || [])
                 {points} pts
               </div>
 
-              <div className="overflow-y-auto flex-1 p-2 space-y-1">
+              <div className="overflow-y-auto overflow-x-hidden flex-1 p-2 space-y-1">
 
                 {grouped[points]
                   .filter(p =>
@@ -211,11 +211,11 @@ setTakenPokemon(taken || [])
                           />
                         )}
 
-                        <div className="flex justify-between w-full text-xs font-medium">
-  <span className="truncate">{poke.name}</span>
+                        <div className="flex justify-between items-center w-full text-xs font-medium min-w-0">
+  <span className="truncate min-w-0">{poke.name}</span>
 
   {isTaken && (
-    <span className="text-[10px] font-semibold text-red-500">
+    <span className="text-[10px] font-semibold text-red-500 ml-1 shrink-0">
       Drafted
     </span>
   )}
