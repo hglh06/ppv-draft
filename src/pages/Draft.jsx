@@ -517,6 +517,8 @@ gridTemplateColumns:`repeat(${teamCount},1fr)`
 {Array.from({length:teamCount}).map((_,i)=>{
 
 const team=teams[i]
+const isCurrent =
+draftState?.current_team_id === team?.id && !draftState?.is_finished
 
 if(!team){
 return(
@@ -526,10 +528,7 @@ Team {i+1}
 )
 }
 
-const globalPickNumber = (round - 1) * teamCount + pickPosition
 
-const isCurrentPick =
-draftState?.current_pick === globalPickNumber && !draftState?.is_finished
 
 return(
 
@@ -584,13 +583,19 @@ round%2===1
 const team=teams[teamIndex]
 
 const pick = picksMap[`${round}-${team?.id}`]
-const isCurrentPick =
-draftState?.current_team_id === team?.id && !pick && !draftState?.is_finished
 
 const pickPosition =
 round % 2 === 1
 ? c + 1
 : teamCount - c
+
+const globalPickNumber =
+(round - 1) * teamCount + pickPosition
+
+const isCurrentPick =
+draftState?.current_pick === globalPickNumber &&
+!pick &&
+!draftState?.is_finished
 
 const label = `${round}.${pickPosition}`
 
