@@ -74,13 +74,10 @@ const [pointsRemaining, setPointsRemaining] = useState(130)
       .select("*")
 
     const { data: tx } = await supabase
-      .from("transactions")
-      .select(`
-        *,
-        teamA:team_a ( name ),
-        teamB:team_b ( name )
-      `)
-      .order("created_at", { ascending: false })
+  .from("transactions")
+  .select("*")
+  .order("created_at", { ascending: false })
+
 
     const { data: seasonData } = await supabase
       .from("seasons")
@@ -173,12 +170,26 @@ taken.add(r.pokedex?.name)
       ?.map(p => p.pokemon.name)
       .filter(name => !taken.has(name)) || []
 
-    setTeams(teamsData || [])
-    setTransactions(tx || [])
-    setWaivers(waiverData || [])
-    setFreeAgents(free)
-    setLoading(false)
+   setTeams(teamsData || [])
+
+/* =========================
+   MAPEAR TRANSACTIONS
+========================= */
+
+const txMapped = (tx || []).map(t=>({
+  ...t,
+  teamA: { name: teamMap[t.team_a] },
+  teamB: { name: teamMap[t.team_b] }
+}))
+
+setTransactions(txMapped)
+
+setWaivers(waiverData || [])
+setFreeAgents(free)
+setLoading(false)
   }
+
+
 
   async function sendFreeAgent() {
 
