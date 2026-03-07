@@ -27,8 +27,12 @@ const [pointsRemaining, setPointsRemaining] = useState(130)
   const faRemaining = 10 - (myWaiver?.fa_used || 0)
 
   useEffect(() => {
-    fetchData()
-  }, [])
+
+  if(!team) return
+
+  fetchData()
+
+}, [team])
 
   useEffect(() => {
 
@@ -267,9 +271,9 @@ function removeReceiveSlot(index) {
   const history = transactions.filter(tx => tx.status === "approved")
 
   const pending = transactions.filter(tx =>
-    tx.status === "pending_player" ||
-    tx.status === "pending_admin"
-  )
+  (tx.team_a === team?.id || tx.team_b === team?.id) &&
+  (tx.status === "pending_player" || tx.status === "pending_admin")
+)
 
   return (
 
