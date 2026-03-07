@@ -64,7 +64,7 @@ Pokemon Performance
 
 <tr className="border-b text-xs text-center">
 
-<th className="text-left">Pokemon</th>
+<th className="text-center">Pokemon</th>
 <th>G</th>
 <th>K</th>
 <th>D</th>
