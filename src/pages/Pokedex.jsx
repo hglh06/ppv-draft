@@ -261,7 +261,7 @@ function PokemonPopup({ pokemon, position }) {
           <img
   src={pokemon.sprite}
   alt={pokemon.name}
-  className="w-20 pokemon-bounce"
+  className="w-20 pokemon-float"
 />
         )}
 
