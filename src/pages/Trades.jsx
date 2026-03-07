@@ -74,22 +74,40 @@ const [pointsRemaining, setPointsRemaining] = useState(130)
    CARGAR MI ROSTER
 ========================= */
 
+/* =========================
+   CARGAR MI ROSTER
+========================= */
+
 const { data: rosterData } = await supabase
-  .from("rosters")
-  .select(`
-    pokemon_id,
-    pokedex(name),
-    season_pokemon(points)
-  `)
-  .eq("team_id", team?.id)
-  .eq("season_id", seasonData.id)
+.from("rosters")
+.select(`
+  pokemon_id,
+  pokedex(name)
+`)
+.eq("team_id", team?.id)
+.eq("season_id", seasonData.id)
 
 const rosterNames = rosterData?.map(r => r.pokedex?.name) || []
 
 setMyRoster(rosterNames)
 
+/* =========================
+   OBTENER PUNTOS
+========================= */
+
+const { data: pointsData } = await supabase
+.from("season_pokemon")
+.select("pokemon_id, points")
+.eq("season_id", seasonData.id)
+
+const pointsMap = {}
+
+pointsData?.forEach(p=>{
+pointsMap[p.pokemon_id] = p.points
+})
+
 const usedPoints =
-rosterData?.reduce((sum,r)=>sum+(r.season_pokemon?.points||0),0) || 0
+rosterData?.reduce((sum,r)=>sum+(pointsMap[r.pokemon_id] || 0),0) || 0
 
 setPointsRemaining(130 - usedPoints)
 
