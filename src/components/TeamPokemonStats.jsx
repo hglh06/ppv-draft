@@ -60,7 +60,7 @@ Pokemon Performance
 
 <table className="w-full text-sm">
 
-<thead>
+<thead className="text-center">
 
 <tr className="border-b text-xs">
 

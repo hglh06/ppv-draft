@@ -107,9 +107,7 @@ Type Resistance Analysis
 
 <tr>
 
-<th className="w-28 text-left pb-2">
-Pokemon
-</th>
+<th className="text-center">Pokemon</th>
 
 {types.map(type=>(
 <th
@@ -134,7 +132,7 @@ return(
 
 <tr key={i} className="border-b h-9">
 
-<td className="flex items-center gap-2">
+<td className="flex items-center justify-center gap-2">
 
 {pokemon && (
 <img src={pokemon.sprite} className="w-6"/>

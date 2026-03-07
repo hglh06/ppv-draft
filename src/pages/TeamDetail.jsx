@@ -201,13 +201,13 @@ Roster
 
 <thead>
 
-<tr className="border-b text-xs">
+<tr className="border-b text-xs text-center">
 
-<th className="w-48">Pokemon</th>
-<th className="w-12">Pts</th>
-<th className="w-24">Types</th>
-<th>Abilities</th>
-<th className="w-16">Obtained</th>
+<th className="w-48 text-center">Pokemon</th>
+<th className="w-12 text-center">Pts</th>
+<th className="w-24 text-center">Types</th>
+<th className="text-center">Abilities</th>
+<th className="w-16 text-center">Obtained</th>
 
 </tr>
 
@@ -237,9 +237,9 @@ const abilities=[p.ability1,p.ability2,p.hidden]
 
 return(
 
-<tr key={i} className="border-b h-10">
+<tr key={i} className="border-b h-10 text-center align-middle">
 
-<td className="flex items-center gap-2">
+<td className="flex items-center justify-center gap-2">
 
 <img src={p.sprite} className="w-7"/>
 
@@ -249,7 +249,7 @@ return(
 
 <td>{p.points}</td>
 
-<td className="flex gap-1">
+<td className="flex justify-center gap-1">
 
 <img src={`/types/${p.type1}.png`} className="h-5"/>
 
@@ -259,7 +259,7 @@ return(
 
 </td>
 
-<td className="text-xs text-slate-600">
+<td className="text-xs text-slate-600 text-center">
 {abilities}
 </td>
 
