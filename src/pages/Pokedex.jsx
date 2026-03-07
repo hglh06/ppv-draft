@@ -103,7 +103,7 @@ setTakenPokemon(taken || [])
 
   return (
   <div
-  className="h-screen -mt-24 pt-32 px-12 pb-4 overflow-hidden"
+  className="h-screen -mt-24 pt-32 px-12 pb-4 overflow-y-hidden"
     style={{
       backgroundImage: "url('/hex-bg.png')",
       backgroundSize: "cover",
@@ -142,7 +142,7 @@ setTakenPokemon(taken || [])
 
             <div
               key={points}
-              className="bg-white rounded-lg border border-slate-200 w-[160px] min-w-[160px] h-[calc(100vh-260px)] flex flex-col"
+              className="bg-white rounded-lg border border-slate-200 w-[160px] min-w-[160px] h-[calc(100vh-3000px)] flex flex-col"
             >
 
               <div className="sticky top-0 bg-white border-b py-1 text-center font-semibold text-sm text-slate-700">
