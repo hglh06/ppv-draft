@@ -606,7 +606,9 @@ key={`${round}-${c}`}
 className={`relative h-[64px] border border-slate-200 rounded-lg
 flex flex-col items-center justify-center text-[10px]
 transition
-${pick ? "" : "bg-white hover:bg-slate-50"}`}
+${pick ? "" : "bg-white hover:bg-slate-50"}
+${draftState?.is_active && isCurrentPick ? "ring-2 ring-red-500 animate-pulse" : ""}
+`}
 style={{
 
 background: (() => {
@@ -659,7 +661,7 @@ className="w-7"
 
 )}
 
-{isCurrentPick && (
+{draftState?.is_active && isCurrentPick && (
 <div className="text-red-600 font-bold text-[14px] mt-1">
 {timeLeft}
 </div>
