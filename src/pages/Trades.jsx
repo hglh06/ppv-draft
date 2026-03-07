@@ -19,8 +19,8 @@ export default function Trades() {
   const [tradeGive, setTradeGive] = useState([""])
   const [tradeReceive, setTradeReceive] = useState([""])
 
-  const rosterCount = team?.roster?.length || 0
-  const pointsRemaining = 130 - (rosterCount * 10)
+  const [myRoster, setMyRoster] = useState([])
+const [pointsRemaining, setPointsRemaining] = useState(130)
 
   const myWaiver = waivers.find(w => w.team?.name === team?.name)
   const faRemaining = 10 - (myWaiver?.fa_used || 0)
@@ -61,6 +61,8 @@ export default function Trades() {
       .order("position")
 
     const { data: seasonPokemon } = await supabase
+
+    
       .from("season_pokemon")
       .select(`
         pokemon:pokemon_id ( name )
@@ -68,11 +70,41 @@ export default function Trades() {
       .eq("season_id", seasonData.id)
       .eq("available", true)
 
+      /* =========================
+   CARGAR MI ROSTER
+========================= */
+
+const { data: rosterData } = await supabase
+  .from("rosters")
+  .select(`
+    pokemon_id,
+    pokedex(name),
+    season_pokemon(points)
+  `)
+  .eq("team_id", team?.id)
+  .eq("season_id", seasonData.id)
+
+const rosterNames = rosterData?.map(r => r.pokedex?.name) || []
+
+setMyRoster(rosterNames)
+
+const usedPoints =
+rosterData?.reduce((sum,r)=>sum+(r.season_pokemon?.points||0),0) || 0
+
+setPointsRemaining(130 - usedPoints)
+
     const taken = new Set()
 
-    teamsData?.forEach(t =>
-      t.roster?.forEach(p => taken.add(p))
-    )
+    const { data: allRosters } = await supabase
+.from("rosters")
+.select(`
+  pokedex(name)
+`)
+.eq("season_id", seasonData.id)
+
+allRosters?.forEach(r=>{
+taken.add(r.pokedex?.name)
+})
 
     const free = seasonPokemon
       ?.map(p => p.pokemon.name)
@@ -169,7 +201,7 @@ export default function Trades() {
             </div>
 
             <div>
-              <span className="font-medium">Roster:</span> {rosterCount} / 10
+              <span className="font-medium">Roster:</span> {myRoster.length} / 10
             </div>
 
             <div>
@@ -329,7 +361,7 @@ export default function Trades() {
             className="w-full border p-2 rounded mb-4"
           >
             <option value="">Soltar (opcional)</option>
-            {team?.roster?.map(p => (
+            {myRoster.map(p => (
               <option key={p}>{p}</option>
             ))}
           </select>
@@ -392,7 +424,7 @@ export default function Trades() {
 
               <option value="">Dar</option>
 
-              {team?.roster?.map(p => (
+              {myRoster.map(p => (
                 <option key={p}>{p}</option>
               ))}
 
