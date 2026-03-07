@@ -197,9 +197,12 @@ function toggleType(type){
 
 if(typeFilter.includes(type)){
 setTypeFilter(typeFilter.filter(t=>t!==type))
-}else{
-setTypeFilter([...typeFilter,type])
+return
 }
+
+if(typeFilter.length === 2) return
+
+setTypeFilter([...typeFilter,type])
 
 }
 
@@ -258,12 +261,28 @@ p.pokedex.name.toLowerCase().includes(search.toLowerCase())
 
 }
 
-if(typeFilter.length){
+if(typeFilter.length === 1){
 
-filtered=filtered.filter(p=>
-typeFilter.includes(p.pokedex.type1) ||
-typeFilter.includes(p.pokedex.type2)
+filtered = filtered.filter(p =>
+p.pokedex.type1 === typeFilter[0] ||
+p.pokedex.type2 === typeFilter[0]
 )
+
+}
+
+if(typeFilter.length === 2){
+
+filtered = filtered.filter(p => {
+
+const t1 = typeFilter[0]
+const t2 = typeFilter[1]
+
+return (
+(p.pokedex.type1 === t1 && p.pokedex.type2 === t2) ||
+(p.pokedex.type1 === t2 && p.pokedex.type2 === t1)
+)
+
+})
 
 }
 
@@ -720,20 +739,31 @@ className="border rounded px-2 py-1 text-sm w-48"
 
 <div className="flex gap-1 flex-wrap">
 
-{uniqueTypes.map(type=>(
+{uniqueTypes.map(type => {
+
+const isSelected = typeFilter.includes(type.name)
+const limitReached = typeFilter.length === 2
+
+return (
 
 <img
 key={type.name}
 src={type.image}
 onClick={()=>toggleType(type.name)}
-className={`h-5 cursor-pointer
-${typeFilter.includes(type.name)
-? "ring-2 ring-red-500"
+className={`h-5 cursor-pointer transition
+
+${isSelected
+? "ring-2 ring-red-500 scale-110"
+: limitReached
+? "opacity-25"
 : "opacity-70 hover:opacity-100"}
+
 `}
 />
 
-))}
+)
+
+})}
 
 </div>
 
