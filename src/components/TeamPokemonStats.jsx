@@ -96,15 +96,16 @@ return(
 
 <tr key={i} className="border-b h-10">
 
-<td className="flex items-center gap-2">
+<td className="h-10">
+  <div className="flex items-center justify-center gap-2 h-full">
 
 <img
 src={p.sprite}
-className="w-8"
+className="w-10"
 />
 
 {p.name}
-
+    </div>
 </td>
 
 <td className="text-center">

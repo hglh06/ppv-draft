@@ -132,12 +132,13 @@ return(
 
 <tr key={i} className="border-b h-9">
 
-<td className="flex items-center justify-center gap-2">
+<td className="h-10">
+  <div className="flex items-center justify-center gap-2 h-full">
 
 {pokemon && (
-<img src={pokemon.sprite} className="w-8"/>
+<img src={pokemon.sprite} className="w-10"/>
 )}
-
+    </div>
 </td>
 
 {types.map(type=>{

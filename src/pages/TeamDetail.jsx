@@ -245,7 +245,7 @@ return(
 <td className="h-10">
   <div className="flex items-center justify-center gap-2 h-full">
 
-<img src={p.sprite} className="w-8"/>
+<img src={p.sprite} className="w-10"/>
 
 {p.name}
 
@@ -254,14 +254,15 @@ return(
 
 <td>{p.points}</td>
 
-<td className="flex justify-center items-center gap-1">
+<td className="h-10">
+  <div className="flex justify-center items-center gap-1 h-full">
 
 <img src={p.type1image} className="h-5"/>
 
 {p.type2image &&
 <img src={p.type2image} className="h-5"/>
 }
-
+    </div>
 </td>
 
 <td className="text-xs text-slate-600 text-center">
