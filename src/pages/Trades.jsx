@@ -225,6 +225,18 @@ ${tradeReceive.filter(Boolean).join(", ") || "Nothing"}
   fetchData()
 }
 
+function removeGiveSlot(index) {
+  const updated = [...tradeGive]
+  updated.splice(index, 1)
+  setTradeGive(updated)
+}
+
+function removeReceiveSlot(index) {
+  const updated = [...tradeReceive]
+  updated.splice(index, 1)
+  setTradeReceive(updated)
+}
+
   async function acceptTrade(id) {
 
     await supabase.rpc("accept_trade", {
@@ -487,26 +499,38 @@ ${tradeReceive.filter(Boolean).join(", ") || "Nothing"}
 
           {tradeGive.map((value, i) => (
 
-            <select
-              key={i}
-              value={value}
-              onChange={e => {
-                const updated = [...tradeGive]
-                updated[i] = e.target.value
-                setTradeGive(updated)
-              }}
-              className="w-full border p-2 rounded mb-2"
-            >
+  <div key={i} className="flex gap-2 mb-2">
 
-              <option value="">Dar</option>
+    <select
+      value={value}
+      onChange={e => {
+        const updated = [...tradeGive]
+        updated[i] = e.target.value
+        setTradeGive(updated)
+      }}
+      className="w-full border p-2 rounded"
+    >
 
-              {myRoster.map(p => (
-                <option key={p}>{p}</option>
-              ))}
+      <option value="">Dar</option>
 
-            </select>
+      {myRoster.map(p => (
+        <option key={p}>{p}</option>
+      ))}
 
-          ))}
+    </select>
+
+    {tradeGive.length > 1 && (
+      <button
+        onClick={() => removeGiveSlot(i)}
+        className="px-2 text-red-600 hover:text-red-800"
+      >
+        ❌
+      </button>
+    )}
+
+  </div>
+
+))}
 
           <button
             onClick={() => setTradeGive([...tradeGive, ""])}
@@ -517,26 +541,38 @@ ${tradeReceive.filter(Boolean).join(", ") || "Nothing"}
 
           {tradeReceive.map((value, i) => (
 
-            <select
-              key={i}
-              value={value}
-              onChange={e => {
-                const updated = [...tradeReceive]
-                updated[i] = e.target.value
-                setTradeReceive(updated)
-              }}
-              className="w-full border p-2 rounded mb-2"
-            >
+  <div key={i} className="flex gap-2 mb-2">
 
-              <option value="">Recibir</option>
+    <select
+      value={value}
+      onChange={e => {
+        const updated = [...tradeReceive]
+        updated[i] = e.target.value
+        setTradeReceive(updated)
+      }}
+      className="w-full border p-2 rounded"
+    >
 
-              {partnerRoster.map(p => (
-  <option key={p}>{p}</option>
+      <option value="">Recibir</option>
+
+      {partnerRoster.map(p => (
+        <option key={p}>{p}</option>
+      ))}
+
+    </select>
+
+    {tradeReceive.length > 1 && (
+      <button
+        onClick={() => removeReceiveSlot(i)}
+        className="px-2 text-red-600 hover:text-red-800"
+      >
+        ❌
+      </button>
+    )}
+
+  </div>
+
 ))}
-
-            </select>
-
-          ))}
 
           <button
             onClick={() => setTradeReceive([...tradeReceive, ""])}
