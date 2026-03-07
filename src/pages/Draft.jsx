@@ -526,7 +526,8 @@ Team {i+1}
 )
 }
 
-const isCurrent = draftState?.current_team_id === team.id
+const isCurrent =
+draftState?.current_team_id === team.id && !draftState?.is_finished
 
 return(
 
@@ -581,6 +582,8 @@ round%2===1
 const team=teams[teamIndex]
 
 const pick = picksMap[`${round}-${team?.id}`]
+const isCurrentPick =
+draftState?.current_team_id === team?.id && !pick && !draftState?.is_finished
 
 const pickPosition =
 round % 2 === 1
@@ -647,6 +650,12 @@ className="w-7"
 
 </>
 
+)}
+
+{isCurrentPick && (
+<div className="text-red-600 font-bold text-[14px] mt-1">
+{timeLeft}
+</div>
 )}
 
 </div>
@@ -1000,7 +1009,9 @@ className="h-4"
 
 <div className="text-lg font-semibold mb-4 text-slate-600 text-center">
 
-{!draftState?.is_active
+{draftState?.is_finished
+? "DRAFT FINALIZADO"
+: !draftState?.is_active
 ? "DRAFT NO COMENZADO"
 : draftState?.currentTeam?.user_id===user?.id
 ? "TOCA ELEGIR"
@@ -1008,6 +1019,8 @@ className="h-4"
 
 </div>
 
+{!draftState?.is_finished && (
+<>
 <div className="text-7xl font-bold text-red-600 leading-none">
 {timeLeft}
 </div>
@@ -1015,6 +1028,8 @@ className="h-4"
 <div className="text-xs text-slate-400 mt-2">
 segundos
 </div>
+</>
+)}
 
 </div>
 
