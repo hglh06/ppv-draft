@@ -526,8 +526,10 @@ Team {i+1}
 )
 }
 
-const isCurrent =
-draftState?.current_team_id === team.id && !draftState?.is_finished
+const globalPickNumber = (round - 1) * teamCount + pickPosition
+
+const isCurrentPick =
+draftState?.current_pick === globalPickNumber && !draftState?.is_finished
 
 return(
 
