@@ -142,7 +142,7 @@ setTakenPokemon(taken || [])
 
             <div
               key={points}
-              className="bg-white rounded-lg border border-slate-200 w-[160px] min-w-[160px] h-full flex flex-col"
+              className="bg-white rounded-lg border border-slate-200 w-[160px] min-w-[160px] h-[70vh] flex flex-col"
             >
 
               <div className="sticky top-0 bg-white border-b py-1 text-center font-semibold text-sm text-slate-700">
