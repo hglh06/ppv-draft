@@ -53,6 +53,8 @@ export default function AdminReports() {
       .eq("status", "pending_admin")
       .order("created_at", { ascending: true })
 
+      console.log("TRANSACTIONS:", txData)
+
     /* ===============================
        WAIVER ORDER
     ============================== */

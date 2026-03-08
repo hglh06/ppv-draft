@@ -277,6 +277,21 @@ function removeReceiveSlot(index) {
     fetchData()
   }
 
+  async function cancelTrade(id) {
+
+  const confirmCancel = window.confirm(
+    "Cancel this trade request?"
+  )
+
+  if(!confirmCancel) return
+
+  await supabase.rpc("cancel_trade", {
+    p_transaction_id: id
+  })
+
+  fetchData()
+}
+
   if (loading) return <div className="p-6">Cargando...</div>
 
   const history = transactions.filter(tx => tx.status === "approved")
@@ -418,9 +433,11 @@ function removeReceiveSlot(index) {
 </div>
 
                 <div>
-                  {tx.teamA?.name}
-                  {tx.teamB && ` ↔ ${tx.teamB?.name}`}
-                </div>
+  {tx.type === "free_agent"
+    ? `${tx.teamA?.name} → Free Agency`
+    : `${tx.teamA?.name} ↔ ${tx.teamB?.name}`
+  }
+</div>
 
                 <div className="text-gray-500 mb-2">
                   {tx.give?.join(", ")} → {tx.receive?.join(", ")}
@@ -447,6 +464,17 @@ function removeReceiveSlot(index) {
                   </div>
 
                 )}
+
+                {team?.id === tx.team_a && tx.status === "pending_player" && (
+
+  <button
+    onClick={() => cancelTrade(tx.id)}
+    className="bg-gray-500 text-white px-2 py-1 rounded text-xs"
+  >
+    Cancel
+  </button>
+
+)}
 
                 {isAdmin && isAdminPending && (
                   <div className="text-xs text-purple-600">
