@@ -89,9 +89,24 @@ export default function App() {
         }`}
       >
 
-        <h1 className="text-xl font-bold">
-          PPV Draft S4
-        </h1>
+        <div className="flex items-center gap-3">
+
+  <img
+    src="/logo-ppv.png"
+    className={`h-10 transition duration-500 ${
+      isHome && !scrolled ? "invert-0" : "invert"
+    }`}
+  />
+
+  <span
+    className={`text-lg font-bold tracking-[0.2em] ${
+      isHome && !scrolled ? "text-white" : "text-slate-900"
+    }`}
+  >
+    GENESIS
+  </span>
+
+</div>
 
         <div className="flex gap-6 items-center">
 
@@ -173,7 +188,7 @@ export default function App() {
                     <NavLink
                       to={`/teams/${team.id}`}
                       onClick={() => setMenuOpen(false)}
-                      className="block px-4 py-2 text-sm hover:bg-slate-100"
+                      className="block px-4 py-2 text-sm text-black hover:bg-slate-100"
                     >
                       Ir a Equipo
                     </NavLink>
