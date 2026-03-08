@@ -181,8 +181,8 @@ useEffect(() => {
 
     setTimeLeft(remaining)
 
-    if (remaining === 0 && draftState?.currentTeam?.user_id !== user?.id) {
-await supabase.rpc("force_auto_pick")
+    if (remaining === 0 && isAdmin) {
+  await supabase.rpc("force_auto_pick")
 }
 
   }, 1000)
@@ -575,20 +575,22 @@ const round=r+1
 
 return Array.from({length:teamCount}).map((_,c)=>{
 
-const teamIndex =
-round % 2 === 1
-  ? c
-  : teamCount - 1 - c
+let team
 
-const team = teams[teamIndex]
+if (round % 2 === 1) {
+  team = teams[c]
+} else {
+  team = teams[teamCount - 1 - c]
+}
 
 const pick = picksMap[`${round}-${team?.id}`]
 
 // posición real del pick dentro de la ronda
-const pickPosition = teamIndex + 1
+const pickPosition = c + 1
 
 const globalPickNumber =
-(round - 1) * teamCount + pickPosition
+(round - 1) * teamCount +
+(round % 2 === 1 ? c + 1 : teamCount - c)
 
 const isCurrentPick =
 draftState?.current_pick === globalPickNumber &&
