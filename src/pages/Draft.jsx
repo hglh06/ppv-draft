@@ -575,19 +575,17 @@ const round=r+1
 
 return Array.from({length:teamCount}).map((_,c)=>{
 
-const teamIndex=
-round%2===1
-? c
-: teamCount-1-c
+const teamIndex =
+round % 2 === 1
+  ? c
+  : teamCount - 1 - c
 
-const team=teams[teamIndex]
+const team = teams[teamIndex]
 
 const pick = picksMap[`${round}-${team?.id}`]
 
-const pickPosition =
-round % 2 === 1
-? c + 1
-: teamCount - c
+// posición real del pick dentro de la ronda
+const pickPosition = teamIndex + 1
 
 const globalPickNumber =
 (round - 1) * teamCount + pickPosition
