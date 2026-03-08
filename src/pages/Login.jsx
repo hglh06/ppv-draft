@@ -50,6 +50,29 @@ export default function Login() {
 
   }
 
+  /* =============================
+   RESET PASSWORD
+============================= */
+
+async function handleResetPassword() {
+
+  if (!email) {
+    alert("Enter your email first")
+    return
+  }
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: "https://ppvdraftleague.com/reset"
+  })
+
+  if (error) {
+    alert(error.message)
+    return
+  }
+
+  alert("Password reset email sent.")
+}
+
 
   /* =============================
      REGISTER
@@ -160,6 +183,18 @@ export default function Login() {
             ? "Create Account"
             : "Login"}
         </button>
+
+        {!isRegister && (
+  <div className="text-right mb-3 text-sm">
+    <button
+      type="button"
+      onClick={handleResetPassword}
+      className="text-blue-600 hover:underline"
+    >
+      Forgot password?
+    </button>
+  </div>
+)}
 
         <div className="text-center mt-4 text-sm">
 
