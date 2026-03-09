@@ -244,6 +244,8 @@ export default function App() {
 
           <Route path="/login" element={<Login />} />
 
+          <Route path="/reset" element={<Login />} />
+
           <Route
             path="/admin/reports"
             element={isAdmin ? <AdminReports /> : <Login />}
