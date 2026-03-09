@@ -22,33 +22,19 @@ export default function Login() {
 
   useEffect(() => {
 
-    async function detectRecovery() {
+  const { data: listener } = supabase.auth.onAuthStateChange((event) => {
 
-      const hash = window.location.hash
-      const search = window.location.search
-
-      let type = null
-
-      if (hash) {
-        const params = new URLSearchParams(hash.substring(1))
-        type = params.get("type")
-      }
-
-      if (!type && search) {
-        const params = new URLSearchParams(search)
-        type = params.get("type")
-      }
-
-      if (type === "recovery") {
-        await supabase.auth.getSession()
-        setIsRecovery(true)
-      }
-
+    if (event === "PASSWORD_RECOVERY") {
+      setIsRecovery(true)
     }
 
-    detectRecovery()
+  })
 
-  }, [])
+  return () => {
+    listener.subscription.unsubscribe()
+  }
+
+}, [])
 
   /* =============================
      PASSWORD MATCH CHECK
