@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { supabase } from "../lib/supabase"
 import { useNavigate } from "react-router-dom"
 
@@ -7,12 +7,28 @@ export default function Login() {
   const navigate = useNavigate()
 
   const [isRegister, setIsRegister] = useState(false)
+  const [isRecovery, setIsRecovery] = useState(false)
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
 
   const [loading, setLoading] = useState(false)
+
+  /* =============================
+     DETECT PASSWORD RECOVERY
+  ============================= */
+
+  useEffect(() => {
+
+    const hash = window.location.hash
+
+    if (hash.includes("type=recovery")) {
+      setIsRecovery(true)
+    }
+
+  }, [])
 
   /* =============================
      PASSWORD MATCH CHECK
@@ -50,28 +66,59 @@ export default function Login() {
 
   }
 
+
   /* =============================
-   RESET PASSWORD
-============================= */
+     UPDATE PASSWORD (RECOVERY)
+  ============================= */
 
-async function handleResetPassword() {
+  async function handleUpdatePassword(e) {
 
-  if (!email) {
-    alert("Enter your email first")
-    return
+    e.preventDefault()
+    setLoading(true)
+
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    })
+
+    if (error) {
+      alert(error.message)
+      setLoading(false)
+      return
+    }
+
+    alert("Password updated successfully")
+
+    window.history.replaceState({}, document.title, "/login")
+
+    navigate("/")
+
+    setLoading(false)
+
   }
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: "https://ppvdraftleague.com/reset"
-  })
 
-  if (error) {
-    alert(error.message)
-    return
+  /* =============================
+     RESET PASSWORD EMAIL
+  ============================= */
+
+  async function handleResetPassword() {
+
+    if (!email) {
+      alert("Enter your email first")
+      return
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + "/login"
+    })
+
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    alert("Password reset email sent.")
   }
-
-  alert("Password reset email sent.")
-}
 
 
   /* =============================
@@ -93,7 +140,7 @@ async function handleResetPassword() {
       email,
       password,
       options: {
-        emailRedirectTo: "https://ppvdraftleague.com"
+        emailRedirectTo: window.location.origin
       }
     })
 
@@ -114,6 +161,54 @@ async function handleResetPassword() {
 
   }
 
+
+  /* =============================
+     RECOVERY SCREEN
+  ============================= */
+
+  if (isRecovery) {
+
+    return (
+
+      <div className="flex justify-center mt-20">
+
+        <form
+          onSubmit={handleUpdatePassword}
+          className="bg-white p-8 rounded-2xl shadow-xl w-96"
+        >
+
+          <h2 className="text-2xl font-bold mb-6 text-center">
+            Set New Password
+          </h2>
+
+          <input
+            type="password"
+            placeholder="New Password"
+            className="border p-3 w-full mb-4 rounded"
+            value={newPassword}
+            onChange={e => setNewPassword(e.target.value)}
+            required
+          />
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-blue-600 text-white w-full py-3 rounded-lg disabled:opacity-50"
+          >
+            {loading ? "Updating..." : "Update Password"}
+          </button>
+
+        </form>
+
+      </div>
+
+    )
+  }
+
+
+  /* =============================
+     NORMAL LOGIN / REGISTER
+  ============================= */
 
   return (
     <div className="flex justify-center mt-20">
@@ -185,16 +280,16 @@ async function handleResetPassword() {
         </button>
 
         {!isRegister && (
-  <div className="text-right mb-3 text-sm">
-    <button
-      type="button"
-      onClick={handleResetPassword}
-      className="text-blue-600 hover:underline"
-    >
-      Forgot password?
-    </button>
-  </div>
-)}
+          <div className="text-right mb-3 text-sm">
+            <button
+              type="button"
+              onClick={handleResetPassword}
+              className="text-blue-600 hover:underline"
+            >
+              Forgot password?
+            </button>
+          </div>
+        )}
 
         <div className="text-center mt-4 text-sm">
 
