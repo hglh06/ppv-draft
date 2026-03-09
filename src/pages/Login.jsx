@@ -22,11 +22,25 @@ export default function Login() {
 
   useEffect(() => {
 
-    const hash = window.location.hash
+    async function checkRecovery() {
 
-    if (hash.includes("type=recovery")) {
-      setIsRecovery(true)
+      const hash = window.location.hash
+
+      if (!hash) return
+
+      const params = new URLSearchParams(hash.substring(1))
+
+      if (params.get("type") === "recovery") {
+
+        // esto hace que supabase procese el token
+        await supabase.auth.getSession()
+
+        setIsRecovery(true)
+      }
+
     }
+
+    checkRecovery()
 
   }, [])
 
@@ -88,6 +102,7 @@ export default function Login() {
 
     alert("Password updated successfully")
 
+    // limpia el hash de la URL
     window.history.replaceState({}, document.title, "/login")
 
     navigate("/")
