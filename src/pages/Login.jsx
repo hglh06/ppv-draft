@@ -6,39 +6,37 @@ export default function Login() {
 
   const navigate = useNavigate()
 
-  const [isRegister, setIsRegister] = useState(false)
-  const [isRecovery, setIsRecovery] = useState(false)
+  const [isRegister,setIsRegister]=useState(false)
+  const [isRecovery,setIsRecovery]=useState(false)
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [newPassword, setNewPassword] = useState("")
+  const [email,setEmail]=useState("")
+  const [password,setPassword]=useState("")
+  const [confirmPassword,setConfirmPassword]=useState("")
+  const [newPassword,setNewPassword]=useState("")
 
-  const [loading, setLoading] = useState(false)
+  const [loading,setLoading]=useState(false)
 
-  /* =============================
-     DETECT PASSWORD RECOVERY
-  ============================= */
+  /* DETECT PASSWORD RECOVERY */
 
-  useEffect(() => {
+  useEffect(()=>{
 
-  const { data: listener } = supabase.auth.onAuthStateChange((event) => {
+    async function checkSession(){
 
-    if (event === "PASSWORD_RECOVERY") {
-      setIsRecovery(true)
+      const { data } = await supabase.auth.getSession()
+
+      const session = data.session
+
+      if(session && window.location.pathname === "/login"){
+        setIsRecovery(true)
+      }
+
     }
 
-  })
+    checkSession()
 
-  return () => {
-    listener.subscription.unsubscribe()
-  }
+  },[])
 
-}, [])
-
-  /* =============================
-     PASSWORD MATCH CHECK
-  ============================= */
+  /* PASSWORD MATCH CHECK */
 
   const passwordsMatch =
     password && confirmPassword && password === confirmPassword
@@ -46,12 +44,9 @@ export default function Login() {
   const passwordsDontMatch =
     confirmPassword && password !== confirmPassword
 
+  /* LOGIN */
 
-  /* =============================
-     LOGIN
-  ============================= */
-
-  async function handleLogin(e) {
+  async function handleLogin(e){
 
     e.preventDefault()
     setLoading(true)
@@ -61,7 +56,7 @@ export default function Login() {
       password
     })
 
-    if (error) {
+    if(error){
       alert(error.message)
       setLoading(false)
       return
@@ -72,21 +67,18 @@ export default function Login() {
 
   }
 
+  /* UPDATE PASSWORD */
 
-  /* =============================
-     UPDATE PASSWORD (RECOVERY)
-  ============================= */
-
-  async function handleUpdatePassword(e) {
+  async function handleUpdatePassword(e){
 
     e.preventDefault()
     setLoading(true)
 
     const { error } = await supabase.auth.updateUser({
-      password: newPassword
+      password:newPassword
     })
 
-    if (error) {
+    if(error){
       alert(error.message)
       setLoading(false)
       return
@@ -94,48 +86,43 @@ export default function Login() {
 
     alert("Password updated successfully")
 
-    window.history.replaceState({}, document.title, "/login")
+    await supabase.auth.signOut()
 
-    navigate("/")
+    navigate("/login")
 
     setLoading(false)
 
   }
 
+  /* RESET PASSWORD EMAIL */
 
-  /* =============================
-     RESET PASSWORD EMAIL
-  ============================= */
+  async function handleResetPassword(){
 
-  async function handleResetPassword() {
-
-    if (!email) {
+    if(!email){
       alert("Enter your email first")
       return
     }
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + "/login"
+    const { error } = await supabase.auth.resetPasswordForEmail(email,{
+      redirectTo:window.location.origin+"/login"
     })
 
-    if (error) {
+    if(error){
       alert(error.message)
       return
     }
 
     alert("Password reset email sent.")
+
   }
 
+  /* REGISTER */
 
-  /* =============================
-     REGISTER
-  ============================= */
-
-  async function handleRegister(e) {
+  async function handleRegister(e){
 
     e.preventDefault()
 
-    if (password !== confirmPassword) {
+    if(password!==confirmPassword){
       alert("Passwords do not match")
       return
     }
@@ -145,12 +132,12 @@ export default function Login() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo: window.location.origin
+      options:{
+        emailRedirectTo:window.location.origin
       }
     })
 
-    if (error) {
+    if(error){
       alert(error.message)
       setLoading(false)
       return
@@ -167,20 +154,17 @@ export default function Login() {
 
   }
 
+  /* RECOVERY SCREEN */
 
-  /* =============================
-     RECOVERY SCREEN
-  ============================= */
+  if(isRecovery){
 
-  if (isRecovery) {
-
-    return (
+    return(
 
       <div className="flex justify-center mt-20">
 
         <form
-          onSubmit={handleUpdatePassword}
-          className="bg-white p-8 rounded-2xl shadow-xl w-96"
+        onSubmit={handleUpdatePassword}
+        className="bg-white p-8 rounded-2xl shadow-xl w-96"
         >
 
           <h2 className="text-2xl font-bold mb-6 text-center">
@@ -188,18 +172,18 @@ export default function Login() {
           </h2>
 
           <input
-            type="password"
-            placeholder="New Password"
-            className="border p-3 w-full mb-4 rounded"
-            value={newPassword}
-            onChange={e => setNewPassword(e.target.value)}
-            required
+          type="password"
+          placeholder="New Password"
+          className="border p-3 w-full mb-4 rounded"
+          value={newPassword}
+          onChange={(e)=>setNewPassword(e.target.value)}
+          required
           />
 
           <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 text-white w-full py-3 rounded-lg disabled:opacity-50"
+          type="submit"
+          disabled={loading}
+          className="bg-blue-600 text-white w-full py-3 rounded-lg disabled:opacity-50"
           >
             {loading ? "Updating..." : "Update Password"}
           </button>
@@ -209,88 +193,78 @@ export default function Login() {
       </div>
 
     )
+
   }
 
+  /* NORMAL LOGIN */
 
-  /* =============================
-     NORMAL LOGIN / REGISTER
-  ============================= */
-
-  return (
+  return(
     <div className="flex justify-center mt-20">
 
       <form
-        onSubmit={isRegister ? handleRegister : handleLogin}
-        className="bg-white p-8 rounded-2xl shadow-xl w-96"
+      onSubmit={isRegister?handleRegister:handleLogin}
+      className="bg-white p-8 rounded-2xl shadow-xl w-96"
       >
 
         <h2 className="text-2xl font-bold mb-6 text-center">
-          {isRegister ? "Create Account" : "Login"}
+          {isRegister?"Create Account":"Login"}
         </h2>
 
         <input
-          type="email"
-          placeholder="Email"
-          className="border p-3 w-full mb-4 rounded"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          required
+        type="email"
+        placeholder="Email"
+        className="border p-3 w-full mb-4 rounded"
+        value={email}
+        onChange={(e)=>setEmail(e.target.value)}
+        required
         />
 
         <input
-          type="password"
-          placeholder="Password"
-          className="border p-3 w-full mb-4 rounded"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
+        type="password"
+        placeholder="Password"
+        className="border p-3 w-full mb-4 rounded"
+        value={password}
+        onChange={(e)=>setPassword(e.target.value)}
+        required
         />
 
         {isRegister && (
           <div className="relative mb-6">
 
             <input
-              type="password"
-              placeholder="Confirm Password"
-              className="border p-3 w-full rounded pr-10"
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              required
+            type="password"
+            placeholder="Confirm Password"
+            className="border p-3 w-full rounded pr-10"
+            value={confirmPassword}
+            onChange={(e)=>setConfirmPassword(e.target.value)}
+            required
             />
 
             {passwordsMatch && (
-              <span className="absolute right-3 top-3 text-green-500 font-bold">
-                ✓
-              </span>
+              <span className="absolute right-3 top-3 text-green-500 font-bold">✓</span>
             )}
 
             {passwordsDontMatch && (
-              <span className="absolute right-3 top-3 text-red-500 font-bold">
-                ✕
-              </span>
+              <span className="absolute right-3 top-3 text-red-500 font-bold">✕</span>
             )}
 
           </div>
         )}
 
         <button
-          type="submit"
-          disabled={loading || (isRegister && !passwordsMatch)}
-          className="bg-blue-600 text-white w-full py-3 rounded-lg disabled:opacity-50"
+        type="submit"
+        disabled={loading || (isRegister && !passwordsMatch)}
+        className="bg-blue-600 text-white w-full py-3 rounded-lg disabled:opacity-50"
         >
-          {loading
-            ? "Loading..."
-            : isRegister
-            ? "Create Account"
-            : "Login"}
+          {loading?"Loading...":isRegister?"Create Account":"Login"}
         </button>
 
         {!isRegister && (
           <div className="text-right mb-3 text-sm">
             <button
-              type="button"
-              onClick={handleResetPassword}
-              className="text-blue-600 hover:underline"
+            type="button"
+            onClick={handleResetPassword}
+            className="text-blue-600 hover:underline"
             >
               Forgot password?
             </button>
@@ -301,17 +275,17 @@ export default function Login() {
 
           {isRegister ? (
             <button
-              type="button"
-              onClick={() => setIsRegister(false)}
-              className="text-blue-600 hover:underline"
+            type="button"
+            onClick={()=>setIsRegister(false)}
+            className="text-blue-600 hover:underline"
             >
               Already have an account? Login
             </button>
-          ) : (
+          ):(
             <button
-              type="button"
-              onClick={() => setIsRegister(true)}
-              className="text-blue-600 hover:underline"
+            type="button"
+            onClick={()=>setIsRegister(true)}
+            className="text-blue-600 hover:underline"
             >
               Create account
             </button>
@@ -323,4 +297,5 @@ export default function Login() {
 
     </div>
   )
+
 }
