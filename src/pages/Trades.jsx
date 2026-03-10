@@ -25,6 +25,7 @@ const [pointsRemaining, setPointsRemaining] = useState(130)
 
   const myWaiver = waivers.find(w => w.team?.name === team?.name)
   const faRemaining = 10 - (myWaiver?.fa_used || 0)
+  const [pointsMap, setPointsMap] = useState({})
 
   useEffect(() => {
 
@@ -139,14 +140,19 @@ setMyRoster(rosterNames)
 
 const { data: pointsData } = await supabase
 .from("season_pokemon")
-.select("pokemon_id, points")
+.select(`
+  points,
+  pokedex(name)
+`)
 .eq("season_id", seasonData.id)
 
-const pointsMap = {}
+const map = {}
 
 pointsData?.forEach(p=>{
-pointsMap[p.pokemon_id] = p.points
+  map[p.pokedex.name] = p.points
 })
+
+setPointsMap(map)
 
 const usedPoints =
 rosterData?.reduce((sum,r)=>sum+(pointsMap[r.pokemon_id] || 0),0) || 0
@@ -215,6 +221,34 @@ setLoading(false)
  async function sendTrade() {
 
   if (!team || !tradePartner) return
+
+  /* =========================
+   VALIDAR DIFERENCIA DE PUNTOS
+========================= */
+
+const givePoints =
+tradeGive
+.filter(Boolean)
+.reduce((sum,p)=>sum+(pointsMap[p] || 0),0)
+
+const receivePoints =
+tradeReceive
+.filter(Boolean)
+.reduce((sum,p)=>sum+(pointsMap[p] || 0),0)
+
+const diff = Math.abs(givePoints - receivePoints)
+
+if(diff > 3){
+
+alert(
+`Trade inválido.
+
+La diferencia de puntos es ${diff}.
+El máximo permitido es 3 puntos.`
+)
+
+return
+}
 
   const partnerName =
     teams.find(t => t.id === tradePartner)?.name || "Unknown"
@@ -362,13 +396,15 @@ function removeReceiveSlot(index) {
               <div key={tx.id} className="bg-slate-50 rounded-lg p-3 text-sm">
 
                 <div className="font-semibold">
-                  {tx.type.toUpperCase()}
-                </div>
+  {tx.type === "free_agent" ? "FREE AGENT" : "TRADE"}
+</div>
 
                 <div>
-                  {tx.teamA?.name}
-                  {tx.teamB && ` ↔ ${tx.teamB?.name}`}
-                </div>
+  {tx.type === "free_agent"
+    ? `${tx.teamA?.name} → Free Agency`
+    : `${tx.teamA?.name} ↔ ${tx.teamB?.name}`
+  }
+</div>
 
                 <div className="text-xs mt-1">
 
