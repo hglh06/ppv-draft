@@ -155,7 +155,7 @@ pointsData?.forEach(p=>{
 setPointsMap(map)
 
 const usedPoints =
-rosterData?.reduce((sum,r)=>sum+(pointsMap[r.pokemon_id] || 0),0) || 0
+rosterData?.reduce((sum,r)=>sum+(map[r.pokedex?.name] || 0),0) || 0
 
 setPointsRemaining(130 - usedPoints)
 
@@ -541,8 +541,10 @@ function removeReceiveSlot(index) {
           >
             <option value="">Soltar (opcional)</option>
             {myRoster.map(p => (
-              <option key={p}>{p}</option>
-            ))}
+  <option key={p} value={p}>
+    {p} ({pointsMap[p] || 0})
+  </option>
+))}
           </select>
 
           <select
@@ -552,8 +554,10 @@ function removeReceiveSlot(index) {
           >
             <option value="">Recoger</option>
             {freeAgents.map(p => (
-              <option key={p}>{p}</option>
-            ))}
+  <option key={p} value={p}>
+    {p} ({pointsMap[p] || 0})
+  </option>
+))}
           </select>
 
           <button
@@ -605,8 +609,10 @@ function removeReceiveSlot(index) {
       <option value="">Dar</option>
 
       {myRoster.map(p => (
-        <option key={p}>{p}</option>
-      ))}
+  <option key={p} value={p}>
+    {p} ({pointsMap[p] || 0})
+  </option>
+))}
 
     </select>
 
@@ -647,8 +653,10 @@ function removeReceiveSlot(index) {
       <option value="">Recibir</option>
 
       {partnerRoster.map(p => (
-        <option key={p}>{p}</option>
-      ))}
+  <option key={p} value={p}>
+    {p} ({pointsMap[p] || 0})
+  </option>
+))}
 
     </select>
 
