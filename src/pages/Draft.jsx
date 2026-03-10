@@ -173,15 +173,17 @@ useEffect(() => {
 
   const interval = setInterval(async () => {
 
-    const elapsed = Math.floor(
-      (Date.now() - new Date(draftState.turn_started_at).getTime()) / 1000
-    )
+    const now = new Date()
 
-    const remaining = Math.max(30 - elapsed, 0)
+const elapsed = Math.floor(
+  (now.getTime() - new Date(draftState.turn_started_at).getTime()) / 1000
+)
+
+    const remaining = Math.max(35 - elapsed, 0)
 
     setTimeLeft(remaining)
 
-    if (remaining === 0 && isAdmin) {
+    if (elapsed >= 35 && isAdmin) {
   await supabase.rpc("force_auto_pick")
 }
 
@@ -586,11 +588,13 @@ if (round % 2 === 1) {
 const pick = picksMap[`${round}-${team?.id}`]
 
 // posición real del pick dentro de la ronda
-const pickPosition = c + 1
+const pickPosition =
+round % 2 === 1
+? c + 1
+: teamCount - c
 
 const globalPickNumber =
-(round - 1) * teamCount +
-(round % 2 === 1 ? c + 1 : teamCount - c)
+(round - 1) * teamCount + pickPosition
 
 const isCurrentPick =
 draftState?.current_pick === globalPickNumber &&
