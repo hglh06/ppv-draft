@@ -298,7 +298,6 @@ filtered.sort((a,b)=> sortPoints==="desc"
 if(loading) return <div className="p-10">Cargando Draft...</div>
 
 const teamCount = teams.length
-const totalPicks = teamCount * rounds
 const rounds = 10
 
 const picksMap = {}
