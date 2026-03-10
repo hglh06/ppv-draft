@@ -138,9 +138,9 @@ function calculatePokemonStandings(reports, teams, pokedex) {
   reports.forEach(report => {
 
     const sides = [
-      ...(report.team_a_data || []),
-      ...(report.team_b_data || [])
-    ]
+  ...(report.team_a_data || []).map(p => ({ ...p, side: "A" })),
+  ...(report.team_b_data || []).map(p => ({ ...p, side: "B" }))
+]
 
     sides.forEach(pokemon => {
 
@@ -187,7 +187,11 @@ function calculatePokemonStandings(reports, teams, pokedex) {
 
   })
 
-  return rows.sort((a,b) => b.ratio - a.ratio)
+ return rows.sort((a,b) => {
+  if (b.kills !== a.kills) return b.kills - a.kills
+  if (b.ratio !== a.ratio) return b.ratio - a.ratio
+  return b.games - a.games
+})
 }
 
 function fillPokemonTable(data, totalRows){

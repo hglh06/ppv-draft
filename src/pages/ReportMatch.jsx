@@ -107,6 +107,63 @@ export default function ReportMatch({ match, onClose }) {
 
   async function submitReport() {
 
+
+  /* ===============================
+     VALIDACIONES
+  ============================== */
+
+  // 1️⃣ mínimo 2 replays
+
+  const validReplays = replays.filter(r => r.trim() !== "")
+
+  if (validReplays.length < 2) {
+    alert("Debes incluir al menos 2 replays.")
+    return
+  }
+
+  if (cleanA.length !== 6 || cleanB.length !== 6) {
+  alert("Debes seleccionar exactamente 6 Pokémon por equipo.")
+  return
+}
+
+  // 2️⃣ evitar Pokémon duplicados
+
+  const cleanA = teamASelected.filter(p => p !== "")
+  const cleanB = teamBSelected.filter(p => p !== "")
+
+  const duplicatesA = new Set(cleanA).size !== cleanA.length
+  const duplicatesB = new Set(cleanB).size !== cleanB.length
+
+  if (duplicatesA || duplicatesB) {
+    alert("No puedes seleccionar el mismo Pokémon dos veces.")
+    return
+  }
+
+  // 3️⃣ evitar kills/deaths negativos
+
+  const checkStats = side => {
+
+    for (let row of side) {
+
+      for (let g of row.games) {
+
+        if (g.kills < 0 || g.deaths < 0) {
+          return true
+        }
+
+      }
+
+    }
+
+    return false
+  }
+
+  if (checkStats(stats.teamA) || checkStats(stats.teamB)) {
+    alert("Kills y deaths no pueden ser negativos.")
+    return
+  }
+
+
     const formatSide = (selected, sideStats) =>
       selected.map((name, rowIndex) => {
 
@@ -133,18 +190,16 @@ export default function ReportMatch({ match, onClose }) {
     setSubmitting(true)
 
     const { error } = await supabase
-      .from("reports")
-      .insert([
-        {
-          match_id: match.id,
-          team_a_id: match.teamA.id,
-          team_b_id: match.teamB.id,
-          replays: replays.filter(r => r.trim() !== ""),
-          team_a_data: formatSide(teamASelected, stats.teamA),
-          team_b_data: formatSide(teamBSelected, stats.teamB),
-          status: "pending"
-        }
-      ])
+  .from("reports")
+  .insert([
+    {
+      match_id: match.id,
+      replays: replays.filter(r => r.trim() !== ""),
+      team_a_data: formatSide(teamASelected, stats.teamA),
+      team_b_data: formatSide(teamBSelected, stats.teamB),
+      status: "pending"
+    }
+  ])
 
     if (error) {
 
@@ -355,8 +410,9 @@ function TeamExcelTable({ title, roster, selected, setSelected, stats, updateSta
                         <span className="font-semibold text-slate-600">K</span>
 
                         <input
-                          type="number"
-                          value={g.kills}
+  type="number"
+  min="0"
+  value={g.kills}
                           onChange={e =>
                             updateStat(rowIndex, gameIndex, "kills", e.target.value)
                           }
@@ -368,8 +424,9 @@ function TeamExcelTable({ title, roster, selected, setSelected, stats, updateSta
                         <span className="font-semibold text-slate-600">D</span>
 
                         <input
-                          type="number"
-                          value={g.deaths}
+  type="number"
+  min="0"
+  value={g.deaths}
                           onChange={e =>
                             updateStat(rowIndex, gameIndex, "deaths", e.target.value)
                           }
