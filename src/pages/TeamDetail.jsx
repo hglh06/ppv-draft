@@ -206,9 +206,9 @@ Roster
 
 <tr className="border-b text-xs text-center">
 
-<th className="w-48 text-center">Pokemon</th>
+<th className="w-48 text-left">Pokemon</th>
 <th className="w-12 text-center">Pts</th>
-<th className="w-24 text-center">Types</th>
+<th className="w-16 text-center">Types</th>
 <th className="text-center">Abilities</th>
 <th className="w-16 text-center">Obtained</th>
 
@@ -243,26 +243,31 @@ return(
 <tr key={i} className="border-b h-10 text-center align-middle">
 
 <td className="h-10">
-  <div className="flex items-center justify-center gap-2 h-full">
+  <div className="flex items-center gap-2 h-full">
 
-<img src={p.sprite} className="w-10"/>
+    <img src={p.sprite} className="w-10 shrink-0"/>
 
-{p.name}
+    <span className="text-left">
+      {p.name}
+    </span>
 
-     </div>
+  </div>
 </td>
 
 <td>{p.points}</td>
 
 <td className="h-10">
-  <div className="flex justify-center items-center gap-1 h-full">
+  <div className="flex items-center justify-center gap-1 h-full w-12">
 
-<img src={p.type1image} className="h-5"/>
+    <img src={p.type1image} className="h-5"/>
 
-{p.type2image &&
-<img src={p.type2image} className="h-5"/>
-}
-    </div>
+    {p.type2image ? (
+      <img src={p.type2image} className="h-5"/>
+    ) : (
+      <div className="h-5 w-5"></div>
+    )}
+
+  </div>
 </td>
 
 <td className="text-xs text-slate-600 text-center">
