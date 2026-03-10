@@ -48,11 +48,12 @@ export default function Home() {
   const { data: matchesData } = await supabase
   .from("matches")
   .select(`
-    week,
-    status,
-    teamA:team_a(logo),
-    teamB:team_b(logo)
-  `)
+  week,
+  status,
+  conference,
+  teamA:team_a(logo),
+  teamB:team_b(logo)
+`)
   .order("week",{ascending:true})
 
   // encontrar la primera semana con matches pendientes
@@ -64,7 +65,13 @@ const nextWeek = matchesData
 const weekMatches = matchesData
   ?.filter(m => m.week === nextWeek && m.status !== "completed")
 
-setMatches(weekMatches || [])
+const kantoMatches = weekMatches?.filter(m => m.conference === "Kanto")
+const johtoMatches = weekMatches?.filter(m => m.conference === "Johto")
+
+setMatches({
+  kanto: kantoMatches || [],
+  johto: johtoMatches || []
+})
 
 
   /* REPORTS */
@@ -234,15 +241,19 @@ function getConferenceTop(conference){
 
 <section className="pb-20 px-8">
 
-<div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-12">
+<div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12">
 
-{/* STANDINGS */}
+{/* ================= KANTO ================= */}
 
 <div className="bg-white rounded-xl border p-6">
 
-<h3 className="font-bold text-xl mb-4">
-Kanto Top 3
+<h3 className="font-bold text-xl mb-6 text-center">
+Kanto Conference
 </h3>
+
+{/* TOP 3 */}
+
+<div className="mb-8">
 
 {getConferenceTop("Kanto").map((t,i)=>(
 <div key={i} className="flex items-center gap-3 mb-2">
@@ -254,9 +265,54 @@ Kanto Top 3
 </div>
 ))}
 
-<h3 className="font-bold text-xl mt-6 mb-4">
-Johto Top 3
+</div>
+
+{/* MATCHES */}
+
+<div>
+
+<h4 className="font-semibold mb-4 text-center text-slate-600">
+Week {matches.kanto?.[0]?.week}
+</h4>
+
+{matches.kanto?.map((m,i)=>(
+
+<div key={i} className="flex justify-center gap-6 mb-3">
+
+<img
+src={m.teamA.logo}
+className="w-10 h-10 object-contain hover:scale-110 transition"
+/>
+
+<span className="text-slate-400 font-semibold">
+vs
+</span>
+
+<img
+src={m.teamB.logo}
+className="w-10 h-10 object-contain hover:scale-110 transition"
+/>
+
+</div>
+
+))}
+
+</div>
+
+</div>
+
+
+{/* ================= JOHTO ================= */}
+
+<div className="bg-white rounded-xl border p-6">
+
+<h3 className="font-bold text-xl mb-6 text-center">
+Johto Conference
 </h3>
+
+{/* TOP 3 */}
+
+<div className="mb-8">
 
 {getConferenceTop("Johto").map((t,i)=>(
 <div key={i} className="flex items-center gap-3 mb-2">
@@ -270,21 +326,21 @@ Johto Top 3
 
 </div>
 
-{/* NEXT MATCHES */}
+{/* MATCHES */}
 
-<div className="bg-white rounded-xl border p-6">
+<div>
 
-<h3 className="font-bold text-xl mb-4">
-Week {matches[0]?.week} Matches
-</h3>
+<h4 className="font-semibold mb-4 text-center text-slate-600">
+Week {matches.johto?.[0]?.week}
+</h4>
 
-{matches.map((m,i)=>(
+{matches.johto?.map((m,i)=>(
 
-<div key={i} className="flex justify-center gap-6 mb-4">
+<div key={i} className="flex justify-center gap-6 mb-3">
 
 <img
 src={m.teamA.logo}
-className="w-12 h-12 object-contain hover:scale-110 transition"
+className="w-10 h-10 object-contain hover:scale-110 transition"
 />
 
 <span className="text-slate-400 font-semibold">
@@ -293,7 +349,7 @@ vs
 
 <img
 src={m.teamB.logo}
-className="w-12 h-12 object-contain hover:scale-110 transition"
+className="w-10 h-10 object-contain hover:scale-110 transition"
 />
 
 </div>
@@ -302,11 +358,16 @@ className="w-12 h-12 object-contain hover:scale-110 transition"
 
 </div>
 
-{/* POKEMON LEADERBOARD */}
+</div>
 
-<div className="bg-white rounded-xl border p-6">
+</div>
 
-<h3 className="font-bold text-xl mb-4">
+
+{/* ================= POKEMON LEADERBOARD ================= */}
+
+<div className="max-w-md mx-auto mt-16 bg-white rounded-xl border p-6">
+
+<h3 className="font-bold text-xl mb-4 text-center">
 Top Pokémon
 </h3>
 
@@ -325,8 +386,6 @@ Top Pokémon
 </div>
 
 ))}
-
-</div>
 
 </div>
 
