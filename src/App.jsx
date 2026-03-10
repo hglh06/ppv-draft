@@ -1,6 +1,7 @@
 import { Routes, Route, NavLink, useLocation } from "react-router-dom"
 import { useAuth } from "./context/AuthContext"
 import { useEffect, useState, useRef } from "react"
+import { supabase } from "./lib/supabase"
 
 import Home from "./pages/Home"
 import Standings from "./pages/Standings"
@@ -21,6 +22,8 @@ export default function App() {
 
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [draftActive, setDraftActive] = useState(false)
+  const [pendingTrades, setPendingTrades] = useState(false)
 
   const menuRef = useRef(null)
 
@@ -34,6 +37,54 @@ export default function App() {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  useEffect(() => {
+
+  async function checkDraft() {
+
+    const { data } = await supabase
+      .from("draft_state")
+      .select("is_active")
+      .single()
+
+    if (data?.is_active) {
+      setDraftActive(true)
+    } else {
+      setDraftActive(false)
+    }
+
+  }
+
+  checkDraft()
+
+  /* ======================
+     REALTIME DRAFT STATUS
+  ====================== */
+
+  const channel = supabase
+    .channel("draft-status")
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "draft_state"
+      },
+      (payload) => {
+
+        const isActive = payload.new.is_active
+
+        setDraftActive(isActive)
+
+      }
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+
+}, [])
 
 
   /* ======================
@@ -55,6 +106,28 @@ export default function App() {
     }
 
   }, [])
+
+  useEffect(() => {
+
+  async function checkTrades() {
+
+    if (!team) return
+
+    const { data } = await supabase
+      .from("transactions")
+      .select("id")
+      .eq("team_b", team.id)
+      .eq("status", "pending_player")
+
+    if (data && data.length > 0) {
+      setPendingTrades(true)
+    }
+
+  }
+
+  checkTrades()
+
+}, [team])
 
 
   /* ======================
@@ -135,14 +208,24 @@ export default function App() {
           </NavLink>
 
           <NavLink to="/draft" className={navItem}>
-            Draft
-          </NavLink>
+  <div className="flex items-center gap-2">
+    Draft
+    {draftActive && (
+      <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+    )}
+  </div>
+</NavLink>
 
           {user && (
-            <NavLink to="/trades" className={navItem}>
-              Trades
-            </NavLink>
-          )}
+  <NavLink to="/trades" className={navItem}>
+    <div className="flex items-center gap-2">
+      Trades
+      {pendingTrades && (
+        <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+      )}
+    </div>
+  </NavLink>
+)}
 
           {isAdmin && (
             <NavLink to="/admin/reports" className={navItem}>

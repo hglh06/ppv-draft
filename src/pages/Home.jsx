@@ -4,6 +4,9 @@ import { supabase } from "../lib/supabase"
 export default function Home() {
 
   const [teams, setTeams] = useState([])
+  const [standings, setStandings] = useState([])
+  const [matches, setMatches] = useState([])
+  const [pokemonLeaders, setPokemonLeaders] = useState([])
   const revealRef = useRef(null)
   const [visible, setVisible] = useState(false)
 
@@ -32,14 +35,105 @@ export default function Home() {
 
   async function loadTeams() {
 
-    const { data } = await supabase
-      .from("teams")
-      .select("name, logo")
-      .order("name")
+  /* TEAMS */
 
-    setTeams(data || [])
+  const { data: teamsData } = await supabase
+    .from("teams")
+    .select("id,name,logo,conference,coach_name")
 
-  }
+  setTeams(teamsData || [])
+
+  /* MATCHES */
+
+  const { data: matchesData } = await supabase
+    .from("matches")
+    .select(`
+      *,
+      teamA:team_a(name,logo),
+      teamB:team_b(name,logo)
+    `)
+    .eq("status","pending")
+    .order("week",{ascending:true})
+    .limit(3)
+
+  setMatches(matchesData || [])
+
+  /* REPORTS */
+
+  const { data: reportsData } = await supabase
+    .from("reports")
+    .select("*")
+    .eq("status","approved")
+
+  /* POKEDEX */
+
+  const { data: pokedexData } = await supabase
+    .from("pokedex")
+    .select("name,sprite")
+
+  /* CALCULAR POKEMON LEADERBOARD */
+
+  const stats = {}
+
+  reportsData?.forEach(report => {
+
+    const sides = [
+      ...(report.team_a_data || []),
+      ...(report.team_b_data || [])
+    ]
+
+    sides.forEach(pokemon => {
+
+      if (!stats[pokemon.name]) {
+        stats[pokemon.name] = {
+          name: pokemon.name,
+          games: 0,
+          kills: 0,
+          deaths: 0
+        }
+      }
+
+      pokemon.games.forEach(g => {
+        stats[pokemon.name].games++
+        stats[pokemon.name].kills += g.kills
+        stats[pokemon.name].deaths += g.deaths
+      })
+
+    })
+
+  })
+
+  const rows = Object.values(stats).map(p => {
+
+    const poke = pokedexData?.find(pk => pk.name === p.name)
+
+    const ratio =
+      p.deaths === 0 ? p.kills : (p.kills / p.deaths)
+
+    return {
+      ...p,
+      sprite: poke?.sprite || "",
+      ratio
+    }
+
+  })
+
+  rows.sort((a,b)=>b.ratio-a.ratio)
+
+  setPokemonLeaders(rows.slice(0,3))
+
+  setStandings(teamsData || [])
+
+}
+
+function getConferenceTop(conference){
+
+  const confTeams = standings
+  .filter(t=>t.conference === conference)
+
+  return confTeams.slice(0,3)
+
+}
 
   return (
     <div className="w-full overflow-x-hidden">
@@ -126,6 +220,112 @@ export default function Home() {
           </p>
 
         </section>
+
+        {/* ================= LEAGUE STATUS ================= */}
+
+<section className="pb-20 px-8">
+
+<div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-12">
+
+{/* STANDINGS */}
+
+<div className="bg-white rounded-xl border p-6">
+
+<h3 className="font-bold text-xl mb-4">
+Kanto Top 3
+</h3>
+
+{getConferenceTop("Kanto").map((t,i)=>(
+<div key={i} className="flex items-center gap-3 mb-2">
+
+<img src={t.logo} className="w-8 h-8"/>
+
+<span>{t.name}</span>
+
+</div>
+))}
+
+<h3 className="font-bold text-xl mt-6 mb-4">
+Johto Top 3
+</h3>
+
+{getConferenceTop("Johto").map((t,i)=>(
+<div key={i} className="flex items-center gap-3 mb-2">
+
+<img src={t.logo} className="w-8 h-8"/>
+
+<span>{t.name}</span>
+
+</div>
+))}
+
+</div>
+
+{/* NEXT MATCHES */}
+
+<div className="bg-white rounded-xl border p-6">
+
+<h3 className="font-bold text-xl mb-4">
+Next Matches
+</h3>
+
+{matches.map((m,i)=>(
+<div key={i} className="flex items-center justify-between mb-3">
+
+<div className="flex items-center gap-2">
+
+<img src={m.teamA.logo} className="w-7"/>
+
+<span>{m.teamA.name}</span>
+
+</div>
+
+<span className="text-sm text-slate-400">
+vs
+</span>
+
+<div className="flex items-center gap-2">
+
+<img src={m.teamB.logo} className="w-7"/>
+
+<span>{m.teamB.name}</span>
+
+</div>
+
+</div>
+))}
+
+</div>
+
+{/* POKEMON LEADERBOARD */}
+
+<div className="bg-white rounded-xl border p-6">
+
+<h3 className="font-bold text-xl mb-4">
+Top Pokémon
+</h3>
+
+{pokemonLeaders.map((p,i)=>(
+
+<div key={i} className="flex items-center gap-3 mb-3">
+
+<img src={p.sprite} className="w-8"/>
+
+<span className="flex-1">{p.name}</span>
+
+<span className="font-semibold text-slate-600">
+{p.ratio.toFixed(2)}
+</span>
+
+</div>
+
+))}
+
+</div>
+
+</div>
+
+</section>
 
         {/* ================= PPV REVEAL ================= */}
 
