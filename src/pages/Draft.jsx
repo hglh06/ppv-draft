@@ -179,7 +179,7 @@ const elapsed = Math.floor(
   (now.getTime() - new Date(draftState.turn_started_at).getTime()) / 1000
 )
 
-    const remaining = Math.max(35 - elapsed, 0)
+    const remaining = Math.max(30 - elapsed, 0)
 
     setTimeLeft(remaining)
 
@@ -577,13 +577,12 @@ const round=r+1
 
 return Array.from({length:teamCount}).map((_,c)=>{
 
-let team
+const team = teams[c]
 
-if (round % 2 === 1) {
-  team = teams[c]
-} else {
-  team = teams[teamCount - 1 - c]
-}
+const visualCol =
+round % 2 === 1
+? c
+: teamCount - 1 - c
 
 const pick = picksMap[`${round}-${team?.id}`]
 
@@ -606,7 +605,7 @@ const label = `${round}.${pickPosition}`
 return(
 
 <div
-key={`${round}-${c}`}
+key={`${round}-${visualCol}`}
 className={`relative h-[64px] border border-slate-200 rounded-lg
 flex flex-col items-center justify-center text-[10px]
 transition
