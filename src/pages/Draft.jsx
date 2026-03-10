@@ -183,7 +183,7 @@ const elapsed = Math.floor(
 
     setTimeLeft(remaining)
 
-    if (elapsed >= 35 && isAdmin) {
+    if (elapsed >= 32 && isAdmin) {
   await supabase.rpc("force_auto_pick")
 }
 
