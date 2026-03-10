@@ -245,7 +245,7 @@ function getConferenceTop(conference){
 
 {/* ================= KANTO ================= */}
 
-<div className="bg-white rounded-xl border p-6">
+<div className="p-6">
 
 <h3 className="font-bold text-xl mb-6 text-center">
 Kanto Conference
@@ -304,7 +304,7 @@ className="w-10 h-10 object-contain hover:scale-110 transition"
 
 {/* ================= JOHTO ================= */}
 
-<div className="bg-white rounded-xl border p-6">
+<div className="p-6">
 
 <h3 className="font-bold text-xl mb-6 text-center">
 Johto Conference
@@ -365,7 +365,7 @@ className="w-10 h-10 object-contain hover:scale-110 transition"
 
 {/* ================= POKEMON LEADERBOARD ================= */}
 
-<div className="max-w-md mx-auto mt-16 bg-white rounded-xl border p-6">
+<div className="max-w-md mx-auto mt-16 p-6">
 
 <h3 className="font-bold text-xl mb-4 text-center">
 Top Pokémon
