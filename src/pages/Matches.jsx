@@ -124,9 +124,9 @@ setTeams(teamsData || [])
 
                 {kantoBye && (
 
-<div className="w-44 bg-slate-100 p-4 rounded-xl border text-center">
+<div className="w-full text-center mt-3">
 
-<div className="text-sm text-slate-500 mb-1">
+<div className="text-xs text-slate-500 tracking-wide">
 Bye Week
 </div>
 
@@ -150,9 +150,9 @@ Bye Week
 
                 {johtoBye && (
 
-<div className="w-44 bg-slate-100 p-4 rounded-xl border text-center">
+<div className="w-full text-center mt-3">
 
-<div className="text-sm text-slate-500 mb-1">
+<div className="text-xs text-slate-500 tracking-wide">
 Bye Week
 </div>
 
