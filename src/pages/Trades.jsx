@@ -715,7 +715,7 @@ function removeReceiveSlot(index) {
 
           <tbody>
 
-            {Array.from({ length: 16 }).map((_, i) => {
+            {Array.from({ length: 18 }).map((_, i) => {
 
               const w = waivers.find(x => x.position === i + 1)
 
