@@ -223,7 +223,7 @@ function getConferenceTop(conference){
 
         {/* ================= MENSAJE ================= */}
 
-        <section className="pt-32 pb-12 px-8 text-center">
+        <section className="pt-32 pb-32 px-8 text-center">
 
           <h2 className="text-5xl font-bold mb-10">
             Siente tu liga. Vive cada pick. Domina cada semana.
