@@ -5,6 +5,7 @@ import ReportMatch from "./ReportMatch"
 export default function Matches() {
 
   const [schedule, setSchedule] = useState([])
+  const [teams, setTeams] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedMatch, setSelectedMatch] = useState(null)
   const [reportingMatch, setReportingMatch] = useState(null)
@@ -14,6 +15,14 @@ export default function Matches() {
   }, [])
 
   async function fetchMatches() {
+
+    /* TEAMS */
+
+const { data: teamsData } = await supabase
+  .from("teams")
+  .select("id,name,conference")
+
+setTeams(teamsData || [])
 
     const { data, error } = await supabase
       .from("matches")
@@ -41,6 +50,22 @@ export default function Matches() {
   const sortedWeeks = Object.keys(groupedByWeek)
     .map(Number)
     .sort((a, b) => a - b)
+
+    function getByeTeam(matches, conference){
+
+  const confTeams = teams.filter(t => t.conference === conference)
+
+  const playingTeams = new Set()
+
+  matches.forEach(m=>{
+    if(m.teamA) playingTeams.add(m.teamA.name)
+    if(m.teamB) playingTeams.add(m.teamB.name)
+  })
+
+  const bye = confTeams.find(t => !playingTeams.has(t.name))
+
+  return bye?.name
+}
 
   return (
   <div
@@ -74,6 +99,9 @@ export default function Matches() {
         const kantoMatches = weekMatches.filter(m => m.conference === "Kanto")
         const johtoMatches = weekMatches.filter(m => m.conference === "Johto")
 
+        const kantoBye = getByeTeam(kantoMatches,"Kanto")
+        const johtoBye = getByeTeam(johtoMatches,"Johto")
+
         return (
           <div key={week} className="mb-12">
 
@@ -93,6 +121,22 @@ export default function Matches() {
                     onClick={() => setSelectedMatch(match)}
                   />
                 ))}
+
+                {kantoBye && (
+
+<div className="w-44 bg-slate-100 p-4 rounded-xl border text-center">
+
+<div className="text-sm text-slate-500 mb-1">
+Bye Week
+</div>
+
+<div className="font-semibold text-slate-800">
+{kantoBye}
+</div>
+
+</div>
+
+)}
               </div>
 
               <div className="flex flex-wrap gap-4 justify-center pl-6">
@@ -103,6 +147,22 @@ export default function Matches() {
                     onClick={() => setSelectedMatch(match)}
                   />
                 ))}
+
+                {johtoBye && (
+
+<div className="w-44 bg-slate-100 p-4 rounded-xl border text-center">
+
+<div className="text-sm text-slate-500 mb-1">
+Bye Week
+</div>
+
+<div className="font-semibold text-slate-800">
+{johtoBye}
+</div>
+
+</div>
+
+)}
               </div>
 
             </div>
