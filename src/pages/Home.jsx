@@ -46,17 +46,26 @@ export default function Home() {
   /* MATCHES */
 
   const { data: matchesData } = await supabase
-    .from("matches")
-    .select(`
-      *,
-      teamA:team_a(name,logo),
-      teamB:team_b(name,logo)
-    `)
-    .eq("status","pending")
-    .order("week",{ascending:true})
-    .limit(3)
+  .from("matches")
+  .select(`
+    week,
+    status,
+    teamA:team_a(logo),
+    teamB:team_b(logo)
+  `)
+  .order("week",{ascending:true})
 
-  setMatches(matchesData || [])
+  // encontrar la primera semana con matches pendientes
+
+const nextWeek = matchesData
+  ?.find(m => m.status !== "completed")
+  ?.week
+
+const weekMatches = matchesData
+  ?.filter(m => m.week === nextWeek && m.status !== "completed")
+
+setMatches(weekMatches || [])
+
 
   /* REPORTS */
 
@@ -266,33 +275,29 @@ Johto Top 3
 <div className="bg-white rounded-xl border p-6">
 
 <h3 className="font-bold text-xl mb-4">
-Next Matches
+Week {matches[0]?.week} Matches
 </h3>
 
 {matches.map((m,i)=>(
-<div key={i} className="flex items-center justify-between mb-3">
 
-<div className="flex items-center gap-2">
+<div key={i} className="flex justify-center gap-6 mb-4">
 
-<img src={m.teamA.logo} className="w-7"/>
+<img
+src={m.teamA.logo}
+className="w-12 h-12 object-contain hover:scale-110 transition"
+/>
 
-<span>{m.teamA.name}</span>
-
-</div>
-
-<span className="text-sm text-slate-400">
+<span className="text-slate-400 font-semibold">
 vs
 </span>
 
-<div className="flex items-center gap-2">
-
-<img src={m.teamB.logo} className="w-7"/>
-
-<span>{m.teamB.name}</span>
-
-</div>
+<img
+src={m.teamB.logo}
+className="w-12 h-12 object-contain hover:scale-110 transition"
+/>
 
 </div>
+
 ))}
 
 </div>
