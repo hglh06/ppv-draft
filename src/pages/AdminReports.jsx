@@ -9,6 +9,7 @@ export default function AdminReports() {
   const [reports, setReports] = useState([])
   const [transactions, setTransactions] = useState([])
   const [groupedFA, setGroupedFA] = useState({})
+  const [expandedReport, setExpandedReport] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -155,6 +156,16 @@ export default function AdminReports() {
     fetchData()
   }
 
+  async function rejectReport(id) {
+
+  await supabase.rpc("reject_report", {
+    p_report_id: id
+  })
+
+  fetchData()
+
+}
+
   /* ===============================
      TRANSACTION APPROVAL
   ============================== */
@@ -210,11 +221,115 @@ export default function AdminReports() {
             </h4>
 
             <button
+onClick={() =>
+setExpandedReport(
+expandedReport === report.id ? null : report.id
+)
+}
+className="text-blue-600 text-sm mt-2"
+>
+Ver Detalles
+</button>
+
+{expandedReport === report.id && (
+
+<div className="mt-4 border rounded-lg p-4 bg-slate-50">
+
+{/* REPLAYS */}
+
+<div className="mb-4">
+
+<div className="font-semibold mb-2">
+Replays
+</div>
+
+{report.replays?.map((r,i)=>(
+<a
+key={i}
+href={r}
+target="_blank"
+rel="noopener noreferrer"
+className="block text-blue-600 underline"
+>
+Replay {i+1}
+</a>
+))}
+
+</div>
+
+{/* TEAM A */}
+
+<div className="mb-4">
+
+<div className="font-semibold">
+{report.match.teamA.name}
+</div>
+
+{report.team_a_data?.map((p,i)=>(
+
+<div key={i} className="text-sm mt-1">
+
+<div className="font-medium">
+{p.name}
+</div>
+
+{p.games.map((g,j)=>(
+<div key={j} className="text-slate-600">
+Game {g.game} — K:{g.kills} D:{g.deaths}
+</div>
+))}
+
+</div>
+
+))}
+
+</div>
+
+{/* TEAM B */}
+
+<div>
+
+<div className="font-semibold">
+{report.match.teamB.name}
+</div>
+
+{report.team_b_data?.map((p,i)=>(
+
+<div key={i} className="text-sm mt-1">
+
+<div className="font-medium">
+{p.name}
+</div>
+
+{p.games.map((g,j)=>(
+<div key={j} className="text-slate-600">
+Game {g.game} — K:{g.kills} D:{g.deaths}
+</div>
+))}
+
+</div>
+
+))}
+
+</div>
+
+</div>
+
+)}
+
+            <button
               onClick={() => approveReport(report)}
               className="mt-4 px-6 py-2 bg-green-600 text-white rounded-lg"
             >
               Aprobar
             </button>
+
+            <button
+onClick={() => rejectReport(report.id)}
+className="mt-4 ml-3 px-6 py-2 bg-red-600 text-white rounded-lg"
+>
+Rechazar
+</button>
 
           </div>
         ))}
