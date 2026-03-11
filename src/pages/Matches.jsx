@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react"
+import { useAuth } from "../context/AuthContext"
 import { supabase } from "../lib/supabase"
 import ReportMatch from "./ReportMatch"
 
 export default function Matches() {
 
+  const { team } = useAuth()
   const [schedule, setSchedule] = useState([])
   const [teams, setTeams] = useState([])
   const [loading, setLoading] = useState(true)
@@ -172,8 +174,9 @@ Bye Week
       })}
 
       {selectedMatch && (
-        <MatchModal
-          match={selectedMatch}
+  <MatchModal
+    match={selectedMatch}
+    team={team}
           onClose={() => setSelectedMatch(null)}
           onReport={(match) => {
             setSelectedMatch(null)
@@ -236,7 +239,11 @@ function MatchCard({ match, onClick }) {
    MATCH MODAL
 ========================= */
 
-function MatchModal({ match, onClose, onReport }) {
+function MatchModal({ match, team, onClose, onReport }) {
+
+  const canReport =
+team &&
+(match.teamA?.id === team.id || match.teamB?.id === team.id)
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
@@ -308,12 +315,16 @@ function MatchModal({ match, onClose, onReport }) {
             Close
           </button>
 
-          <button
-            onClick={() => onReport(match)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Report Result
-          </button>
+          {canReport && match.status !== "completed" && (
+
+<button
+  onClick={() => onReport(match)}
+  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+>
+  Report Result
+</button>
+
+)}
 
         </div>
 
