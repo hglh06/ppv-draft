@@ -4,207 +4,171 @@ import React from "react"
 
 export default function ReportMatch({ match, onClose }) {
 
-  const [submitting, setSubmitting] = useState(false)
-  const [success, setSuccess] = useState(false)
+  const [submitting,setSubmitting] = useState(false)
+  const [success,setSuccess] = useState(false)
 
-  const [teamARoster, setTeamARoster] = useState([])
-  const [teamBRoster, setTeamBRoster] = useState([])
+  const [teamARoster,setTeamARoster] = useState([])
+  const [teamBRoster,setTeamBRoster] = useState([])
 
-  const [replays, setReplays] = useState(["", "", ""])
+  const [replays,setReplays] = useState(["",""])
 
-  const [teamASelected, setTeamASelected] = useState(Array(6).fill(""))
-  const [teamBSelected, setTeamBSelected] = useState(Array(6).fill(""))
+  const [teamASelected,setTeamASelected] = useState(Array(6).fill(""))
+  const [teamBSelected,setTeamBSelected] = useState(Array(6).fill(""))
 
-  const [stats, setStats] = useState({
-    teamA: createEmptyStats(),
-    teamB: createEmptyStats()
+  const [winners,setWinners] = useState(["","",""])
+
+  const [stats,setStats] = useState({
+    teamA:createEmptyStats(),
+    teamB:createEmptyStats()
   })
 
-  function createEmptyStats() {
-    return Array(6).fill().map(() => ({
-      games: [
-        { entered: false, kills: 0, deaths: 0 },
-        { entered: false, kills: 0, deaths: 0 },
-        { entered: false, kills: 0, deaths: 0 }
+  function createEmptyStats(){
+    return Array(6).fill().map(()=>({
+      games:[
+        {entered:false,kills:0,deaths:0},
+        {entered:false,kills:0,deaths:0},
+        {entered:false,kills:0,deaths:0}
       ]
     }))
   }
 
   /* ===============================
-     CARGAR ROSTERS
+     LOAD ROSTERS
   ============================== */
 
-  useEffect(() => {
+  useEffect(()=>{
 
-    async function fetchRosters() {
+    async function fetchRosters(){
 
-  if (!match) return
+      if(!match) return
 
-  const { data: seasonState } = await supabase
-    .from("draft_state")
-    .select("season_id")
-    .single()
+      const { data:seasonState } = await supabase
+      .from("draft_state")
+      .select("season_id")
+      .single()
 
-  const seasonId = seasonState?.season_id
+      const seasonId = seasonState?.season_id
 
-  /* TEAM A */
+      const { data:teamARosterData } = await supabase
+      .from("rosters")
+      .select(`
+        pokemon_id,
+        pokedex(name)
+      `)
+      .eq("team_id",match.teamA.id)
+      .eq("season_id",seasonId)
 
-  const { data: teamARosterData } = await supabase
-    .from("rosters")
-    .select(`
-      pokemon_id,
-      pokedex(name)
-    `)
-    .eq("team_id", match.teamA.id)
-    .eq("season_id", seasonId)
+      const { data:teamBRosterData } = await supabase
+      .from("rosters")
+      .select(`
+        pokemon_id,
+        pokedex(name)
+      `)
+      .eq("team_id",match.teamB.id)
+      .eq("season_id",seasonId)
 
-  /* TEAM B */
+      setTeamARoster(
+        teamARosterData?.map(r=>r.pokedex?.name) || []
+      )
 
-  const { data: teamBRosterData } = await supabase
-    .from("rosters")
-    .select(`
-      pokemon_id,
-      pokedex(name)
-    `)
-    .eq("team_id", match.teamB.id)
-    .eq("season_id", seasonId)
+      setTeamBRoster(
+        teamBRosterData?.map(r=>r.pokedex?.name) || []
+      )
 
-  setTeamARoster(
-    teamARosterData?.map(r => r.pokedex?.name) || []
-  )
-
-  setTeamBRoster(
-    teamBRosterData?.map(r => r.pokedex?.name) || []
-  )
-
-}
+    }
 
     fetchRosters()
 
-  }, [match])
+  },[match])
 
-  function updateStat(side, rowIndex, gameIndex, field, value) {
+  /* ===============================
+     UPDATE STATS
+  ============================== */
 
-    const updated = { ...stats }
+  function updateStat(side,rowIndex,gameIndex,field,value){
 
-    if (field === "entered") {
+    const updated = {...stats}
 
-      updated[side][rowIndex].games[gameIndex].entered = value
+    if(field==="entered"){
 
-      if (!value) {
-        updated[side][rowIndex].games[gameIndex].kills = 0
-        updated[side][rowIndex].games[gameIndex].deaths = 0
+      updated[side][rowIndex].games[gameIndex].entered=value
+
+      if(!value){
+        updated[side][rowIndex].games[gameIndex].kills=0
+        updated[side][rowIndex].games[gameIndex].deaths=0
       }
 
-    } else {
+    }else{
 
-      updated[side][rowIndex].games[gameIndex][field] = Number(value)
+      updated[side][rowIndex].games[gameIndex][field]=Math.max(0,Number(value))
 
     }
 
     setStats(updated)
   }
 
-  async function submitReport() {
-
-
   /* ===============================
-     VALIDACIONES
+     VALIDATION + SUBMIT
   ============================== */
 
-  // 1️⃣ mínimo 2 replays
+  async function submitReport(){
 
-  const validReplays = replays.filter(r => r.trim() !== "")
+    const uniqueA = new Set(teamASelected)
+    const uniqueB = new Set(teamBSelected)
 
-  if (validReplays.length < 2) {
-    alert("Debes incluir al menos 2 replays.")
-    return
-  }
-
-  if (cleanA.length !== 6 || cleanB.length !== 6) {
-  alert("Debes seleccionar exactamente 6 Pokémon por equipo.")
-  return
-}
-
-  // 2️⃣ evitar Pokémon duplicados
-
-  const cleanA = teamASelected.filter(p => p !== "")
-  const cleanB = teamBSelected.filter(p => p !== "")
-
-  const duplicatesA = new Set(cleanA).size !== cleanA.length
-  const duplicatesB = new Set(cleanB).size !== cleanB.length
-
-  if (duplicatesA || duplicatesB) {
-    alert("No puedes seleccionar el mismo Pokémon dos veces.")
-    return
-  }
-
-  // 3️⃣ evitar kills/deaths negativos
-
-  const checkStats = side => {
-
-    for (let row of side) {
-
-      for (let g of row.games) {
-
-        if (g.kills < 0 || g.deaths < 0) {
-          return true
-        }
-
-      }
-
+    if(uniqueA.size!==6 || teamASelected.includes("")){
+      alert("Team A must select 6 different Pokémon")
+      return
     }
 
-    return false
-  }
+    if(uniqueB.size!==6 || teamBSelected.includes("")){
+      alert("Team B must select 6 different Pokémon")
+      return
+    }
 
-  if (checkStats(stats.teamA) || checkStats(stats.teamB)) {
-    alert("Kills y deaths no pueden ser negativos.")
-    return
-  }
+    const validReplays = replays.filter(r=>r.trim()!=="")
+    if(validReplays.length < 2){
+      alert("At least 2 replays are required")
+      return
+    }
 
-
-    const formatSide = (selected, sideStats) =>
-      selected.map((name, rowIndex) => {
-
-        if (!name) return null
+    const formatSide=(selected,sideStats)=>
+      selected.map((name,rowIndex)=>{
 
         const gamesData = sideStats[rowIndex].games
-          .map((g, index) =>
-            g.entered
-              ? {
-                  game: index + 1,
-                  kills: g.kills,
-                  deaths: g.deaths
-                }
-              : null
-          )
-          .filter(Boolean)
-
-        return gamesData.length > 0
-          ? { name, games: gamesData }
+        .map((g,index)=>
+          g.entered
+          ? {
+              game:index+1,
+              kills:g.kills,
+              deaths:g.deaths
+            }
           : null
+        )
+        .filter(Boolean)
+
+        return gamesData.length>0
+        ? {name,games:gamesData}
+        : null
 
       }).filter(Boolean)
 
     setSubmitting(true)
 
     const { error } = await supabase
-  .from("reports")
-  .insert([
-    {
-      match_id: match.id,
-      replays: replays.filter(r => r.trim() !== ""),
-      team_a_data: formatSide(teamASelected, stats.teamA),
-      team_b_data: formatSide(teamBSelected, stats.teamB),
-      status: "pending"
-    }
-  ])
+    .from("reports")
+    .insert([{
+      match_id:match.id,
+      replays:validReplays,
+      team_a_data:formatSide(teamASelected,stats.teamA),
+      team_b_data:formatSide(teamBSelected,stats.teamB),
+      status:"pending"
+    }])
 
-    if (error) {
+    if(error){
 
       console.error(error)
-      alert("Error al enviar reporte")
+      alert("Error submitting report")
       setSubmitting(false)
       return
 
@@ -213,20 +177,21 @@ export default function ReportMatch({ match, onClose }) {
     setSubmitting(false)
     setSuccess(true)
 
-    setTimeout(() => {
+    setTimeout(()=>{
       setSuccess(false)
       onClose()
-    }, 1500)
+    },1500)
+
   }
 
-  if (!match) return null
+  if(!match) return null
 
-  return (
+  return(
 
     <div className="max-h-[75vh] overflow-y-auto pr-2">
 
       <h3 className="text-2xl font-bold mb-6">
-        Reportar: {match.teamA?.name} vs {match.teamB?.name}
+        Report: {match.teamA?.name} vs {match.teamB?.name}
       </h3>
 
       {/* REPLAYS */}
@@ -237,21 +202,19 @@ export default function ReportMatch({ match, onClose }) {
           Replay Links
         </h4>
 
-        {replays.map((link, index) => (
+        {replays.map((link,index)=>(
 
           <input
-            key={index}
-            type="text"
-            placeholder={`Replay ${index + 1}`}
-            value={link}
-            onChange={e => {
-
-              const updated = [...replays]
-              updated[index] = e.target.value
-              setReplays(updated)
-
-            }}
-            className="border border-slate-200 p-2 rounded w-full"
+          key={index}
+          type="text"
+          placeholder={`Replay ${index+1}`}
+          value={link}
+          onChange={e=>{
+            const updated=[...replays]
+            updated[index]=e.target.value
+            setReplays(updated)
+          }}
+          className="border border-slate-200 p-2 rounded w-full"
           />
 
         ))}
@@ -261,25 +224,25 @@ export default function ReportMatch({ match, onClose }) {
       <div className="grid grid-cols-2 gap-10">
 
         <TeamExcelTable
-          title={match.teamA?.name}
-          roster={teamARoster}
-          selected={teamASelected}
-          setSelected={setTeamASelected}
-          stats={stats.teamA}
-          updateStat={(row, game, field, value) =>
-            updateStat("teamA", row, game, field, value)
-          }
+        title={match.teamA?.name}
+        roster={teamARoster}
+        selected={teamASelected}
+        setSelected={setTeamASelected}
+        stats={stats.teamA}
+        updateStat={(row,game,field,value)=>
+          updateStat("teamA",row,game,field,value)
+        }
         />
 
         <TeamExcelTable
-          title={match.teamB?.name}
-          roster={teamBRoster}
-          selected={teamBSelected}
-          setSelected={setTeamBSelected}
-          stats={stats.teamB}
-          updateStat={(row, game, field, value) =>
-            updateStat("teamB", row, game, field, value)
-          }
+        title={match.teamB?.name}
+        roster={teamBRoster}
+        selected={teamBSelected}
+        setSelected={setTeamBSelected}
+        stats={stats.teamB}
+        updateStat={(row,game,field,value)=>
+          updateStat("teamB",row,game,field,value)
+        }
         />
 
       </div>
@@ -287,46 +250,48 @@ export default function ReportMatch({ match, onClose }) {
       <div className="flex justify-between mt-8">
 
         <button
-          onClick={onClose}
-          className="px-6 py-3 bg-slate-700 text-white rounded-lg"
+        onClick={onClose}
+        className="px-6 py-3 bg-slate-700 text-white rounded-lg"
         >
-          Cancelar
+        Cancel
         </button>
 
         <button
-          onClick={submitReport}
-          disabled={submitting}
-          className="px-6 py-3 rounded-lg text-white bg-green-600"
+        onClick={submitReport}
+        disabled={submitting}
+        className="px-6 py-3 rounded-lg text-white bg-green-600"
         >
-          {submitting ? "Enviando..." : "Enviar Reporte"}
+        {submitting ? "Submitting..." : "Submit Report"}
         </button>
 
       </div>
 
-      {success && (
+      {success &&(
 
         <div className="mt-4 p-3 bg-green-100 text-green-700 rounded-lg shadow">
-          ✅ Reporte enviado correctamente
+        ✅ Report submitted
         </div>
 
       )}
 
     </div>
+
   )
+
 }
 
 /* ===============================
    TEAM TABLE
 ================================ */
 
-function TeamExcelTable({ title, roster, selected, setSelected, stats, updateStat }) {
+function TeamExcelTable({title,roster,selected,setSelected,stats,updateStat}){
 
-  function getSprite(name) {
-    if (!name) return null
-    return `https://play.pokemonshowdown.com/sprites/ani/${name.toLowerCase().replaceAll(" ", "")}.gif`
+  function getSprite(name){
+    if(!name) return null
+    return `https://play.pokemonshowdown.com/sprites/ani/${name.toLowerCase().replaceAll(" ","")}.gif`
   }
 
-  return (
+  return(
 
     <div>
 
@@ -347,7 +312,7 @@ function TeamExcelTable({ title, roster, selected, setSelected, stats, updateSta
 
         <tbody>
 
-          {selected.map((poke, rowIndex) => (
+          {selected.map((poke,rowIndex)=>(
 
             <tr key={rowIndex} className="border">
 
@@ -355,31 +320,31 @@ function TeamExcelTable({ title, roster, selected, setSelected, stats, updateSta
 
                 <div className="flex items-center gap-2">
 
-                  {poke && (
+                  {poke &&(
                     <img
-                      src={getSprite(poke)}
-                      alt={poke}
-                      className="w-6 h-6"
+                    src={getSprite(poke)}
+                    alt={poke}
+                    className="w-6 h-6"
                     />
                   )}
 
                   <select
-                    value={poke}
-                    onChange={e => {
-
-                      const updated = [...selected]
-                      updated[rowIndex] = e.target.value
-                      setSelected(updated)
-
-                    }}
-                    className="w-full border border-slate-200 rounded p-1 text-xs"
+                  value={poke}
+                  onChange={e=>{
+                    const updated=[...selected]
+                    updated[rowIndex]=e.target.value
+                    setSelected(updated)
+                  }}
+                  className="w-full border border-slate-200 rounded p-1 text-xs"
                   >
 
                     <option value="">Select</option>
 
-                    {roster.map((pokemonName, index) => (
+                    {roster
+                    .filter(p=>!selected.includes(p)||p===poke)
+                    .map((pokemonName,index)=>(
                       <option key={index} value={pokemonName}>
-                        {pokemonName}
+                      {pokemonName}
                       </option>
                     ))}
 
@@ -389,48 +354,46 @@ function TeamExcelTable({ title, roster, selected, setSelected, stats, updateSta
 
               </td>
 
-              {stats[rowIndex].games.map((g, gameIndex) => (
+              {stats[rowIndex].games.map((g,gameIndex)=>(
 
                 <td key={gameIndex} className="border text-center p-2">
 
                   <div className="flex flex-col items-center gap-1">
 
                     <input
-                      type="checkbox"
-                      checked={g.entered}
-                      onChange={e =>
-                        updateStat(rowIndex, gameIndex, "entered", e.target.checked)
-                      }
+                    type="checkbox"
+                    checked={g.entered}
+                    onChange={e=>
+                      updateStat(rowIndex,gameIndex,"entered",e.target.checked)
+                    }
                     />
 
-                    {g.entered && (
+                    {g.entered &&(
 
                       <div className="flex items-center gap-1 text-xs">
 
-                        <span className="font-semibold text-slate-600">K</span>
+                        <span>K</span>
 
                         <input
-  type="number"
-  min="0"
-  value={g.kills}
-                          onChange={e =>
-                            updateStat(rowIndex, gameIndex, "kills", e.target.value)
-                          }
-                          className="w-10 border text-xs text-center"
+                        type="number"
+                        value={g.kills}
+                        onChange={e=>
+                          updateStat(rowIndex,gameIndex,"kills",e.target.value)
+                        }
+                        className="w-10 border text-xs text-center"
                         />
 
                         <span>/</span>
 
-                        <span className="font-semibold text-slate-600">D</span>
+                        <span>D</span>
 
                         <input
-  type="number"
-  min="0"
-  value={g.deaths}
-                          onChange={e =>
-                            updateStat(rowIndex, gameIndex, "deaths", e.target.value)
-                          }
-                          className="w-10 border text-xs text-center"
+                        type="number"
+                        value={g.deaths}
+                        onChange={e=>
+                          updateStat(rowIndex,gameIndex,"deaths",e.target.value)
+                        }
+                        className="w-10 border text-xs text-center"
                         />
 
                       </div>
@@ -454,4 +417,5 @@ function TeamExcelTable({ title, roster, selected, setSelected, stats, updateSta
     </div>
 
   )
+
 }
