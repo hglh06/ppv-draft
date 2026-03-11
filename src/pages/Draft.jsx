@@ -251,6 +251,16 @@ p_pokemon_id:pokemonId
 setPicking(false)
 }
 
+async function passPick(){
+
+  if(!team) return
+
+  await supabase.rpc("pass_draft_pick",{
+    p_team_id: team.id
+  })
+
+}
+
 /* FILTER */
 
 let filtered=[...pokemon]
@@ -1040,6 +1050,17 @@ className="h-4"
 <div className="text-xs text-slate-400 mt-2">
 segundos
 </div>
+
+{team?.id === draftState?.current_team_id && (
+
+<button
+onClick={passPick}
+className="mt-3 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition"
+>
+Pass Pick
+</button>
+
+)}
 </>
 )}
 
