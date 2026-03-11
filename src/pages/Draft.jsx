@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext"
 
 export default function Draft(){
 
-const { isAdmin,user } = useAuth()
+const { isAdmin,user, team } = useAuth()
 
 const [draftState,setDraftState]=useState(null)
 const [pokemon,setPokemon]=useState([])
