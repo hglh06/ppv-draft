@@ -4,13 +4,14 @@ import React from "react"
 
 export default function ReportMatch({ match, onClose }) {
 
+  const [winner,setWinner] = useState("")
   const [submitting,setSubmitting] = useState(false)
   const [success,setSuccess] = useState(false)
 
   const [teamARoster,setTeamARoster] = useState([])
   const [teamBRoster,setTeamBRoster] = useState([])
 
-  const [replays,setReplays] = useState(["",""])
+  const [replays,setReplays] = useState(["","",""])
 
   const [teamASelected,setTeamASelected] = useState(Array(6).fill(""))
   const [teamBSelected,setTeamBSelected] = useState(Array(6).fill(""))
@@ -116,6 +117,12 @@ export default function ReportMatch({ match, onClose }) {
     const uniqueA = new Set(teamASelected)
     const uniqueB = new Set(teamBSelected)
 
+    if(!winner){
+alert("You must select the match winner")
+return
+}
+
+
     if(uniqueA.size!==6 || teamASelected.includes("")){
       alert("Team A must select 6 different Pokémon")
       return
@@ -158,12 +165,13 @@ export default function ReportMatch({ match, onClose }) {
     const { error } = await supabase
     .from("reports")
     .insert([{
-      match_id:match.id,
-      replays:validReplays,
-      team_a_data:formatSide(teamASelected,stats.teamA),
-      team_b_data:formatSide(teamBSelected,stats.teamB),
-      status:"pending"
-    }])
+match_id:match.id,
+winner:winner,
+replays:validReplays,
+team_a_data:formatSide(teamASelected,stats.teamA),
+team_b_data:formatSide(teamBSelected,stats.teamB),
+status:"pending"
+}])
 
     if(error){
 
@@ -193,6 +201,26 @@ export default function ReportMatch({ match, onClose }) {
       <h3 className="text-2xl font-bold mb-6">
         Report: {match.teamA?.name} vs {match.teamB?.name}
       </h3>
+
+      <div className="mb-6">
+
+<h4 className="font-semibold text-slate-700 mb-2">
+Match Winner
+</h4>
+
+<select
+value={winner}
+onChange={e=>setWinner(e.target.value)}
+className="border border-slate-200 p-2 rounded w-full"
+>
+
+<option value="">Select Winner</option>
+<option value={match.teamA?.name}>{match.teamA?.name}</option>
+<option value={match.teamB?.name}>{match.teamB?.name}</option>
+
+</select>
+
+</div>
 
       {/* REPLAYS */}
 
