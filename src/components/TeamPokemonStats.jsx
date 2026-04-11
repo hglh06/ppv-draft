@@ -49,15 +49,15 @@ return(
 Pokemon Performance
 </h3>
 
-<table className="w-full text-sm table-fixed">
+<table className="w-full text-sm">
 
 <thead className="text-center">
 
 <tr className="border-b text-xs text-center">
-<th className="w-1/2 text-center">Pokemon</th>
-<th className="w-1/6">G</th>
-<th className="w-1/6">K</th>
-<th className="w-1/6">D</th>
+<th className="text-left">Pokemon</th>
+<th className="text-center">G</th>
+<th className="text-center">K</th>
+<th className="text-center">D</th>
 </tr>
 
 </thead>
@@ -93,7 +93,7 @@ return(
 >
 
 <td>
-  <div className="flex items-center justify-center gap-2 h-full">
+  <div className="flex items-center gap-2 h-full">
     <img src={p.sprite} className="w-10"/>
     {p.name}
   </div>
