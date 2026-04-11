@@ -43,21 +43,21 @@ return base
 
 return(
 
-<div className="bg-white border rounded-xl p-6 h-full">
+<div className="bg-white border rounded-xl p-6 h-full w-full">
 
 <h3 className="font-semibold mb-4">
 Pokemon Performance
 </h3>
 
-<table className="w-full text-sm">
+<table className="w-full text-sm table-fixed">
 
 <thead className="text-center">
 
 <tr className="border-b text-xs text-center">
-<th className="text-center">Pokemon</th>
-<th>G</th>
-<th>K</th>
-<th>D</th>
+<th className="w-1/2 text-center">Pokemon</th>
+<th className="w-1/6">G</th>
+<th className="w-1/6">K</th>
+<th className="w-1/6">D</th>
 </tr>
 
 </thead>
