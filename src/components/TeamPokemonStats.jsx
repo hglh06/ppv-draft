@@ -1,13 +1,12 @@
 import { useMemo } from "react"
 
-export default function TeamPokemonStats({ roster, reports }) {
+export default function TeamPokemonStats({ roster, reports, rowHeight }) {
 
 const stats = useMemo(()=>{
 
 const base = {}
 
 roster.forEach(p=>{
-
 if(!p) return
 
 base[p.name]={
@@ -15,29 +14,22 @@ games:0,
 kills:0,
 deaths:0
 }
-
 })
 
 reports.forEach(report=>{
 
 const processSide=(side)=>{
-
 if(!side) return
 
 side.forEach(p=>{
-
 if(!base[p.name]) return
 
 p.games?.forEach(g=>{
-
 base[p.name].games+=1
 base[p.name].kills+=g.kills||0
 base[p.name].deaths+=g.deaths||0
-
 })
-
 })
-
 }
 
 processSide(report.team_a_data)
@@ -48,7 +40,6 @@ processSide(report.team_b_data)
 return base
 
 },[roster,reports])
-
 
 return(
 
@@ -63,12 +54,10 @@ Pokemon Performance
 <thead className="text-center">
 
 <tr className="border-b text-xs text-center">
-
 <th className="text-center">Pokemon</th>
 <th>G</th>
 <th>K</th>
 <th>D</th>
-
 </tr>
 
 </thead>
@@ -78,34 +67,36 @@ Pokemon Performance
 {roster.map((p,i)=>{
 
 if(!p){
-
 return(
-<tr key={i} className="border-b h-10 text-slate-300">
+
+<tr
+  key={i}
+  className="border-b text-slate-300"
+  style={{height:`${rowHeight}px`}}
+>
 <td>Empty</td>
 <td>0</td>
 <td>0</td>
 <td>0</td>
 </tr>
 )
-
 }
 
 const s=stats[p.name] || {games:0,kills:0,deaths:0}
 
 return(
 
-<tr key={i} className="border-b h-10">
+<tr
+  key={i}
+  className="border-b"
+  style={{height:`${rowHeight}px`}}
+>
 
-<td className="h-10">
+<td>
   <div className="flex items-center justify-center gap-2 h-full">
-
-<img
-src={p.sprite}
-className="w-10"
-/>
-
-{p.name}
-    </div>
+    <img src={p.sprite} className="w-10"/>
+    {p.name}
+  </div>
 </td>
 
 <td className="text-center">
@@ -121,7 +112,6 @@ className="w-10"
 </td>
 
 </tr>
-
 )
 
 })}
