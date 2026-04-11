@@ -308,7 +308,7 @@ filtered.sort((a,b)=> sortPoints==="desc"
 if(loading) return <div className="p-10">Cargando Draft...</div>
 
 const teamCount = teams.length
-const rounds = 10
+const rounds = 8
 
 const picksMap = {}
 
@@ -921,7 +921,7 @@ Puntos restantes:
 
 <div className="grid grid-cols-5 gap-2 mb-6">
 
-{Array.from({length:10}).map((_,i)=>{
+{Array.from({length:8}).map((_,i)=>{
 
 const teamPicks =
 myTeamId
