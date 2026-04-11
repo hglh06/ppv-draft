@@ -214,7 +214,9 @@ function MatchCard({ match, onClick }) {
       g => g.winner === match.teamB?.name
     ).length
 
-    scoreDisplay = `${winsA} - ${winsB}`
+    if (match.status === "completed") {
+  scoreDisplay = winsA > winsB ? "Winner: " + teamAName : "Winner: " + teamBName
+}
   }
 
   return (
