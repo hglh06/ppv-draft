@@ -301,10 +301,19 @@ return (
 
 }
 
-filtered.sort((a,b)=> sortPoints==="desc"
-? b.points-a.points
-: a.points-b.points
-)
+filtered.sort((a,b)=>{
+
+// 1️⃣ Primero separar drafted
+if(a.drafted !== b.drafted){
+return a.drafted ? 1 : -1
+}
+
+// 2️⃣ Luego ordenar por puntos
+return sortPoints==="desc"
+? b.points - a.points
+: a.points - b.points
+
+})
 
 /* RENDER */
 
