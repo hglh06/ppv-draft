@@ -3,6 +3,25 @@ import { supabase } from "../lib/supabase"
 
 export default function Pokedex() {
 
+  const [showAbove, setShowAbove] = useState(false)
+
+function handleOpen(e){
+
+  const rect = e.currentTarget.getBoundingClientRect()
+
+  const spaceBelow = window.innerHeight - rect.bottom
+  const spaceAbove = rect.top
+
+  const popupHeight = 250
+
+  if(spaceBelow < popupHeight && spaceAbove > popupHeight){
+    setShowAbove(true)
+  } else {
+    setShowAbove(false)
+  }
+
+}
+
   const [pokemon, setPokemon] = useState([])
   const [loading, setLoading] = useState(true)
   const [hoveredPokemon, setHoveredPokemon] = useState(null)
@@ -10,6 +29,7 @@ export default function Pokedex() {
   const [takenPokemon, setTakenPokemon] = useState([])
   const [search, setSearch] = useState("")
   const [hoverTimer, setHoverTimer] = useState(null)
+  
 
   useEffect(() => {
     loadPokedex()
@@ -185,10 +205,21 @@ setTakenPokemon(taken || [])
       x = rect.left - 330
     }
 
-    setPopupPosition({
-      x,
-      y: rect.top
-    })
+    let y = rect.top
+
+const popupHeight = 260 // aprox altura del popup
+const margin = 10
+
+if (y + popupHeight > window.innerHeight) {
+  y = rect.bottom - popupHeight
+
+  // fallback extra por si sigue saliéndose
+  if (y < margin) {
+    y = margin
+  }
+}
+
+setPopupPosition({ x, y })
 
     setHoveredPokemon(poke)
 
