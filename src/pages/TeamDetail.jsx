@@ -14,10 +14,16 @@ const [roster,setRoster]=useState([])
 const [matches,setMatches]=useState([])
 const [reports,setReports]=useState([])
 const [loading,setLoading]=useState(true)
+const [rosterSize, setRosterSize] = useState(10)
+
+
+
 
 useEffect(()=>{
 fetchTeam()
 },[teamId])
+
+
 
 async function fetchTeam(){
 
@@ -44,6 +50,16 @@ const { data: seasonState } = await supabase
 .single()
 
 const seasonId = seasonState?.season_id
+
+const { data: settings } = await supabase
+.from("league_settings")
+.select("roster_size")
+.eq("season_id", seasonId)
+.single()
+
+if (settings?.roster_size) {
+  setRosterSize(settings.roster_size)
+}
 
 
 // obtener roster
@@ -130,8 +146,8 @@ return <div className="text-center mt-20">Loading team...</div>
 
 const rosterSlots=[...roster]
 
-while(rosterSlots.length<10){
-rosterSlots.push(null)
+while(rosterSlots.length < rosterSize){
+  rosterSlots.push(null)
 }
 
 return(
@@ -349,7 +365,7 @@ Result
 
 <tbody>
 
-{Array.from({ length: 10 }).map((_, i) => {
+{Array.from({ length: rosterSize }).map((_, i) => {
 
 const match = matches[i]
 
