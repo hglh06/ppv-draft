@@ -179,7 +179,7 @@ className="w-36 mb-4"
 <div>{team.losses||0}</div>
 
 <div>Points</div>
-<div>{roster.reduce((s,p)=>s+(p?.points||0),0)}/130</div>
+<div>{roster.reduce((s,p)=>s+(p?.points||0),0)}/60</div>
 
 <div>FA Moves</div>
 <div>{team.fa_moves||0}</div>

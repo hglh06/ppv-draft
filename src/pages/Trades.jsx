@@ -21,7 +21,7 @@ export default function Trades() {
   const [partnerRoster, setPartnerRoster] = useState([])
 
   const [myRoster, setMyRoster] = useState([])
-const [pointsRemaining, setPointsRemaining] = useState(130)
+const [pointsRemaining, setPointsRemaining] = useState(60)
 
   const myWaiver = waivers.find(w => w.team?.name === team?.name)
   const faRemaining = 10 - (myWaiver?.fa_used || 0)
@@ -157,7 +157,7 @@ setPointsMap(map)
 const usedPoints =
 rosterData?.reduce((sum,r)=>sum+(map[r.pokedex?.name] || 0),0) || 0
 
-setPointsRemaining(130 - usedPoints)
+setPointsRemaining(60 - usedPoints)
 
     const taken = new Set()
 
