@@ -117,6 +117,7 @@ hiddenability
 )
 `)
 .eq("season_id",state.season_id)
+.eq("available", true)
 
 const map={}
 
@@ -126,11 +127,13 @@ map[p.pokemon_id]=p.points
 
 setPointsMap(map)
 
-const pickedIds=draftPicks?.map(p=>p.pokemon_id) || []
+const pickedIds = draftPicks?.map(p=>p.pokemon_id) || []
 
-const availablePokemon=
-seasonPokemon
-?.filter(p=>!pickedIds.includes(p.pokemon_id)) || []
+const availablePokemon =
+seasonPokemon?.map(p => ({
+  ...p,
+  drafted: pickedIds.includes(p.pokemon_id)
+})) || []
 
 setPokemon(availablePokemon)
 
@@ -413,6 +416,16 @@ fetchDraft()
 className="bg-yellow-500 text-white px-3 py-2 rounded-lg text-sm shadow hover:bg-yellow-600 transition"
 >
 Pausar
+</button>
+
+<button
+onClick={async ()=>{
+await supabase.rpc("force_auto_pick")
+fetchDraft()
+}}
+className="bg-orange-500 text-white px-3 py-2 rounded-lg text-sm shadow hover:bg-orange-600 transition"
+>
+Autopick
 </button>
 
 <button
@@ -828,7 +841,7 @@ setSortPoints(sortPoints==="desc" ? "asc" : "desc")
 Pts
 </th>
 
-<th>Types</th>
+<th className="text-center">Types</th>
 
 <th className="text-left">Abilities</th>
 
@@ -853,11 +866,15 @@ return(
 <tr
 key={p.pokemon_id}
 onClick={()=>{
+if(p.drafted) return
+
 if(draftState?.currentTeam?.user_id===user?.id){
 makePick(p.pokemon_id)
 }
 }}
-className="border-b hover:bg-slate-50 cursor-pointer"
+className={`border-b
+${p.drafted ? "bg-slate-100 opacity-50 cursor-not-allowed" : "hover:bg-slate-50 cursor-pointer"}
+`}
 >
 
 <td>
@@ -865,12 +882,25 @@ className="border-b hover:bg-slate-50 cursor-pointer"
 </td>
 
 <td className="font-medium">
+
+<div className="flex items-center gap-2">
+
 {p.pokedex.name}
+
+{p.drafted && (
+<span className="text-xs bg-red-500 text-white px-2 py-[2px] rounded">
+Drafted
+</span>
+)}
+
+</div>
+
 </td>
 
-<td>{p.points}</td>
+<td className="text-center">{p.points}</td>
 
-<td className="flex gap-1 items-center">
+<td className="text-center">
+  <div className="flex justify-center gap-1">
 
 <img
 src={p.pokedex.type1image}
@@ -884,6 +914,7 @@ className="h-4"
 />
 )}
 
+  </div>
 </td>
 
 <td className="text-xs text-slate-500">
