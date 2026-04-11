@@ -96,7 +96,7 @@ type2image:r.pokedex?.type2image,
 ability1:r.pokedex?.ability1,
 ability2:r.pokedex?.ability2,
 hidden:r.pokedex?.hiddenability,
-points:pointsMap || 0,
+points:pointsMap[r.pokemon_id] || 0,
 obtained:"Draft"
 }))
 setRoster(formatted)
@@ -241,8 +241,12 @@ return(
 
 {/* PERFORMANCE */}
 
-<div className="col-span-2">
-<TeamPokemonStats roster={rosterSlots} reports={reports}/>
+<div className="col-span-2 flex">
+<TeamPokemonStats
+  roster={rosterSlots}
+  reports={reports}
+  className="w-full h-full"
+/>
 </div>
 
 </div>
