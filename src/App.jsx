@@ -166,7 +166,7 @@ export default function App() {
 
   <img
     src="/logo-ppv.png"
-    className={`h-15 transition duration-500 ${
+    className={`h-11 transition duration-500 ${
       isHome && !scrolled ? "invert-0" : "invert"
     }`}
   />
