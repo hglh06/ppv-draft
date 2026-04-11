@@ -14,7 +14,7 @@ const [roster,setRoster]=useState([])
 const [matches,setMatches]=useState([])
 const [reports,setReports]=useState([])
 const [loading,setLoading]=useState(true)
-const [rosterSize, setRosterSize] = useState(10)
+const [rosterSize,setRosterSize]=useState(10)
 
 useEffect(()=>{
 fetchTeam()
@@ -45,14 +45,14 @@ const { data: seasonState } = await supabase
 
 const seasonId = seasonState?.season_id
 
-// roster size dinámico
+// 🔥 obtener roster_size dinámico
 const { data: settings } = await supabase
 .from("league_settings")
 .select("roster_size")
-.eq("season_id", seasonId)
+.eq("season_id",seasonId)
 .single()
 
-if (settings?.roster_size) {
+if(settings?.roster_size){
 setRosterSize(settings.roster_size)
 }
 
@@ -96,9 +96,10 @@ type2image:r.pokedex?.type2image,
 ability1:r.pokedex?.ability1,
 ability2:r.pokedex?.ability2,
 hidden:r.pokedex?.hiddenability,
-points:pointsMap[r.pokemon_id] || 0,
+points:pointsMap || 0,
 obtained:"Draft"
 }))
+
 setRoster(formatted)
 
 // matches
@@ -126,21 +127,23 @@ if(loading){
 return <div className="text-center mt-20">Loading team...</div>
 }
 
-// limitar roster
+// 🔥 limitar roster
 const limitedRoster = roster.slice(0, rosterSize)
 
-// slots dinámicos
+// 🔥 slots dinámicos
 const rosterSlots=[...limitedRoster]
 while(rosterSlots.length < rosterSize){
 rosterSlots.push(null)
 }
 
-// altura dinámica
+// 🔥 altura dinámica
 const rowHeight = Math.max(40, Math.floor(420 / rosterSize))
 
 return(
 
 <div className="px-12 pb-16">
+
+{/* TOP */}
 
 <div className="grid grid-cols-12 gap-8 mb-10 items-stretch">
 
@@ -163,7 +166,7 @@ return(
 <div>Title</div><div>{team.coach_title||"-"}</div>
 <div>Wins</div><div>{team.wins||0}</div>
 <div>Losses</div><div>{team.losses||0}</div>
-<div>Points</div><div>{roster.reduce((s,p)=>s+(p?.points||0),0)}/60</div>
+<div>Points</div><div>{roster.reduce((s,p)=>s+(p?.points||0),0)}/130</div>
 <div>FA Moves</div><div>{team.fa_moves||0}</div>
 <div>Favorite</div><div>{team.favorite_pokemon||"-"}</div>
 
@@ -235,6 +238,7 @@ return(
 })}
 
 </tbody>
+
 </table>
 
 </div>
@@ -242,11 +246,7 @@ return(
 {/* PERFORMANCE */}
 
 <div className="col-span-2 flex">
-<TeamPokemonStats
-  roster={rosterSlots}
-  reports={reports}
-  className="w-full h-full"
-/>
+<TeamPokemonStats roster={rosterSlots} reports={reports} rowHeight={rowHeight}/>
 </div>
 
 </div>
@@ -256,7 +256,7 @@ return(
 <div className="grid grid-cols-12 gap-8">
 
 <div className="col-span-8">
-<TeamTypeAnalysis roster={rosterSlots}/>
+<TeamTypeAnalysis roster={rosterSlots} rowHeight={rowHeight}/>
 </div>
 
 {/* MATCH HISTORY */}
@@ -326,6 +326,7 @@ return (
 })}
 
 </tbody>
+
 </table>
 
 </div>
@@ -337,3 +338,4 @@ return (
 )
 
 }
+
