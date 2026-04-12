@@ -961,7 +961,7 @@ Puntos restantes:
 
 <div className="grid grid-cols-5 gap-2 mb-6">
 
-{Array.from({length:8}).map((_,i)=>{
+{Array.from({length:10}).map((_,i)=>{
 
 const teamPicks =
 myTeamId
