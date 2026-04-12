@@ -23,9 +23,6 @@ const [showPanel,setShowPanel]=useState(false)
 const previousPickCount=useRef(0)
 const [pointsMap,setPointsMap]=useState({})
 const fetching = useRef(false)
-const audioRef = useRef(null)
-const [isMuted, setIsMuted] = useState(false)
-const [volume, setVolume] = useState(0.5)
 
 /* FETCH */
 
@@ -198,35 +195,6 @@ const elapsed = Math.floor(
   return () => clearInterval(interval)
 
 }, [draftState?.turn_started_at])
-
-useEffect(() => {
-
-  if (!audioRef.current) return
-
-  if (draftState?.is_active && !draftState?.is_finished) {
-
-    audioRef.current.loop = true
-    audioRef.current.volume = volume
-    audioRef.current.muted = isMuted
-
-    const playAudio = async () => {
-  try {
-    await audioRef.current.play()
-  } catch (e) {
-    console.log("Audio bloqueado hasta interacción")
-  }
-}
-
-playAudio()
-
-  } else {
-
-    audioRef.current.pause()
-    audioRef.current.currentTime = 0
-
-  }
-
-}, [draftState, isMuted, volume])
 
 /* UTIL */
 
@@ -408,14 +376,6 @@ const pointsRemaining = 65 - pointsUsed
 
 return(
 
-<>
-<audio
-  ref={audioRef}
-  src="https://ftqjbvtivchkcotgljbc.supabase.co/storage/v1/object/public/music/draftsong.mp3"
-  loop
-  preload="auto"
-/>
-
 <div className="h-screen flex flex-col">
 
 {/* ADMIN FLOATING CONTROLS */}
@@ -431,22 +391,8 @@ return(
 <>
 <button
 onClick={async ()=>{
-
-// 🔥 desbloquear audio correctamente
-if(audioRef.current){
-audioRef.current.muted = false
-audioRef.current.volume = volume
-
-try{
-await audioRef.current.play()
-audioRef.current.pause()
-audioRef.current.currentTime = 0
-}catch(e){}
-}
-
 await supabase.rpc("start_draft")
 fetchDraft()
-
 }}
 className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm shadow hover:bg-green-700 transition"
 >
@@ -583,27 +529,6 @@ Reset
 </div>
 
 )}
-
-<div className="fixed bottom-6 left-6 bg-white border rounded-xl p-3 shadow flex items-center gap-3 z-[9999]">
-
-<button
-onClick={() => setIsMuted(!isMuted)}
-className="text-sm px-2 py-1 rounded bg-slate-200 hover:bg-slate-300"
->
-{isMuted ? "🔇" : "🔊"}
-</button>
-
-<input
-type="range"
-min="0"
-max="1"
-step="0.01"
-value={volume}
-onChange={(e)=>setVolume(parseFloat(e.target.value))}
-className="w-24"
-/>
-
-</div>
 
 
 
@@ -1177,7 +1102,6 @@ segundos
 
 </div>
 
-</>
 )
 
 }
