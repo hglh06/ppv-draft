@@ -372,7 +372,7 @@ const pointsUsed = teamPicks.reduce((sum,p)=>{
 return sum + (pointsMap[p.pokemon_id] || 0)
 },0)
 
-const pointsRemaining = 65 - pointsUsed
+const pointsRemaining = 60 - pointsUsed
 
 return(
 

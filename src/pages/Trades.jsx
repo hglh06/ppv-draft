@@ -157,7 +157,7 @@ setPointsMap(map)
 const usedPoints =
 rosterData?.reduce((sum,r)=>sum+(map[r.pokedex?.name] || 0),0) || 0
 
-setPointsRemaining(65 - usedPoints)
+setPointsRemaining(60 - usedPoints)
 
     const taken = new Set()
 

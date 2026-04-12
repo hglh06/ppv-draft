@@ -178,7 +178,7 @@ return(
 <div>Title</div><div>{team.coach_title||"-"}</div>
 <div>Wins</div><div>{team.wins||0}</div>
 <div>Losses</div><div>{team.losses||0}</div>
-<div>Points</div><div>{roster.reduce((s,p)=>s+(p?.points||0),0)}/65</div>
+<div>Points</div><div>{roster.reduce((s,p)=>s+(p?.points||0),0)}/60</div>
 <div>FA Moves</div><div>{team.fa_moves||0}</div>
 <div>Favorite</div>
 
