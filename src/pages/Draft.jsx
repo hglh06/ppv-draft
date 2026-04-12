@@ -209,7 +209,15 @@ useEffect(() => {
     audioRef.current.volume = volume
     audioRef.current.muted = isMuted
 
-    audioRef.current.play().catch(() => {})
+    const playAudio = async () => {
+  try {
+    await audioRef.current.play()
+  } catch (e) {
+    console.log("Audio bloqueado hasta interacción")
+  }
+}
+
+playAudio()
 
   } else {
 
@@ -418,8 +426,15 @@ return(
 <>
 <button
 onClick={async ()=>{
+
+// 👇 esto desbloquea el audio
+if(audioRef.current){
+audioRef.current.play().catch(()=>{})
+}
+
 await supabase.rpc("start_draft")
 fetchDraft()
+
 }}
 className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm shadow hover:bg-green-700 transition"
 >
@@ -556,6 +571,27 @@ Reset
 </div>
 
 )}
+
+<div className="fixed bottom-6 left-6 bg-white border rounded-xl p-3 shadow flex items-center gap-3 z-50">
+
+<button
+onClick={() => setIsMuted(!isMuted)}
+className="text-sm px-2 py-1 rounded bg-slate-200 hover:bg-slate-300"
+>
+{isMuted ? "🔇" : "🔊"}
+</button>
+
+<input
+type="range"
+min="0"
+max="1"
+step="0.01"
+value={volume}
+onChange={(e)=>setVolume(parseFloat(e.target.value))}
+className="w-24"
+/>
+
+</div>
 
 
 
