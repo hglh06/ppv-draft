@@ -409,7 +409,12 @@ const pointsRemaining = 65 - pointsUsed
 return(
 
 <>
-<audio ref={audioRef} src="/sounds/draftsong.mp3" />
+<audio
+  ref={audioRef}
+  src="https://ftqjbvtivchkcotgljbc.supabase.co/storage/v1/object/public/music/draftsong.mp3"
+  loop
+  preload="auto"
+/>
 
 <div className="h-screen flex flex-col">
 
