@@ -23,6 +23,9 @@ const [showPanel,setShowPanel]=useState(false)
 const previousPickCount=useRef(0)
 const [pointsMap,setPointsMap]=useState({})
 const fetching = useRef(false)
+const audioRef = useRef(null)
+const [isMuted, setIsMuted] = useState(false)
+const [volume, setVolume] = useState(0.5)
 
 /* FETCH */
 
@@ -195,6 +198,27 @@ const elapsed = Math.floor(
   return () => clearInterval(interval)
 
 }, [draftState?.turn_started_at])
+
+useEffect(() => {
+
+  if (!audioRef.current) return
+
+  if (draftState?.is_active && !draftState?.is_finished) {
+
+    audioRef.current.loop = true
+    audioRef.current.volume = volume
+    audioRef.current.muted = isMuted
+
+    audioRef.current.play().catch(() => {})
+
+  } else {
+
+    audioRef.current.pause()
+    audioRef.current.currentTime = 0
+
+  }
+
+}, [draftState, isMuted, volume])
 
 /* UTIL */
 
@@ -375,6 +399,9 @@ return sum + (pointsMap[p.pokemon_id] || 0)
 const pointsRemaining = 65 - pointsUsed
 
 return(
+
+<>
+<audio ref={audioRef} src="/sounds/draftsong.mp3" />
 
 <div className="h-screen flex flex-col">
 
@@ -1102,6 +1129,7 @@ segundos
 
 </div>
 
+</>
 )
 
 }
