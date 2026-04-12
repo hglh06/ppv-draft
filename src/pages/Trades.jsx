@@ -377,7 +377,7 @@ function removeReceiveSlot(index) {
 
         {/* HISTORIAL */}
 
-        <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm flex flex-col h-full">
+        <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm flex flex-col max-h-[500px]">
 
           <h3 className="text-lg font-semibold text-slate-700 mb-4">
             Historial
@@ -409,14 +409,14 @@ function removeReceiveSlot(index) {
                 <div className="text-xs mt-1">
 
                   <span className="text-red-600">
-                    {tx.give?.join(", ")}
-                  </span>
+  {tx.give?.map(p => `${p} (${pointsMap[p] || 0})`).join(", ")}
+</span>
 
-                  {" → "}
+{" ↔ "}
 
-                  <span className="text-green-600">
-                    {tx.receive?.join(", ")}
-                  </span>
+<span className="text-green-600">
+  {tx.receive?.map(p => `${p} (${pointsMap[p] || 0})`).join(", ")}
+</span>
 
                 </div>
 
@@ -592,50 +592,7 @@ function removeReceiveSlot(index) {
               ))}
           </select>
 
-          {tradeGive.map((value, i) => (
-
-  <div key={i} className="flex gap-2 mb-2">
-
-    <select
-      value={value}
-      onChange={e => {
-        const updated = [...tradeGive]
-        updated[i] = e.target.value
-        setTradeGive(updated)
-      }}
-      className="w-full border p-2 rounded"
-    >
-
-      <option value="">Dar</option>
-
-      {myRoster.map(p => (
-  <option key={p} value={p}>
-    {p} ({pointsMap[p] || 0})
-  </option>
-))}
-
-    </select>
-
-    {tradeGive.length > 1 && (
-      <button
-        onClick={() => removeGiveSlot(i)}
-        className="px-2 text-red-600 hover:text-red-800"
-      >
-        ❌
-      </button>
-    )}
-
-  </div>
-
-))}
-
-          <button
-            onClick={() => setTradeGive([...tradeGive, ""])}
-            className="text-sm text-blue-600 mb-4"
-          >
-            + Agregar otro
-          </button>
-
+          
           {tradeReceive.map((value, i) => (
 
   <div key={i} className="flex gap-2 mb-2">
@@ -652,7 +609,9 @@ function removeReceiveSlot(index) {
 
       <option value="">Recibir</option>
 
-      {partnerRoster.map(p => (
+      {partnerRoster
+  .filter(p => !tradeReceive.includes(p) || p === value)
+  .map(p => (
   <option key={p} value={p}>
     {p} ({pointsMap[p] || 0})
   </option>
@@ -675,6 +634,52 @@ function removeReceiveSlot(index) {
 
           <button
             onClick={() => setTradeReceive([...tradeReceive, ""])}
+            className="text-sm text-blue-600 mb-4"
+          >
+            + Agregar otro
+          </button>
+
+          {tradeGive.map((value, i) => (
+
+  <div key={i} className="flex gap-2 mb-2">
+
+    <select
+      value={value}
+      onChange={e => {
+        const updated = [...tradeGive]
+        updated[i] = e.target.value
+        setTradeGive(updated)
+      }}
+      className="w-full border p-2 rounded"
+    >
+
+      <option value="">Dar</option>
+
+      {myRoster
+  .filter(p => !tradeGive.includes(p) || p === value)
+  .map(p => (
+  <option key={p} value={p}>
+    {p} ({pointsMap[p] || 0})
+  </option>
+))}
+
+    </select>
+
+    {tradeGive.length > 1 && (
+      <button
+        onClick={() => removeGiveSlot(i)}
+        className="px-2 text-red-600 hover:text-red-800"
+      >
+        ❌
+      </button>
+    )}
+
+  </div>
+
+))}
+
+          <button
+            onClick={() => setTradeGive([...tradeGive, ""])}
             className="text-sm text-blue-600 mb-4"
           >
             + Agregar otro
