@@ -23,6 +23,10 @@ const [showPanel,setShowPanel]=useState(false)
 const previousPickCount=useRef(0)
 const [pointsMap,setPointsMap]=useState({})
 const fetching = useRef(false)
+const audioRef = useRef(null)
+const [audioEnabled, setAudioEnabled] = useState(false)
+const [isMuted, setIsMuted] = useState(false)
+const [volume, setVolume] = useState(0.5)
 
 /* FETCH */
 
@@ -78,9 +82,11 @@ type2
 
 if(draftPicks?.length > previousPickCount.current){
 
+if(audioEnabled){
 const audio=new Audio("/sounds/pick.mp3")
 audio.volume=1
-audio.play()
+audio.play().catch(()=>{})
+}
 
 }
 
@@ -195,6 +201,26 @@ const elapsed = Math.floor(
   return () => clearInterval(interval)
 
 }, [draftState?.turn_started_at])
+
+useEffect(() => {
+
+if (!audioRef.current || !audioEnabled) return
+
+if (draftState?.is_active && !draftState?.is_finished) {
+
+audioRef.current.volume = volume
+audioRef.current.muted = isMuted
+
+audioRef.current.play().catch(()=>{})
+
+} else {
+
+audioRef.current.pause()
+audioRef.current.currentTime = 0
+
+}
+
+}, [draftState, audioEnabled, isMuted, volume])
 
 /* UTIL */
 
@@ -375,6 +401,12 @@ return sum + (pointsMap[p.pokemon_id] || 0)
 const pointsRemaining = 65 - pointsUsed
 
 return(
+<>
+<audio
+  ref={audioRef}
+  src="https://ftqjbvtivchkcotgljbc.supabase.co/storage/v1/object/public/music/draftsong.mp3"
+  loop
+/>
 
 <div className="h-screen flex flex-col">
 
@@ -391,8 +423,21 @@ return(
 <>
 <button
 onClick={async ()=>{
+
+// 🔥 activar audio
+setAudioEnabled(true)
+
+if(audioRef.current){
+try{
+audioRef.current.volume = volume
+audioRef.current.muted = isMuted
+await audioRef.current.play()
+}catch(e){}
+}
+
 await supabase.rpc("start_draft")
 fetchDraft()
+
 }}
 className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm shadow hover:bg-green-700 transition"
 >
@@ -529,6 +574,27 @@ Reset
 </div>
 
 )}
+
+<div className="fixed bottom-6 left-6 bg-white border rounded-xl p-3 shadow flex items-center gap-3 z-[9999]">
+
+<button
+onClick={() => setIsMuted(!isMuted)}
+className="text-sm px-2 py-1 rounded bg-slate-200"
+>
+{isMuted ? "🔇" : "🔊"}
+</button>
+
+<input
+type="range"
+min="0"
+max="1"
+step="0.01"
+value={volume}
+onChange={(e)=>setVolume(parseFloat(e.target.value))}
+className="w-24"
+/>
+
+</div>
 
 
 
@@ -1101,6 +1167,8 @@ segundos
 </div>
 
 </div>
+
+</>
 
 )
 
