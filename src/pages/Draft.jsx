@@ -427,9 +427,16 @@ return(
 <button
 onClick={async ()=>{
 
-// 👇 esto desbloquea el audio
+// 🔥 desbloquear audio correctamente
 if(audioRef.current){
-audioRef.current.play().catch(()=>{})
+audioRef.current.muted = false
+audioRef.current.volume = volume
+
+try{
+await audioRef.current.play()
+audioRef.current.pause()
+audioRef.current.currentTime = 0
+}catch(e){}
 }
 
 await supabase.rpc("start_draft")
@@ -572,7 +579,7 @@ Reset
 
 )}
 
-<div className="fixed bottom-6 left-6 bg-white border rounded-xl p-3 shadow flex items-center gap-3 z-50">
+<div className="fixed bottom-6 left-6 bg-white border rounded-xl p-3 shadow flex items-center gap-3 z-[9999]">
 
 <button
 onClick={() => setIsMuted(!isMuted)}
