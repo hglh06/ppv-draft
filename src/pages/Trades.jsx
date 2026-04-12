@@ -360,7 +360,7 @@ function removeReceiveSlot(index) {
             </div>
 
             <div>
-              <span className="font-medium">Roster:</span> {myRoster.length} / 10
+              <span className="font-medium">Roster:</span> {myRoster.length} / 8
             </div>
 
             <div>
