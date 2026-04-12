@@ -15,6 +15,7 @@ const [matches,setMatches]=useState([])
 const [reports,setReports]=useState([])
 const [loading,setLoading]=useState(true)
 const [rosterSize,setRosterSize]=useState(10)
+const [favoriteData, setFavoriteData] = useState(null)
 
 useEffect(()=>{
 fetchTeam()
@@ -36,6 +37,17 @@ return
 }
 
 setTeam(teamData)
+
+if (teamData.favorite_pokemon) {
+
+  const { data: fav } = await supabase
+    .from("pokedex")
+    .select("name, sprite")
+    .eq("name", teamData.favorite_pokemon)
+    .maybeSingle()
+
+  setFavoriteData(fav)
+}
 
 // season actual
 const { data: seasonState } = await supabase
@@ -166,9 +178,20 @@ return(
 <div>Title</div><div>{team.coach_title||"-"}</div>
 <div>Wins</div><div>{team.wins||0}</div>
 <div>Losses</div><div>{team.losses||0}</div>
-<div>Points</div><div>{roster.reduce((s,p)=>s+(p?.points||0),0)}/60</div>
+<div>Points</div><div>{roster.reduce((s,p)=>s+(p?.points||0),0)}/65</div>
 <div>FA Moves</div><div>{team.fa_moves||0}</div>
-<div>Favorite</div><div>{team.favorite_pokemon||"-"}</div>
+<div>Favorite</div>
+
+<div className="flex items-center gap-2">
+  {favoriteData ? (
+    <>
+      <img src={favoriteData.sprite} className="w-8" />
+      {favoriteData.name}
+    </>
+  ) : (
+    "-"
+  )}
+</div>
 
 </div>
 
