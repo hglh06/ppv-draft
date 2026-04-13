@@ -26,7 +26,7 @@ function handleOpen(e){
   const [loading, setLoading] = useState(true)
   const [hoveredPokemon, setHoveredPokemon] = useState(null)
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 })
-  const [takenPokemon, setTakenPokemon] = useState([])
+  const [takenPokemon, setTakenPokemon] = useState({})
   const [search, setSearch] = useState("")
   const [hoverTimer, setHoverTimer] = useState(null)
   
@@ -87,12 +87,25 @@ function handleOpen(e){
    const { data: rosterData } = await supabase
   .from("rosters")
   .select(`
-    pokedex(name)
+    pokedex(name),
+    team:team_id (
+      name,
+      logo
+    )
   `)
 
-const taken = rosterData?.map(r => r.pokedex?.name)
+const map = {}
 
-setTakenPokemon(taken || [])
+rosterData?.forEach(r => {
+  if(r.pokedex?.name){
+    map[r.pokedex.name] = {
+      name: r.team?.name,
+      logo: r.team?.logo
+    }
+  }
+})
+
+setTakenPokemon(map)
     setPokemon(merged)
     setLoading(false)
   }
@@ -181,7 +194,7 @@ setTakenPokemon(taken || [])
 .map(p => {
 
                     const poke = p.pokedex
-                    const isTaken = takenPokemon.includes(poke.name)
+                    const isTaken = !!takenPokemon[poke.name]
 
                     return (
                       <div
@@ -192,8 +205,6 @@ setTakenPokemon(taken || [])
                           : "hover:bg-slate-50 cursor-pointer"}
                       `}
                         onMouseEnter={(e) => {
-
-  if (isTaken) return
 
   const rect = e.currentTarget.getBoundingClientRect()
 
@@ -221,7 +232,10 @@ if (y + popupHeight > window.innerHeight) {
 
 setPopupPosition({ x, y })
 
-    setHoveredPokemon(poke)
+    setHoveredPokemon({
+  ...poke,
+  team: takenPokemon[poke.name] || null
+})
 
   }, 1000)
 
@@ -299,6 +313,23 @@ function PokemonPopup({ pokemon, position }) {
         <h3 className="text-xl font-bold text-slate-800">
           {pokemon.name}
         </h3>
+
+        {pokemon.team && (
+  <div className="flex items-center gap-2 mt-2">
+
+    {pokemon.team.logo && (
+      <img
+        src={pokemon.team.logo}
+        className="w-6 h-6 object-contain"
+      />
+    )}
+
+    <span className="text-xs text-slate-500">
+      {pokemon.team.name}
+    </span>
+
+  </div>
+)}
       </div>
 
       <div className="flex gap-4 mb-4">
