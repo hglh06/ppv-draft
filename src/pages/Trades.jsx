@@ -12,8 +12,8 @@ export default function Trades() {
   const [freeAgents, setFreeAgents] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const [selectedGiveFA, setSelectedGiveFA] = useState("")
-  const [selectedReceiveFA, setSelectedReceiveFA] = useState("")
+  const [selectedGiveFA, setSelectedGiveFA] = useState([""])
+  const [selectedReceiveFA, setSelectedReceiveFA] = useState([""])
 
   const [tradePartner, setTradePartner] = useState("")
   const [tradeGive, setTradeGive] = useState([""])
@@ -21,7 +21,7 @@ export default function Trades() {
   const [partnerRoster, setPartnerRoster] = useState([])
 
   const [myRoster, setMyRoster] = useState([])
-const [pointsRemaining, setPointsRemaining] = useState(60)
+  const [pointsRemaining, setPointsRemaining] = useState(60)
 
   const myWaiver = waivers.find(w => w.team?.name === team?.name)
   const faRemaining = 10 - (myWaiver?.fa_used || 0)
@@ -209,12 +209,12 @@ setLoading(false)
 
   await supabase.rpc("request_free_agent", {
     p_team_id: team.id,
-    p_give: selectedGiveFA ? [selectedGiveFA] : [],
-    p_receive: selectedReceiveFA ? [selectedReceiveFA] : []
+    p_give: selectedGiveFA.filter(Boolean),
+    p_receive: selectedReceiveFA.filter(Boolean)
   })
 
-  setSelectedGiveFA("")
-  setSelectedReceiveFA("")
+  setSelectedGiveFA([""])
+  setSelectedReceiveFA([""])
   fetchData()
 }
 
@@ -534,31 +534,105 @@ function removeReceiveSlot(index) {
             Free Agency
           </h3>
 
-          <select
-            value={selectedGiveFA}
-            onChange={e => setSelectedGiveFA(e.target.value)}
-            className="w-full border p-2 rounded mb-4"
-          >
-            <option value="">Soltar (opcional)</option>
-            {myRoster.map(p => (
-  <option key={p} value={p}>
-    {p} ({pointsMap[p] || 0})
-  </option>
-))}
-          </select>
+          {selectedGiveFA.map((value, i) => (
 
-          <select
-            value={selectedReceiveFA}
-            onChange={e => setSelectedReceiveFA(e.target.value)}
-            className="w-full border p-2 rounded mb-4"
-          >
-            <option value="">Recoger</option>
-            {freeAgents.map(p => (
-  <option key={p} value={p}>
-    {p} ({pointsMap[p] || 0})
-  </option>
+  <div key={i} className="flex gap-2 mb-2">
+
+    <select
+      value={value}
+      onChange={e => {
+        const updated = [...selectedGiveFA]
+        updated[i] = e.target.value
+        setSelectedGiveFA(updated)
+      }}
+      className="w-full border p-2 rounded"
+    >
+
+      <option value="">Soltar (opcional)</option>
+
+      {myRoster
+        .filter(p => !selectedGiveFA.includes(p) || p === value)
+        .map(p => (
+          <option key={p} value={p}>
+            {p} ({pointsMap[p] || 0})
+          </option>
+        ))}
+
+    </select>
+
+    {selectedGiveFA.length > 1 && (
+      <button
+        onClick={() => {
+          const updated = [...selectedGiveFA]
+          updated.splice(i,1)
+          setSelectedGiveFA(updated)
+        }}
+        className="px-2 text-red-600"
+      >
+        ❌
+      </button>
+    )}
+
+  </div>
+
 ))}
-          </select>
+
+<button
+  onClick={() => setSelectedGiveFA([...selectedGiveFA, ""])}
+  className="text-sm text-blue-600 mb-4"
+>
+  + Agregar otro
+</button>
+
+          {selectedReceiveFA.map((value, i) => (
+
+  <div key={i} className="flex gap-2 mb-2">
+
+    <select
+      value={value}
+      onChange={e => {
+        const updated = [...selectedReceiveFA]
+        updated[i] = e.target.value
+        setSelectedReceiveFA(updated)
+      }}
+      className="w-full border p-2 rounded"
+    >
+
+      <option value="">Recoger</option>
+
+      {freeAgents
+        .filter(p => !selectedReceiveFA.includes(p) || p === value)
+        .map(p => (
+          <option key={p} value={p}>
+            {p} ({pointsMap[p] || 0})
+          </option>
+        ))}
+
+    </select>
+
+    {selectedReceiveFA.length > 1 && (
+      <button
+        onClick={() => {
+          const updated = [...selectedReceiveFA]
+          updated.splice(i,1)
+          setSelectedReceiveFA(updated)
+        }}
+        className="px-2 text-red-600"
+      >
+        ❌
+      </button>
+    )}
+
+  </div>
+
+))}
+
+<button
+  onClick={() => setSelectedReceiveFA([...selectedReceiveFA, ""])}
+  className="text-sm text-blue-600 mb-4"
+>
+  + Agregar otro
+</button>
 
           <button
             onClick={sendFreeAgent}
