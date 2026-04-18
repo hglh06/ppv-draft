@@ -215,7 +215,10 @@ function MatchCard({ match, onClick }) {
     ).length
 
     if (match.status === "completed") {
-  scoreDisplay = winsA > winsB ? "Winner: " + teamAName : "Winner: " + teamBName
+  scoreDisplay =
+    winsA > winsB
+      ? "Winner: " + match.teamA?.name
+      : "Winner: " + match.teamB?.name
 }
   }
 
