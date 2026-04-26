@@ -154,26 +154,6 @@ const finalGames = validGames.map(g => ({
   replay: g.replay || null
 }))
 
-const validGames = games.filter(g => g.winner !== "")
-
-if (validGames.length < 2) {
-  alert("Debes seleccionar al menos 2 juegos")
-  return
-}
-
-const winsA = validGames.filter(g => g.winner === "teamA").length
-const winsB = validGames.filter(g => g.winner === "teamB").length
-
-let matchWinner = null
-
-if (winsA === 2) matchWinner = "teamA"
-if (winsB === 2) matchWinner = "teamB"
-
-if (!matchWinner) {
-  alert("El match no está completo")
-  return
-}
-
 const formatSide=(selected,sideStats)=>
   selected.map((name,rowIndex)=>{
 
