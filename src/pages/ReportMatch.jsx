@@ -23,6 +23,12 @@ teamA:createEmptyStats(),
 teamB:createEmptyStats()
 })
 
+const [games, setGames] = useState([
+  { winner: "" },
+  { winner: "" },
+  { winner: "" }
+])
+
 function createEmptyStats(){
 return Array(6).fill().map(()=>({
 games:[
@@ -136,6 +142,13 @@ if(validReplays.length < 2){
   return
 }
 
+const validGames = games.filter(g => g.winner !== "")
+
+if (validGames.length < 2) {
+  alert("Debes seleccionar al menos 2 juegos")
+  return
+}
+
 const formatSide=(selected,sideStats)=>
   selected.map((name,rowIndex)=>{
 
@@ -216,6 +229,32 @@ return(
     </select>
 
   </div>
+
+  <div className="space-y-2">
+  <div className="font-semibold">Resultados por juego</div>
+
+  {[0,1,2].map((i) => (
+    <div key={i} className="flex gap-2 items-center">
+
+      <span>Game {i + 1}</span>
+
+      <select
+        value={games[i].winner}
+        onChange={(e) => {
+          const newGames = [...games]
+          newGames[i].winner = e.target.value
+          setGames(newGames)
+        }}
+        className="border rounded px-2 py-1"
+      >
+        <option value="">Seleccionar</option>
+        <option value="teamA">Team A</option>
+        <option value="teamB">Team B</option>
+      </select>
+
+    </div>
+  ))}
+</div>
 
   <div className="mb-6 space-y-2">
 
