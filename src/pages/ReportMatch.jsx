@@ -243,8 +243,8 @@ return(
           className="border rounded px-2 py-1 w-full"
         >
           <option value="">Seleccionar</option>
-          <option value="teamA">Team A</option>
-          <option value="teamB">Team B</option>
+          <option value="teamA">{match.teamA?.name}</option>
+          <option value="teamB">{match.teamB?.name}</option>
         </select>
 
       </div>
