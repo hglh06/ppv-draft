@@ -420,6 +420,15 @@ function removeReceiveSlot(index) {
 
                 </div>
 
+                <div className="text-xs text-slate-500 mt-2">
+  {tx.approved_at
+    ? new Date(tx.approved_at).toLocaleString("es-MX", {
+        dateStyle: "medium",
+        timeStyle: "short"
+      })
+    : ""}
+</div>
+
               </div>
 
             ))}
