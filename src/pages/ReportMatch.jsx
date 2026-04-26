@@ -4,7 +4,6 @@ import React from "react"
 
 export default function ReportMatch({ match, onClose }) {
 
-const [winner,setWinner] = useState("")
 const [submitting,setSubmitting] = useState(false)
 const [success,setSuccess] = useState(false)
 
@@ -15,8 +14,6 @@ const [replays,setReplays] = useState(["","",""])
 
 const [teamASelected,setTeamASelected] = useState(Array(6).fill(""))
 const [teamBSelected,setTeamBSelected] = useState(Array(6).fill(""))
-
-const [winners,setWinners] = useState(["","",""])
 
 const [stats,setStats] = useState({
 teamA:createEmptyStats(),
@@ -121,10 +118,6 @@ async function submitReport(){
 const uniqueA = new Set(teamASelected)
 const uniqueB = new Set(teamBSelected)
 
-if(!winner){
-  alert("You must select the match winner")
-  return
-}
 
 if(uniqueA.size!==6 || teamASelected.includes("")){
   alert("Team A must select 6 different Pokémon")
@@ -136,16 +129,48 @@ if(uniqueB.size!==6 || teamBSelected.includes("")){
   return
 }
 
-const validReplays = replays.filter(r=>r.trim()!=="")
-if(validReplays.length < 2){
-  alert("At least 2 replays are required")
+const validGames = games.filter(g => g.winner !== "")
+
+if (validGames.length < 2) {
+  alert("Debes seleccionar al menos 2 juegos")
   return
 }
+
+const winsA = validGames.filter(g => g.winner === "teamA").length
+const winsB = validGames.filter(g => g.winner === "teamB").length
+
+let matchWinner = null
+
+if (winsA === 2) matchWinner = "teamA"
+if (winsB === 2) matchWinner = "teamB"
+
+if (!matchWinner) {
+  alert("El match no está completo")
+  return
+}
+
+const finalGames = validGames.map(g => ({
+  winner: g.winner,
+  replay: g.replay || null
+}))
 
 const validGames = games.filter(g => g.winner !== "")
 
 if (validGames.length < 2) {
   alert("Debes seleccionar al menos 2 juegos")
+  return
+}
+
+const winsA = validGames.filter(g => g.winner === "teamA").length
+const winsB = validGames.filter(g => g.winner === "teamB").length
+
+let matchWinner = null
+
+if (winsA === 2) matchWinner = "teamA"
+if (winsB === 2) matchWinner = "teamB"
+
+if (!matchWinner) {
+  alert("El match no está completo")
   return
 }
 
@@ -173,15 +198,14 @@ const formatSide=(selected,sideStats)=>
 setSubmitting(true)
 
 const { error } = await supabase
-.from("reports")
-.insert([{
-  match_id:match.id,
-  winner:winner,
-  replays:validReplays,
-  team_a_data:formatSide(teamASelected,stats.teamA),
-  team_b_data:formatSide(teamBSelected,stats.teamB),
-  status:"pending"
-}])
+  .from("matches")
+  .update({
+    games: finalGames,
+    winner: matchWinner,
+    replays: finalGames.map(g => g.replay),
+    status: "completed"
+  })
+  .eq("id", match.id)
 
 if(error){
   console.error(error)
@@ -212,72 +236,70 @@ return(
     Report: {match.teamA?.name} vs {match.teamB?.name}
   </h3>
 
-  <div className="mb-6">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-    <h4 className="font-semibold text-slate-700 mb-2">
-      Match Winner
-    </h4>
+  {/* IZQUIERDA - GAMES */}
+  <div className="space-y-3">
+    <div className="font-semibold">Resultados por juego</div>
 
-    <select
-      value={winner}
-      onChange={e=>setWinner(e.target.value)}
-      className="border border-slate-200 p-2 rounded w-full"
-    >
-      <option value="">Select Winner</option>
-      <option value={match.teamA?.name}>{match.teamA?.name}</option>
-      <option value={match.teamB?.name}>{match.teamB?.name}</option>
-    </select>
+    {[0,1,2].map((i) => (
+      <div key={i} className="flex items-center gap-2">
 
-  </div>
+        <span className="w-16">Game {i + 1}</span>
 
-  <div className="space-y-2">
-  <div className="font-semibold">Resultados por juego</div>
+        <select
+          value={games[i].winner}
+          onChange={(e) => {
+            const newGames = [...games]
+            newGames[i].winner = e.target.value
 
-  {[0,1,2].map((i) => (
-    <div key={i} className="flex gap-2 items-center">
+            // 🔥 limpiar replay si quitan winner
+            if (!e.target.value) {
+              newGames[i].replay = ""
+            }
 
-      <span>Game {i + 1}</span>
+            setGames(newGames)
+          }}
+          className="border rounded px-2 py-1 w-full"
+        >
+          <option value="">Seleccionar</option>
+          <option value="teamA">Team A</option>
+          <option value="teamB">Team B</option>
+        </select>
 
-      <select
-        value={games[i].winner}
-        onChange={(e) => {
-          const newGames = [...games]
-          newGames[i].winner = e.target.value
-          setGames(newGames)
-        }}
-        className="border rounded px-2 py-1"
-      >
-        <option value="">Seleccionar</option>
-        <option value="teamA">Team A</option>
-        <option value="teamB">Team B</option>
-      </select>
-
-    </div>
-  ))}
-</div>
-
-  <div className="mb-6 space-y-2">
-
-    <h4 className="font-semibold text-slate-700">
-      Replay Links
-    </h4>
-
-    {replays.map((link,index)=>(
-      <input
-        key={index}
-        type="text"
-        placeholder={`Replay ${index+1}`}
-        value={link}
-        onChange={e=>{
-          const updated=[...replays]
-          updated[index]=e.target.value
-          setReplays(updated)
-        }}
-        className="border border-slate-200 p-2 rounded w-full"
-      />
+      </div>
     ))}
-
   </div>
+
+  {/* DERECHA - REPLAYS */}
+  <div className="space-y-3">
+    <div className="font-semibold">Replays</div>
+
+    {[0,1,2].map((i) => (
+      <div key={i} className="flex items-center gap-2">
+
+        <span className="w-16">Game {i + 1}</span>
+
+        <input
+          type="text"
+          value={games[i].replay || ""}
+          onChange={(e) => {
+            const newGames = [...games]
+            newGames[i].replay = e.target.value
+            setGames(newGames)
+          }}
+          placeholder="Link replay"
+          disabled={!games[i].winner} // 🔥 CLAVE
+          className={`border rounded px-2 py-1 w-full ${
+            !games[i].winner ? "bg-gray-100 opacity-50" : ""
+          }`}
+        />
+
+      </div>
+    ))}
+  </div>
+
+</div>
 
   <div className="grid grid-cols-2 gap-10">
 
