@@ -25,6 +25,7 @@ export default function App() {
 const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [draftActive, setDraftActive] = useState(false)
   const [pendingTrades, setPendingTrades] = useState(false)
+  const hamburgerRef = useRef(null)
 
   const menuRef = useRef(null)
 
@@ -104,11 +105,13 @@ const [userMenuOpen, setUserMenuOpen] = useState(false)
     }
 
     if (
-      mobileMenuRef.current &&
-      !mobileMenuRef.current.contains(event.target)
-    ) {
-      setMobileMenuOpen(false)
-    }
+  mobileMenuRef.current &&
+  !mobileMenuRef.current.contains(event.target) &&
+  hamburgerRef.current &&
+  !hamburgerRef.current.contains(event.target)
+) {
+  setMobileMenuOpen(false)
+}
 
   }
 
@@ -197,6 +200,7 @@ const [userMenuOpen, setUserMenuOpen] = useState(false)
 
 {/* DERECHA (HAMBURGUESA SOLO MOBILE) */}
 <button
+ref={hamburgerRef}
   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
   className="md:hidden text-2xl"
 >
@@ -209,7 +213,7 @@ const [userMenuOpen, setUserMenuOpen] = useState(false)
     className="md:hidden absolute top-16 right-4 z-50"
   >
 
-    <div className="bg-white w-52 rounded-xl shadow-lg p-4 flex flex-col gap-3">
+    <div className="bg-white text-slate-900 w-52 rounded-xl shadow-lg p-4 flex flex-col gap-3">
 
       <NavLink to="/" onClick={()=>setMobileMenuOpen(false)}>Home</NavLink>
       <NavLink to="/standings" onClick={()=>setMobileMenuOpen(false)}>Standings</NavLink>
