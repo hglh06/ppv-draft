@@ -19,7 +19,7 @@ export default function App() {
 
   const { isAdmin, user, team, logout } = useAuth()
   const location = useLocation()
-
+  const mobileMenuRef = useRef(null)
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -94,19 +94,31 @@ const [userMenuOpen, setUserMenuOpen] = useState(false)
 
   useEffect(() => {
 
-    function handleClickOutside(event) {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setMenuOpen(false)
-      }
+  function handleClickOutside(event) {
+
+    if (
+      menuRef.current &&
+      !menuRef.current.contains(event.target)
+    ) {
+      setUserMenuOpen(false)
     }
 
-    document.addEventListener("mousedown", handleClickOutside)
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
+    if (
+      mobileMenuRef.current &&
+      !mobileMenuRef.current.contains(event.target)
+    ) {
+      setMobileMenuOpen(false)
     }
 
-  }, [])
+  }
+
+  document.addEventListener("mousedown", handleClickOutside)
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside)
+  }
+
+}, [])
 
   useEffect(() => {
 
@@ -192,7 +204,10 @@ const [userMenuOpen, setUserMenuOpen] = useState(false)
 </button>
 
 {mobileMenuOpen && (
-  <div className="md:hidden absolute top-16 right-4 z-50">
+  <div
+    ref={mobileMenuRef}
+    className="md:hidden absolute top-16 right-4 z-50"
+  >
 
     <div className="bg-white w-52 rounded-xl shadow-lg p-4 flex flex-col gap-3">
 
@@ -204,13 +219,13 @@ const [userMenuOpen, setUserMenuOpen] = useState(false)
       <NavLink to="/teams" onClick={()=>setMobileMenuOpen(false)}>Teams</NavLink>
 
       {user && (
-        <NavLink to="/trades" onClick={() => setUserMenuOpen(!userMenuOpen)}>
+        <NavLink to="/trades" onClick={() => setMobileMenuOpen(false)}>
           Trades
         </NavLink>
       )}
 
       {isAdmin && (
-        <NavLink to="/admin/reports" onClick={() => setUserMenuOpen(!userMenuOpen)}>
+        <NavLink to="/admin/reports" onClick={() => setMobileMenuOpen(false)}>
           Reports
         </NavLink>
       )}
@@ -224,7 +239,7 @@ const [userMenuOpen, setUserMenuOpen] = useState(false)
       {user && (
         <button
           onClick={() => {
-            setUserMenuOpen(false)
+            setMobileMenuOpen(false)
             logout()
           }}
           className="text-red-600 text-left"
@@ -303,7 +318,7 @@ const [userMenuOpen, setUserMenuOpen] = useState(false)
 
               {/* TEAM ICON */}
               <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="flex items-center"
               >
 
@@ -320,7 +335,7 @@ const [userMenuOpen, setUserMenuOpen] = useState(false)
               </button>
 
               {/* DROPDOWN MENU */}
-              {mobileMenuOpen && (
+              {userMenuOpen && (
                 <div className="absolute right-0 mt-3 w-40 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
 
                   {team && (
