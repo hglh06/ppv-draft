@@ -11,8 +11,45 @@ export default function Matches() {
   const [loading, setLoading] = useState(true)
   const [selectedMatch, setSelectedMatch] = useState(null)
   const [reportingMatch, setReportingMatch] = useState(null)
+  const [pokedex, setPokedex] = useState({})
 
   useEffect(() => {
+    useEffect(() => {
+
+  const loadData = async () => {
+
+    // 🔹 TU FETCH ACTUAL (NO LO CAMBIES)
+    const { data, error } = await supabase
+      .from("matches")
+      .select(`
+        *,
+        team_a_data,
+        team_b_data
+      `)
+
+    if (!error) {
+      setSchedule(data)
+    }
+
+    // 🔥 NUEVO: POKEDEX
+    const { data: pokedexData } = await supabase
+      .from("pokedex")
+      .select("name, sprite")
+
+    if (pokedexData) {
+      const map = {}
+      pokedexData.forEach(p => {
+        map[p.name] = p.sprite
+      })
+      setPokedex(map)
+    }
+
+  }
+
+  loadData()
+
+}, [])
+
     fetchMatches()
   }, [])
 
@@ -295,7 +332,35 @@ team &&
                   >
                     Replay
                   </a>
+                  
                 )}
+                <div className="flex justify-between mt-2">
+
+  {/* TEAM A */}
+  <div className="flex gap-1">
+    {match.team_a_data?.map((p, idx) => (
+      <img
+        key={idx}
+        src={pokedex[p.name]}
+        alt={p.name}
+        className="w-6 h-6"
+      />
+    ))}
+  </div>
+
+  {/* TEAM B */}
+  <div className="flex gap-1">
+    {match.team_b_data?.map((p, idx) => (
+      <img
+        key={idx}
+        src={pokedex[p.name]}
+        alt={p.name}
+        className="w-6 h-6"
+      />
+    ))}
+  </div>
+
+</div>
 
               </div>
 
