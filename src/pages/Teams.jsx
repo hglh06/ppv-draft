@@ -42,19 +42,7 @@ export default function Teams() {
 
       {/* TITLES */}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 mb-8 md:mb-12 gap-2 md:gap-0 relative">
-
-        <div className="text-center text-2xl font-semibold text-slate-800 tracking-wide">
-          Kanto Conference
-        </div>
-
-        <div className="text-center text-2xl font-semibold text-slate-800 tracking-wide">
-          Johto Conference
-        </div>
-
-        <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-slate-200"></div>
-
-      </div>
+   
 
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 relative">
@@ -66,7 +54,16 @@ export default function Teams() {
 
         {/* KANTO */}
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-6 md:pr-8">
+        <div>
+
+  <div className="text-center text-xl md:text-2xl font-semibold text-slate-800 mb-4 md:mb-6">
+    Kanto Conference
+  </div>
+
+  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-6 md:pr-8">
+
+      </div>
+</div>
 
           {kanto.map(team => (
             <TeamCard
@@ -81,7 +78,16 @@ export default function Teams() {
 
         {/* JOHTO */}
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-6 md:pl-8">
+        <div>
+
+  <div className="text-center text-xl md:text-2xl font-semibold text-slate-800 mb-4 md:mb-6">
+    Johto Conference
+  </div>
+
+  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-6 md:pl-8">
+
+      </div>
+</div>
 
           {johto.map(team => (
             <TeamCard
@@ -93,9 +99,7 @@ export default function Teams() {
 
         </div>
 
-      </div>
 
-    </div>
   )
 }
 
