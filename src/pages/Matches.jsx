@@ -3,10 +3,13 @@ import { useAuth } from "../context/AuthContext"
 import { supabase } from "../lib/supabase"
 import ReportMatch from "./ReportMatch"
 
+
+
 export default function Matches() {
 
   const { team } = useAuth()
   const [schedule, setSchedule] = useState([])
+  const [pokedex, setPokedex] = useState({})
   const [teams, setTeams] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedMatch, setSelectedMatch] = useState(null)
@@ -15,6 +18,20 @@ export default function Matches() {
   useEffect(() => {
     fetchMatches()
   }, [])
+
+  const { data: pokedexData } = await supabase
+  .from("pokedex")
+  .select("name, sprite")
+
+if (pokedexData) {
+  const map = {}
+  pokedexData.forEach(p => {
+    map[p.name] = p.sprite
+  })
+  setPokedex(map)
+}
+
+  
 
   async function fetchMatches() {
 
@@ -295,7 +312,37 @@ team &&
                   >
                     Replay
                   </a>
+
+                  
                 )}
+
+                <div className="flex justify-between mt-2">
+
+  {/* TEAM A */}
+  <div className="flex gap-1">
+    {match.team_a_data?.map((p, idx) => (
+      <img
+        key={idx}
+        src={pokedex[p.name]}
+        alt={p.name}
+        className="w-6 h-6"
+      />
+    ))}
+  </div>
+
+  {/* TEAM B */}
+  <div className="flex gap-1">
+    {match.team_b_data?.map((p, idx) => (
+      <img
+        key={idx}
+        src={pokedex[p.name]}
+        alt={p.name}
+        className="w-6 h-6"
+      />
+    ))}
+  </div>
+
+</div>
 
               </div>
 
