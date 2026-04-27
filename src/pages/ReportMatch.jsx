@@ -131,6 +131,14 @@ if(uniqueB.size!==6 || teamBSelected.includes("")){
 
 const validGames = games.filter(g => g.winner !== "")
 
+for (const g of validGames) {
+  if (!g.replay || g.replay.trim() === "") {
+    alert("Cada juego debe tener replay")
+    setSubmitting(false)
+    return
+  }
+}
+
 if (validGames.length < 2) {
   alert("Debes seleccionar al menos 2 juegos")
   return
@@ -184,7 +192,6 @@ const { error } = await supabase
     games: finalGames, // 🔥 IMPORTANTE
     team_a_data: formatSide(teamASelected, stats.teamA),
     team_b_data: formatSide(teamBSelected, stats.teamB),
-    replays: finalGames.map(g => g.replay),
     winner: matchWinner,
     status: "pending"
   })
