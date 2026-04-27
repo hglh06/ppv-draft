@@ -54,7 +54,7 @@ export default function Standings() {
 
   return (
     <div
-      className="min-h-screen -mt-24 pt-32 px-12 pb-20"
+      className="min-h-screen -mt-24 pt-32 px-4 md:px-12 pb-20"
       style={{
         backgroundImage: "url('/hex-bg.png')",
         backgroundSize: "cover",
@@ -65,7 +65,7 @@ export default function Standings() {
 
       {/* CONFERENCES */}
 
-      <div className="grid grid-cols-2 gap-10 mb-16">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 mb-16">
 
         <ConferenceTable title="Kanto Conference" teams={kantoStandings} />
         <ConferenceTable title="Johto Conference" teams={johtoStandings} />
@@ -242,9 +242,9 @@ function ConferenceTable({ title, teams }) {
         {title}
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
 
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[500px] text-sm">
 
           <thead className="border-b border-slate-200 bg-slate-50">
             <tr>
@@ -321,9 +321,9 @@ function PokemonTable({ data }) {
         Pokémon Leaderboard
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
 
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[700px] text-sm">
 
           <thead className="border-b border-slate-200 bg-slate-50">
 
