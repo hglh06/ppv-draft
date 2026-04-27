@@ -225,11 +225,11 @@ function MatchCard({ match, onClick }) {
   if (match.status === "completed" && match.games?.length > 0) {
 
     const winsA = match.games.filter(
-      g => g.winner === match.teamA?.name
+      g => g.winner === "teamA"
     ).length
 
     const winsB = match.games.filter(
-      g => g.winner === match.teamB?.name
+      g => g.winner === "teamB"
     ).length
 
     if (match.status === "completed") {
@@ -309,7 +309,9 @@ const getPokesByGame = (teamData, gameNumber) => {
                 </div>
 
                 <div className="text-slate-800 font-semibold">
-                  {game.winner}
+                  {game.winner === "teamA"
+  ? match.teamA?.name
+  : match.teamB?.name}
                 </div>
 
                 {match.replays?.[i] && (

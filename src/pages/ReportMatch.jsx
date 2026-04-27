@@ -180,11 +180,13 @@ setSubmitting(true)
 const { error } = await supabase
   .from("matches")
   .update({
-    games: finalGames,
-    winner: matchWinner,
-    replays: finalGames.map(g => g.replay),
-    status: "completed"
-  })
+  games: finalGames,
+  winner: matchWinner,
+  replays: finalGames.map(g => g.replay),
+  team_a_data: formatSide(teamASelected, stats.teamA),
+  team_b_data: formatSide(teamBSelected, stats.teamB),
+  status: "completed"
+})
   .eq("id", match.id)
 
 if(error){
