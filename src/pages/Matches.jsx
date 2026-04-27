@@ -30,10 +30,14 @@ setTeams(teamsData || [])
     const { data, error } = await supabase
       .from("matches")
       .select(`
-        *,
-        teamA:team_a ( id, name ),
-        teamB:team_b ( id, name )
-      `)
+  *,
+  teamA:team_a ( id, name ),
+  teamB:team_b ( id, name ),
+  reports (
+    team_a_data,
+    team_b_data
+  )
+`)
       .eq("stage", "regular")
       .order("week", { ascending: true })
 
@@ -315,7 +319,7 @@ team &&
 
   {/* TEAM A */}
   <div className="flex gap-1">
-    {(match.team_a_data || []).map((p, idx) => {
+    {(match.reports?.[0]?.team_a_data || []).map((p, idx) => {
       const sprite = pokedex?.[p.name]
       if (!sprite) return null
 
@@ -332,7 +336,7 @@ team &&
 
   {/* TEAM B */}
   <div className="flex gap-1">
-    {(match.team_b_data || []).map((p, idx) => {
+    {(match.reports?.[0]?.team_b_data || []).map((p, idx) => {
       const sprite = pokedex?.[p.name]
       if (!sprite) return null
 
