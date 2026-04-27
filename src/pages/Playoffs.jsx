@@ -92,26 +92,26 @@ export default function Playoffs() {
           <div className="space-y-24">
 
             <BracketMatch
-  title="Wild Card 1"
-  teamA={k1}
-  teamB={j4}
-  matchData={getPlayoffMatch("WC1")}
+  title="Kanto WC"
+  teamA={k3}
+  teamB={k4}
+  matchData={getPlayoffMatch("K_WC")}
   onClick={setSelectedMatch}
 />
 
 <BracketMatch
-  title="Wild Card 2"
+  title="Kanto SF"
   teamA={k2}
-  teamB={j3}
-  matchData={getPlayoffMatch("WC2")}
+  teamB="Winner WC"
+  matchData={getPlayoffMatch("K_SF")}
   onClick={setSelectedMatch}
 />
 
 <BracketMatch
-  title="Semifinal 1"
-  teamA="Winner WC1"
-  teamB="Winner WC2"
-  matchData={getPlayoffMatch("SF1")}
+  title="Kanto Final"
+  teamA={k1}
+  teamB="Winner SF"
+  matchData={getPlayoffMatch("K_F")}
   onClick={setSelectedMatch}
 />
 
@@ -120,8 +120,8 @@ export default function Playoffs() {
           <div className="flex justify-center">
             <BracketMatch
               title="Grand Final"
-              teamA="Winner S1"
-              teamB="Winner S2"
+              teamA="Winner Kanto"
+              teamB="Winner Johto"
               matchData={getPlayoffMatch("FINAL")}
               onClick={setSelectedMatch}
               highlight
@@ -131,26 +131,26 @@ export default function Playoffs() {
           <div className="space-y-24">
 
             <BracketMatch
-  title="Wild Card 3"
-  teamA={j1}
-  teamB={k4}
-  matchData={getPlayoffMatch("WC3")}
+  title="Johto WC"
+  teamA={j3}
+  teamB={j4}
+  matchData={getPlayoffMatch("J_WC")}
   onClick={setSelectedMatch}
 />
 
 <BracketMatch
-  title="Wild Card 4"
+  title="Johto SF"
   teamA={j2}
-  teamB={k3}
-  matchData={getPlayoffMatch("WC4")}
+  teamB="Winner WC"
+  matchData={getPlayoffMatch("J_SF")}
   onClick={setSelectedMatch}
 />
 
 <BracketMatch
-  title="Semifinal 2"
-  teamA="Winner WC3"
-  teamB="Winner WC4"
-  matchData={getPlayoffMatch("SF2")}
+  title="Johto Final"
+  teamA={j1}
+  teamB="Winner SF"
+  matchData={getPlayoffMatch("J_F")}
   onClick={setSelectedMatch}
 />
 
