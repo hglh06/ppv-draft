@@ -163,7 +163,8 @@ export default function App() {
         }`}
       >
 
-        <div className="flex items-center gap-3">
+        {/* IZQUIERDA */}
+<div className="flex items-center gap-3">
 
   <img
     src="/logo-ppv.png"
@@ -180,14 +181,15 @@ export default function App() {
     GENESIS
   </span>
 
+</div>
+
+{/* DERECHA (HAMBURGUESA SOLO MOBILE) */}
 <button
   onClick={() => setMenuOpen(!menuOpen)}
   className="md:hidden text-2xl"
 >
   ☰
 </button>
-
-</div>
 
         <div className="hidden md:flex gap-6 items-center">
 
