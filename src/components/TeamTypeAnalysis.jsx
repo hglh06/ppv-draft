@@ -142,11 +142,12 @@ export default function TeamTypeAnalysis({ roster }) {
           Type Resistance Analysis
         </h3>
 
-        <table className="w-full text-[11px] table-fixed">
+        <div className="overflow-x-auto">
+  <table className="w-full min-w-[900px] text-[11px]">
 
           <thead>
             <tr>
-              <th className="text-center">Pokemon</th>
+              <th className="sticky left-0 bg-white z-10 text-center">Pokemon</th>
 
               {types.map(type => (
                 <th
@@ -169,10 +170,10 @@ export default function TeamTypeAnalysis({ roster }) {
               return (
                 <tr key={i} className="border-b h-9">
 
-                  <td className="h-10">
+                  <td className="h-10 sticky left-0 bg-white z-10">
                     <div className="flex items-center justify-center h-full">
                       {pokemon && (
-                        <img src={pokemon.sprite} className="w-10"/>
+                        <img src={pokemon.sprite} className="w-8 md:w-10"/>
                       )}
                     </div>
                   </td>
@@ -229,6 +230,7 @@ export default function TeamTypeAnalysis({ roster }) {
           </tbody>
 
         </table>
+        </div>
       </>
       )}
 
