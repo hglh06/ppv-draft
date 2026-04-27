@@ -105,8 +105,13 @@ function calculateStandings(matches, allTeams, conference) {
       const teamA = match.teamA.name
       const teamB = match.teamB.name
 
-      const winsA = match.games?.filter(g => g.winner === "teamA").length || 0
-      const winsB = match.games?.filter(g => g.winner === "teamB").length || 0
+      const winsA = match.games?.filter(g => 
+  g.winner === "teamA" || g.winner === match.teamA?.name
+).length || 0
+
+const winsB = match.games?.filter(g => 
+  g.winner === "teamB" || g.winner === match.teamB?.name
+).length || 0
 
       stats[teamA].diff += (winsA - winsB)
       stats[teamB].diff += (winsB - winsA)
