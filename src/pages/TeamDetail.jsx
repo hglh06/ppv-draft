@@ -185,8 +185,9 @@ return(
 <div className="flex items-center gap-2">
   {favoriteData ? (
     <>
-      <img src={favoriteData.sprite} className="w-8" />
+      
       {favoriteData.name}
+      <img src={favoriteData.sprite} className="w-8" />
     </>
   ) : (
     "-"
