@@ -16,23 +16,37 @@ export default function Matches() {
   const [reportingMatch, setReportingMatch] = useState(null)
 
   useEffect(() => {
-    fetchMatches()
+  const loadData = async () => {
 
+    // 🔹 MATCHES
+    const { data, error } = await supabase
+      .from("matches")
+      .select(`
+        *,
+        team_a_data,
+        team_b_data
+      `)
+
+    if (!error) {
+      setSchedule(data)
+    }
+
+    // 🔹 POKEDEX (AQUÍ YA ES VÁLIDO EL await)
     const { data: pokedexData } = await supabase
-  .from("pokedex")
-  .select("name, sprite")
+      .from("pokedex")
+      .select("name, sprite")
 
-if (pokedexData) {
-  const map = {}
-  pokedexData.forEach(p => {
-    map[p.name] = p.sprite
-  })
-  setPokedex(map)
-}
+    if (pokedexData) {
+      const map = {}
+      pokedexData.forEach(p => {
+        map[p.name] = p.sprite
+      })
+      setPokedex(map)
+    }
+  }
 
-  }, 
-  
-  [])
+  loadData()
+}, [])
 
 
 
