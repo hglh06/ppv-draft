@@ -268,6 +268,14 @@ function MatchModal({ match, team, onClose, onReport, pokedex }) {
 team &&
 (match.teamA?.id === team.id || match.teamB?.id === team.id)
 
+const getPokesByGame = (teamData, gameNumber) => {
+  if (!teamData) return []
+
+  return teamData.filter(p =>
+    p.games?.some(g => g.game === gameNumber)
+  )
+}
+
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
 
@@ -315,11 +323,11 @@ team &&
                   </a>
                   
                 )}
-                <div className="flex justify-between mt-2">
+                <div className="flex items-center justify-between mt-2">
 
   {/* TEAM A */}
   <div className="flex gap-1">
-    {(match.reports?.[0]?.team_a_data || []).map((p, idx) => {
+    {getPokesByGame(match.reports?.[0]?.team_a_data, i + 1).map((p, idx) => {
       const sprite = pokedex?.[p.name]
       if (!sprite) return null
 
@@ -334,9 +342,14 @@ team &&
     })}
   </div>
 
+  {/* VS */}
+  <div className="text-xs font-bold text-slate-500 mx-2">
+    VS
+  </div>
+
   {/* TEAM B */}
   <div className="flex gap-1">
-    {(match.reports?.[0]?.team_b_data || []).map((p, idx) => {
+    {getPokesByGame(match.reports?.[0]?.team_b_data, i + 1).map((p, idx) => {
       const sprite = pokedex?.[p.name]
       if (!sprite) return null
 
