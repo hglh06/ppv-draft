@@ -21,6 +21,7 @@ export default function App() {
   const location = useLocation()
 
   const [scrolled, setScrolled] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [draftActive, setDraftActive] = useState(false)
   const [pendingTrades, setPendingTrades] = useState(false)
@@ -179,9 +180,16 @@ export default function App() {
     GENESIS
   </span>
 
+<button
+  onClick={() => setMenuOpen(!menuOpen)}
+  className="md:hidden text-2xl"
+>
+  ☰
+</button>
+
 </div>
 
-        <div className="flex gap-6 items-center">
+        <div className="hidden md:flex gap-6 items-center">
 
           <NavLink to="/" className={navItem}>
             Home
@@ -295,6 +303,60 @@ export default function App() {
 
         </div>
       </nav>
+
+      {menuOpen && (
+  <div className="md:hidden fixed top-0 left-0 w-full h-full bg-black/60 z-40">
+
+    <div className="bg-white w-64 h-full p-6 shadow-lg flex flex-col gap-4">
+
+      <button
+        onClick={() => setMenuOpen(false)}
+        className="self-end text-xl"
+      >
+        ✕
+      </button>
+
+      <NavLink to="/" onClick={()=>setMenuOpen(false)}>Home</NavLink>
+      <NavLink to="/standings" onClick={()=>setMenuOpen(false)}>Standings</NavLink>
+      <NavLink to="/matches" onClick={()=>setMenuOpen(false)}>Matches</NavLink>
+      <NavLink to="/playoffs" onClick={()=>setMenuOpen(false)}>Playoffs</NavLink>
+      <NavLink to="/pokedex" onClick={()=>setMenuOpen(false)}>Pokedex</NavLink>
+      <NavLink to="/teams" onClick={()=>setMenuOpen(false)}>Teams</NavLink>
+      <NavLink to="/draft" onClick={()=>setMenuOpen(false)}>Draft</NavLink>
+
+      {user && (
+        <NavLink to="/trades" onClick={()=>setMenuOpen(false)}>
+          Trades
+        </NavLink>
+      )}
+
+      {isAdmin && (
+        <NavLink to="/admin/reports" onClick={()=>setMenuOpen(false)}>
+          Reports
+        </NavLink>
+      )}
+
+      {!user && (
+        <NavLink to="/login" onClick={()=>setMenuOpen(false)}>
+          Login
+        </NavLink>
+      )}
+
+      {user && (
+        <button
+          onClick={() => {
+            setMenuOpen(false)
+            logout()
+          }}
+          className="text-red-600 text-left"
+        >
+          Logout
+        </button>
+      )}
+
+    </div>
+  </div>
+)}
 
       <main className={isHome ? "" : "pt-24"}>
 
