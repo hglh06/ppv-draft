@@ -202,7 +202,6 @@ export default function App() {
       <NavLink to="/playoffs" onClick={()=>setMenuOpen(false)}>Playoffs</NavLink>
       <NavLink to="/pokedex" onClick={()=>setMenuOpen(false)}>Pokedex</NavLink>
       <NavLink to="/teams" onClick={()=>setMenuOpen(false)}>Teams</NavLink>
-      <NavLink to="/draft" onClick={()=>setMenuOpen(false)}>Draft</NavLink>
 
       {user && (
         <NavLink to="/trades" onClick={()=>setMenuOpen(false)}>
