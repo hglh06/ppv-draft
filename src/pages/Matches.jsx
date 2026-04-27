@@ -8,6 +8,7 @@ export default function Matches() {
   const { team } = useAuth()
   const [schedule, setSchedule] = useState([])
   const [teams, setTeams] = useState([])
+  const [pokedex, setPokedex] = useState({})
   const [loading, setLoading] = useState(true)
   const [selectedMatch, setSelectedMatch] = useState(null)
   const [reportingMatch, setReportingMatch] = useState(null)
@@ -37,6 +38,18 @@ setTeams(teamsData || [])
       .order("week", { ascending: true })
 
     if (!error) setSchedule(data || [])
+
+      const { data: pokedexData } = await supabase
+  .from("pokedex")
+  .select("name, sprite")
+
+if (pokedexData) {
+  const map = {}
+  pokedexData.forEach(p => {
+    map[p.name] = p.sprite
+  })
+  setPokedex(map)
+}
 
     setLoading(false)
   }
@@ -174,9 +187,10 @@ Bye Week
       })}
 
       {selectedMatch && (
-  <MatchModal
-    match={selectedMatch}
-    team={team}
+      <MatchModal
+      match={selectedMatch}
+      team={team}
+      pokedex={pokedex}
           onClose={() => setSelectedMatch(null)}
           onReport={(match) => {
             setSelectedMatch(null)
@@ -244,7 +258,7 @@ function MatchCard({ match, onClick }) {
    MATCH MODAL
 ========================= */
 
-function MatchModal({ match, team, onClose, onReport }) {
+function MatchModal({ match, team, onClose, onReport, pokedex }) {
 
   const canReport =
 team &&
@@ -295,7 +309,45 @@ team &&
                   >
                     Replay
                   </a>
+                  
                 )}
+                <div className="flex justify-between mt-2">
+
+  {/* TEAM A */}
+  <div className="flex gap-1">
+    {(match.team_a_data || []).map((p, idx) => {
+      const sprite = pokedex?.[p.name]
+      if (!sprite) return null
+
+      return (
+        <img
+          key={`a-${idx}`}
+          src={sprite}
+          alt={p.name}
+          className="w-6 h-6"
+        />
+      )
+    })}
+  </div>
+
+  {/* TEAM B */}
+  <div className="flex gap-1">
+    {(match.team_b_data || []).map((p, idx) => {
+      const sprite = pokedex?.[p.name]
+      if (!sprite) return null
+
+      return (
+        <img
+          key={`b-${idx}`}
+          src={sprite}
+          alt={p.name}
+          className="w-6 h-6"
+        />
+      )
+    })}
+  </div>
+
+</div>
 
               </div>
 
