@@ -71,10 +71,10 @@ export default function Playoffs() {
   const j4 = standings.johto[3]?.name || "Johto #4"
 
   return (
-    <div className="relative h-[calc(100vh-96px)] overflow-hidden">
+    <div className="relative min-h-screen md:h-[calc(100vh-96px)] overflow-hidden md:overflow-hidden overflow-auto">
 
       {/* BACKGROUND STRIPES */}
-      <div className="absolute inset-0 grid grid-cols-5">
+      <div className="hidden md:grid absolute inset-0 grid-cols-5">
         <BackgroundColumn image="/posters/wc1.jpg" />
         <BackgroundColumn image="/posters/wc2.jpg" />
         <BackgroundColumn image="/posters/sf1.jpg" />
@@ -87,9 +87,9 @@ export default function Playoffs() {
       {/* BRACKET */}
       <div className="relative z-10 flex items-center justify-center h-full">
 
-        <div className="grid grid-cols-3 gap-24 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-24 items-center">
 
-          <div className="space-y-24">
+          <div className="space-y-6 md:space-y-24">
 
             <BracketMatch
   title="Kanto WC"
@@ -128,7 +128,7 @@ export default function Playoffs() {
             />
           </div>
 
-          <div className="space-y-24">
+          <div className="space-y-6 md:space-y-24">
 
             <BracketMatch
   title="Johto WC"
@@ -210,7 +210,7 @@ function BracketMatch({ title, teamA, teamB, matchData, onClick, highlight }) {
 
       <div
         onClick={() => matchData && onClick(matchData)}
-        className={`rounded-xl border p-8 w-72 text-center backdrop-blur-md
+        className={`rounded-xl border p-4 md:p-8 w-full max-w-[280px] md:w-72 text-center backdrop-blur-md
         transition hover:scale-105 cursor-pointer
         ${
           highlight
@@ -222,7 +222,7 @@ function BracketMatch({ title, teamA, teamB, matchData, onClick, highlight }) {
           {title}
         </div>
 
-        <div className="text-xl font-semibold text-white">
+        <div className="text-base md:text-xl font-semibold text-white">
           {teamA}
         </div>
 
@@ -230,7 +230,7 @@ function BracketMatch({ title, teamA, teamB, matchData, onClick, highlight }) {
           {scoreDisplay || "VS"}
         </div>
 
-        <div className="text-xl font-semibold text-white">
+        <div className="text-base md:text-xl font-semibold text-white">
           {teamB}
         </div>
 
