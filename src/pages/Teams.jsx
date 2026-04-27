@@ -40,66 +40,56 @@ export default function Teams() {
       }}
     >
 
-      {/* TITLES */}
-
-   
-
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 relative">
 
         {/* DIVIDER */}
-
         <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-slate-200"></div>
 
-
         {/* KANTO */}
-
         <div>
 
-  <div className="text-center text-xl md:text-2xl font-semibold text-slate-800 mb-4 md:mb-6">
-    Kanto Conference
-  </div>
+          <div className="text-center text-xl md:text-2xl font-semibold text-slate-800 mb-4 md:mb-6">
+            Kanto Conference
+          </div>
 
-  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-6 md:pr-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 md:pr-8 justify-items-center">
 
-      </div>
-</div>
+            {kanto.map(team => (
+              <TeamCard
+                key={team.id}
+                team={team}
+                navigate={navigate}
+              />
+            ))}
 
-          {kanto.map(team => (
-            <TeamCard
-              key={team.id}
-              team={team}
-              navigate={navigate}
-            />
-          ))}
+          </div>
 
         </div>
-
 
         {/* JOHTO */}
-
         <div>
 
-  <div className="text-center text-xl md:text-2xl font-semibold text-slate-800 mb-4 md:mb-6">
-    Johto Conference
-  </div>
+          <div className="text-center text-xl md:text-2xl font-semibold text-slate-800 mb-4 md:mb-6">
+            Johto Conference
+          </div>
 
-  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-6 md:pl-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 md:pl-8 justify-items-center">
 
-      </div>
-</div>
+            {johto.map(team => (
+              <TeamCard
+                key={team.id}
+                team={team}
+                navigate={navigate}
+              />
+            ))}
 
-          {johto.map(team => (
-            <TeamCard
-              key={team.id}
-              team={team}
-              navigate={navigate}
-            />
-          ))}
+          </div>
 
         </div>
 
+      </div>
 
+    </div>
   )
 }
 
@@ -127,33 +117,23 @@ function TeamCard({ team, navigate }) {
     >
 
       {/* LOGO */}
-
       <div className="flex items-center justify-center h-24">
-
-  <img
-    src={team.logo}
-    alt={team.name}
-    className="max-h-16 md:max-h-20 object-contain transition-transform duration-300 group-hover:scale-110"
-  />
-
-</div>
-
+        <img
+          src={team.logo}
+          alt={team.name}
+          className="max-h-16 md:max-h-20 object-contain transition-transform duration-300 group-hover:scale-110"
+        />
+      </div>
 
       {/* TEAM NAME */}
-
       <div className="text-center">
-
         <div className="font-medium text-slate-800 text-sm leading-tight">
           {team.name}
         </div>
-
       </div>
 
-
       {/* ROSTER */}
-
       <div className="flex flex-wrap justify-center gap-1 max-w-[170px]">
-
         {team.roster?.map((p, i) => (
           <img
             key={i}
@@ -161,7 +141,6 @@ function TeamCard({ team, navigate }) {
             className="w-3 h-3 md:w-4 md:h-4 object-contain"
           />
         ))}
-
       </div>
 
     </div>
