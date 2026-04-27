@@ -56,15 +56,6 @@ export default function TeamTypeAnalysis({ roster }) {
     setTypeChart(map)
   }
 
-  // 🔥 Evita cálculos antes de cargar datos
-  if (!Object.keys(typeChart).length) {
-    return (
-      <div className="p-6 text-sm text-slate-500">
-        Loading type data...
-      </div>
-    )
-  }
-
   const rows = useMemo(() => {
 
     return roster.map(pokemon => {
@@ -138,97 +129,108 @@ export default function TeamTypeAnalysis({ roster }) {
 
     <div className="bg-white border rounded-xl p-6">
 
-      <h3 className="font-semibold mb-4">
-        Type Resistance Analysis
-      </h3>
+      {!Object.keys(typeChart).length ? (
 
-      <table className="w-full text-[11px] table-fixed">
+        <div className="text-sm text-slate-500">
+          Loading type data...
+        </div>
 
-        <thead>
-          <tr>
-            <th className="text-center">Pokemon</th>
+      ) : (
 
-            {types.map(type => (
-              <th
-                key={type}
-                className={`pb-2 text-center border-b-4 ${typeColors[type]} font-medium`}
-              >
-                {type}
-              </th>
-            ))}
+      <>
+        <h3 className="font-semibold mb-4">
+          Type Resistance Analysis
+        </h3>
 
-          </tr>
-        </thead>
+        <table className="w-full text-[11px] table-fixed">
 
-        <tbody>
+          <thead>
+            <tr>
+              <th className="text-center">Pokemon</th>
 
-          {roster.map((pokemon, i) => {
+              {types.map(type => (
+                <th
+                  key={type}
+                  className={`pb-2 text-center border-b-4 ${typeColors[type]} font-medium`}
+                >
+                  {type}
+                </th>
+              ))}
 
-            const row = rows[i]
+            </tr>
+          </thead>
 
-            return (
-              <tr key={i} className="border-b h-9">
+          <tbody>
 
-                <td className="h-10">
-                  <div className="flex items-center justify-center h-full">
-                    {pokemon && (
-                      <img src={pokemon.sprite} className="w-10"/>
-                    )}
-                  </div>
-                </td>
+            {roster.map((pokemon, i) => {
 
-                {types.map(type => {
+              const row = rows[i]
 
-                  const value = row[type]
+              return (
+                <tr key={i} className="border-b h-9">
 
-                  return (
-                    <td key={type} className="text-center">
-
-                      {value === "2×" && <span className="text-red-600 font-medium">2×</span>}
-                      {value === "4×" && <span className="text-red-700 font-semibold">4×</span>}
-
-                      {value === "½" && <span className="text-green-600">½</span>}
-                      {value === "¼" && <span className="text-green-700 font-semibold">¼</span>}
-
-                      {value === "IMM" && (
-                        <span className="text-gray-600 text-[10px]">
-                          IMM
-                        </span>
+                  <td className="h-10">
+                    <div className="flex items-center justify-center h-full">
+                      {pokemon && (
+                        <img src={pokemon.sprite} className="w-10"/>
                       )}
+                    </div>
+                  </td>
 
-                    </td>
-                  )
+                  {types.map(type => {
 
-                })}
+                    const value = row[type]
 
-              </tr>
-            )
+                    return (
+                      <td key={type} className="text-center">
 
-          })}
+                        {value === "2×" && <span className="text-red-600 font-medium">2×</span>}
+                        {value === "4×" && <span className="text-red-700 font-semibold">4×</span>}
 
-          <tr className="border-t">
-            <td className="font-medium pt-2">Weak</td>
+                        {value === "½" && <span className="text-green-600">½</span>}
+                        {value === "¼" && <span className="text-green-700 font-semibold">¼</span>}
 
-            {types.map(t => (
-              <td key={t} className="text-red-600 text-center pt-2">
-                {totals.weak[t]}
-              </td>
-            ))}
-          </tr>
+                        {value === "IMM" && (
+                          <span className="text-gray-600 text-[10px]">
+                            IMM
+                          </span>
+                        )}
 
-          <tr>
-            <td className="font-medium">Resist</td>
+                      </td>
+                    )
 
-            {types.map(t => (
-              <td key={t} className="text-green-600 text-center">
-                {totals.resist[t]}
-              </td>
-            ))}
-          </tr>
+                  })}
 
-        </tbody>
+                </tr>
+              )
 
-      </table>
+            })}
+
+            <tr className="border-t">
+              <td className="font-medium pt-2">Weak</td>
+
+              {types.map(t => (
+                <td key={t} className="text-red-600 text-center pt-2">
+                  {totals.weak[t]}
+                </td>
+              ))}
+            </tr>
+
+            <tr>
+              <td className="font-medium">Resist</td>
+
+              {types.map(t => (
+                <td key={t} className="text-green-600 text-center">
+                  {totals.resist[t]}
+                </td>
+              ))}
+            </tr>
+
+          </tbody>
+
+        </table>
+      </>
+      )}
 
     </div>
   )
