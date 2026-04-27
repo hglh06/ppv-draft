@@ -17,9 +17,8 @@ export default function Matches() {
 
   useEffect(() => {
     fetchMatches()
-  }, [])
 
-  const { data: pokedexData } = await supabase
+    const { data: pokedexData } = await supabase
   .from("pokedex")
   .select("name, sprite")
 
@@ -30,6 +29,12 @@ if (pokedexData) {
   })
   setPokedex(map)
 }
+
+  }, 
+  
+  [])
+
+
 
   
 
