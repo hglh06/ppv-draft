@@ -46,7 +46,7 @@ export default function Playoffs() {
 
       return Object.values(teams)
         .sort((a,b)=> b.wins - a.wins)
-        .slice(0,3)
+        .slice(0,4)
     }
 
     setStandings({
@@ -63,10 +63,12 @@ export default function Playoffs() {
   const k1 = standings.kanto[0]?.name || "Kanto #1"
   const k2 = standings.kanto[1]?.name || "Kanto #2"
   const k3 = standings.kanto[2]?.name || "Kanto #3"
+  const k4 = standings.kanto[3]?.name || "Kanto #4"
 
   const j1 = standings.johto[0]?.name || "Johto #1"
   const j2 = standings.johto[1]?.name || "Johto #2"
   const j3 = standings.johto[2]?.name || "Johto #3"
+  const j4 = standings.johto[3]?.name || "Johto #4"
 
   return (
     <div className="relative h-[calc(100vh-96px)] overflow-hidden">
@@ -90,20 +92,28 @@ export default function Playoffs() {
           <div className="space-y-24">
 
             <BracketMatch
-              title="Wild Card 1"
-              teamA={k2}
-              teamB={j3}
-              matchData={getPlayoffMatch("WC1")}
-              onClick={setSelectedMatch}
-            />
+  title="Wild Card 1"
+  teamA={k1}
+  teamB={j4}
+  matchData={getPlayoffMatch("WC1")}
+  onClick={setSelectedMatch}
+/>
 
-            <BracketMatch
-              title="Semifinal 1"
-              teamA={k1}
-              teamB="Winner WC1"
-              matchData={getPlayoffMatch("SF1")}
-              onClick={setSelectedMatch}
-            />
+<BracketMatch
+  title="Wild Card 2"
+  teamA={k2}
+  teamB={j3}
+  matchData={getPlayoffMatch("WC2")}
+  onClick={setSelectedMatch}
+/>
+
+<BracketMatch
+  title="Semifinal 1"
+  teamA="Winner WC1"
+  teamB="Winner WC2"
+  matchData={getPlayoffMatch("SF1")}
+  onClick={setSelectedMatch}
+/>
 
           </div>
 
@@ -121,20 +131,28 @@ export default function Playoffs() {
           <div className="space-y-24">
 
             <BracketMatch
-              title="Wild Card 2"
-              teamA={j2}
-              teamB={k3}
-              matchData={getPlayoffMatch("WC2")}
-              onClick={setSelectedMatch}
-            />
+  title="Wild Card 3"
+  teamA={j1}
+  teamB={k4}
+  matchData={getPlayoffMatch("WC3")}
+  onClick={setSelectedMatch}
+/>
 
-            <BracketMatch
-              title="Semifinal 2"
-              teamA={j1}
-              teamB="Winner WC2"
-              matchData={getPlayoffMatch("SF2")}
-              onClick={setSelectedMatch}
-            />
+<BracketMatch
+  title="Wild Card 4"
+  teamA={j2}
+  teamB={k3}
+  matchData={getPlayoffMatch("WC4")}
+  onClick={setSelectedMatch}
+/>
+
+<BracketMatch
+  title="Semifinal 2"
+  teamA="Winner WC3"
+  teamB="Winner WC4"
+  matchData={getPlayoffMatch("SF2")}
+  onClick={setSelectedMatch}
+/>
 
           </div>
 
