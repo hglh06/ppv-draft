@@ -31,7 +31,7 @@ export default function Teams() {
 
   return (
     <div
-      className="min-h-screen -mt-24 pt-32 px-12 pb-16"
+      className="min-h-screen -mt-24 pt-32 px-4 md:px-12 pb-16"
       style={{
         backgroundImage: "url('/hex-bg.png')",
         backgroundSize: "cover",
@@ -42,7 +42,7 @@ export default function Teams() {
 
       {/* TITLES */}
 
-      <div className="grid grid-cols-2 mb-12 relative">
+      <div className="grid grid-cols-1 md:grid-cols-2 mb-8 md:mb-12 gap-2 md:gap-0 relative">
 
         <div className="text-center text-2xl font-semibold text-slate-800 tracking-wide">
           Kanto Conference
@@ -57,7 +57,7 @@ export default function Teams() {
       </div>
 
 
-      <div className="grid grid-cols-2 gap-12 relative">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 relative">
 
         {/* DIVIDER */}
 
@@ -66,7 +66,7 @@ export default function Teams() {
 
         {/* KANTO */}
 
-        <div className="grid grid-cols-3 gap-6 pr-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-6 md:pr-8">
 
           {kanto.map(team => (
             <TeamCard
@@ -81,7 +81,7 @@ export default function Teams() {
 
         {/* JOHTO */}
 
-        <div className="grid grid-cols-3 gap-6 pl-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-6 md:pl-8">
 
           {johto.map(team => (
             <TeamCard
@@ -106,7 +106,7 @@ function TeamCard({ team, navigate }) {
     <div
       onClick={() => navigate(`/teams/${team.id}`)}
       className="
-      w-52 h-44
+      w-full max-w-[180px] h-40 md:w-52 md:h-44
       bg-white
       rounded-xl
       border border-slate-200
@@ -129,7 +129,7 @@ function TeamCard({ team, navigate }) {
   <img
     src={team.logo}
     alt={team.name}
-    className="max-h-20 object-contain transition-transform duration-300 group-hover:scale-110"
+    className="max-h-16 md:max-h-20 object-contain transition-transform duration-300 group-hover:scale-110"
   />
 
 </div>
@@ -154,7 +154,7 @@ function TeamCard({ team, navigate }) {
           <img
             key={i}
             src={p.sprite}
-            className="w-4 h-4 object-contain"
+            className="w-3 h-3 md:w-4 md:h-4 object-contain"
           />
         ))}
 
