@@ -153,26 +153,26 @@ const rowHeight = Math.max(40, Math.floor(420 / rosterSize))
 
 return(
 
-<div className="px-12 pb-16">
+<div className="px-4 md:px-12 pb-16">
 
 {/* TOP */}
 
-<div className="grid grid-cols-12 gap-8 mb-10 items-stretch">
+<div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 mb-10 items-stretch">
 
 {/* TEAM INFO */}
 
-<div className="col-span-2 bg-white border rounded-xl p-6 flex flex-col">
+<div className="md:col-span-2 bg-white border rounded-xl p-6 flex flex-col">
 
 <div className="flex flex-col items-center mb-6">
 
-<img src={team.logo} className="w-36 mb-4"/>
+<img src={team.logo} className="w-24 md:w-36 mb-4"/>
 
 <div className="text-lg font-semibold">{team.name}</div>
-<div className="text-sm text-slate-500">{team.conference}</div>
+<div className="text-xs md:text-sm text-slate-500">{team.conference}</div>
 
 </div>
 
-<div className="grid grid-cols-2 gap-y-2 text-sm mt-auto">
+<div className="grid grid-cols-2 gap-y-2 text-xs md:text-sm mt-auto">
 
 <div>Coach</div><div>{team.coach_name||"-"}</div>
 <div>Title</div><div>{team.coach_title||"-"}</div>
@@ -200,11 +200,12 @@ return(
 
 {/* ROSTER */}
 
-<div className="col-span-8 bg-white border rounded-xl p-6">
+<div className="md:col-span-8 bg-white border rounded-xl p-6">
 
 <h3 className="font-semibold mb-4">Roster</h3>
 
-<table className="w-full text-sm">
+<div className="overflow-x-auto">
+  <table className="w-full min-w-[700px] text-xs md:text-sm">
 
 <thead>
 <tr className="border-b text-xs text-center">
@@ -264,12 +265,13 @@ return(
 </tbody>
 
 </table>
+</div>
 
 </div>
 
 {/* PERFORMANCE */}
 
-<div className="col-span-2 flex">
+<div className="md:col-span-2 flex">
 <TeamPokemonStats roster={rosterSlots} reports={reports} rowHeight={rowHeight}/>
 </div>
 
@@ -277,19 +279,20 @@ return(
 
 {/* BOTTOM */}
 
-<div className="grid grid-cols-12 gap-8">
+<div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
 
-<div className="col-span-8">
+<div className="md:col-span-8">
 <TeamTypeAnalysis roster={rosterSlots} rowHeight={rowHeight}/>
 </div>
 
 {/* MATCH HISTORY */}
 
-<div className="col-span-4 bg-white border rounded-xl p-6 flex flex-col h-full">
+<div className="md:col-span-4 bg-white border rounded-xl p-6 flex flex-col h-full">
 
 <h3 className="font-semibold mb-4">Match History</h3>
 
-<table className="w-full text-sm">
+<div className="overflow-x-auto">
+  <table className="w-full min-w-[500px] text-xs md:text-sm">
 
 <thead>
 <tr className="border-b text-gray-500 text-xs uppercase tracking-wide">
@@ -352,6 +355,7 @@ return (
 </tbody>
 
 </table>
+</div>
 
 </div>
 
