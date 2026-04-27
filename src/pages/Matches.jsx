@@ -88,7 +88,7 @@ if (pokedexData) {
 
   return (
   <div
-    className="min-h-screen -mt-24 pt-32 px-12 pb-16"
+    className="min-h-screen -mt-24 pt-32 px-4 md:px-12 pb-16"
     style={{
       backgroundImage: "url('/hex-bg.png')",
       backgroundSize: "cover",
@@ -97,7 +97,7 @@ if (pokedexData) {
     }}
   >
 
-      <div className="grid grid-cols-2 mb-10 relative">
+      <div className="grid grid-cols-1 md:grid-cols-2 mb-6 md:mb-10 gap-2 md:gap-0 relative">
 
         <div className="text-center text-2xl font-bold text-slate-800">
           Kanto Conference
@@ -128,11 +128,11 @@ if (pokedexData) {
               Week {week}
             </div>
 
-            <div className="grid grid-cols-2 gap-8 items-start relative">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 items-start relative">
 
               <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-slate-200"></div>
 
-              <div className="flex flex-wrap gap-4 justify-center pr-6">
+              <div className="flex flex-wrap gap-3 md:gap-4 justify-center md:pr-6">
                 {kantoMatches.map(match => (
                   <MatchCard
                     key={match.id}
@@ -158,7 +158,7 @@ Bye Week
 )}
               </div>
 
-              <div className="flex flex-wrap gap-4 justify-center pl-6">
+              <div className="flex flex-wrap gap-3 md:gap-4 justify-center md:pl-6">
                 {johtoMatches.map(match => (
                   <MatchCard
                     key={match.id}
@@ -243,10 +243,10 @@ function MatchCard({ match, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="w-44 bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-center cursor-pointer hover:shadow-md transition"
+      className="w-full max-w-[220px] md:w-44 bg-white p-3 md:p-4 rounded-xl shadow-sm border border-slate-200 text-center cursor-pointer hover:shadow-md transition"
     >
       <div className="font-medium text-slate-700 text-sm">{match.teamA?.name}</div>
-      <div className="font-bold text-base my-2 text-slate-900">{scoreDisplay}</div>
+      <div className="font-bold text-sm md:text-basetext-base my-2 text-slate-900">{scoreDisplay}</div>
       <div className="font-medium text-slate-700 text-sm">{match.teamB?.name}</div>
 
       {match.status === "completed" && (
@@ -279,7 +279,7 @@ const getPokesByGame = (teamData, gameNumber) => {
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
 
-      <div className="bg-white rounded-xl p-8 w-[650px] max-w-[95%]">
+      <div className="bg-white rounded-xl p-8 w-full max-w-[650px] mx-2 max-w-[95%]">
 
         <div className="flex justify-between items-center mb-6">
 
