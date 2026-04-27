@@ -225,7 +225,7 @@ return(
     Report: {match.teamA?.name} vs {match.teamB?.name}
   </h3>
 
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
 
   {/* IZQUIERDA - GAMES */}
   <div className="space-y-3">
@@ -290,7 +290,7 @@ return(
 
 </div>
 
-  <div className="grid grid-cols-2 gap-10">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
 
     <TeamExcelTable
       title={match.teamA?.name}
@@ -316,7 +316,7 @@ return(
 
   </div>
 
-  <div className="flex justify-between mt-8">
+  <div className="flex flex-col md:flex-row gap-3 md:justify-between mt-8">
 
     <button
       onClick={onClose}
@@ -357,7 +357,8 @@ return(
 
   <h3 className="text-lg font-semibold mb-3">{title}</h3>
 
-  <table className="w-full text-sm border border-slate-200 rounded-lg overflow-hidden">
+  <div className="overflow-x-auto">
+  <table className="min-w-[500px] w-full text-xs md:text-sm border border-slate-200 rounded-lg">
 
     <thead className="bg-slate-100">
 
@@ -381,13 +382,13 @@ return(
 
             <td className="p-1">
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
 
                 {selectedPokemon?.sprite && (
                   <img
                     src={selectedPokemon.sprite}
                     alt={poke}
-                    className="w-6 h-6"
+                    className="w-5 h-5 md:w-6 md:h-6"
                   />
                 )}
 
@@ -443,7 +444,7 @@ return(
                         onChange={e=>
                           updateStat(rowIndex,gameIndex,"kills",e.target.value)
                         }
-                        className="w-10 border text-xs text-center"
+                        className="w-8 md:w-10 border text-xs text-center"
                       />
 
                       <span>/</span>
@@ -456,7 +457,7 @@ return(
                         onChange={e=>
                           updateStat(rowIndex,gameIndex,"deaths",e.target.value)
                         }
-                        className="w-10 border text-xs text-center"
+                        className="w-8 md:w-10 border text-xs text-center"
                       />
 
                     </div>
@@ -477,6 +478,8 @@ return(
     </tbody>
 
   </table>
+
+  </div>
 
 </div>
 
