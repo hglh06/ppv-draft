@@ -11,49 +11,8 @@ export default function Matches() {
   const [loading, setLoading] = useState(true)
   const [selectedMatch, setSelectedMatch] = useState(null)
   const [reportingMatch, setReportingMatch] = useState(null)
-  const [pokedex, setPokedex] = useState({})
 
   useEffect(() => {
-    fetchMatches()
-  }, [])
-
-  useEffect(() => {
-    useEffect(() => {
-
-  const loadData = async () => {
-
-    // 🔹 TU FETCH ACTUAL (NO LO CAMBIES)
-    const { data, error } = await supabase
-      .from("matches")
-      .select(`
-        *,
-        team_a_data,
-        team_b_data
-      `)
-
-    if (!error) {
-      setSchedule(data)
-    }
-
-    // 🔥 NUEVO: POKEDEX
-    const { data: pokedexData } = await supabase
-      .from("pokedex")
-      .select("name, sprite")
-
-    if (pokedexData) {
-      const map = {}
-      pokedexData.forEach(p => {
-        map[p.name] = p.sprite
-      })
-      setPokedex(map)
-    }
-
-  }
-
-  loadData()
-
-}, [])
-
     fetchMatches()
   }, [])
 
@@ -291,17 +250,6 @@ function MatchModal({ match, team, onClose, onReport }) {
 team &&
 (match.teamA?.id === team.id || match.teamB?.id === team.id)
 
-const parseTeamData = (data) => {
-  if (!data) return []
-  if (Array.isArray(data)) return data
-
-  try {
-    return JSON.parse(data)
-  } catch {
-    return []
-  }
-}
-
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
 
@@ -347,50 +295,7 @@ const parseTeamData = (data) => {
                   >
                     Replay
                   </a>
-                  
                 )}
-
-
-                
-               <div className="flex justify-between mt-2">
-
-  {/* TEAM A */}
-  <div className="flex gap-1">
-    {parseTeamData(match.team_a_data).map((p, idx) => {
-  const sprite = pokedex[p.name]
-
-  if (!sprite) return null
-
-  return (
-    <img
-      key={`a-${idx}`}
-      src={sprite}
-      alt={p.name}
-      className="w-6 h-6"
-    />
-  )
-})}
-  </div>
-
-  {/* TEAM B */}
-  <div className="flex gap-1">
-    {parseTeamData(match.team_b_data).map((p, idx) => {
-  const sprite = pokedex[p.name]
-
-  if (!sprite) return null
-
-  return (
-    <img
-      key={`b-${idx}`}
-      src={sprite}
-      alt={p.name}
-      className="w-6 h-6"
-    />
-  )
-})}
-  </div>
-
-</div>
 
               </div>
 
@@ -467,3 +372,4 @@ function ReportModal({ match, onClose }) {
     </div>
   )
 }
+
