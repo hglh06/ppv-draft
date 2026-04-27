@@ -14,6 +14,10 @@ export default function Matches() {
   const [pokedex, setPokedex] = useState({})
 
   useEffect(() => {
+    fetchMatches()
+  }, [])
+
+  useEffect(() => {
     useEffect(() => {
 
   const loadData = async () => {
