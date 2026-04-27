@@ -247,16 +247,13 @@ function getMultiplier(attack, t1, t2, chart) {
     if (!data) return
 
     if (data.immune.includes(attack)) {
-      mult *= 0
+      mult = 0
       return
     }
 
-    if (data.weak.includes(attack)) {
-      mult *= 2
-    }
-
-    if (data.resist.includes(attack)) {
-      mult *= 0.5
+    if (mult !== 0) {
+      if (data.weak.includes(attack)) mult *= 2
+      if (data.resist.includes(attack)) mult *= 0.5
     }
   }
 
