@@ -325,10 +325,10 @@ const getPokesByGame = (teamData, gameNumber) => {
                   </a>
                   
                 )}
-                <div className="flex items-center justify-between mt-2">
+                <div className="flex flex-col md:flex-row items-center justify-between mt-2 gap-2">
 
   {/* TEAM A */}
-  <div className="flex gap-1">
+  <div className="flex gap-1 flex-wrap justify-center md:justify-start max-w-[120px]">
     {getPokesByGame(match.reports?.[0]?.team_a_data, i + 1).map((p, idx) => {
       const sprite = pokedex?.[p.name]
       if (!sprite) return null
@@ -338,19 +338,19 @@ const getPokesByGame = (teamData, gameNumber) => {
           key={`a-${idx}`}
           src={sprite}
           alt={p.name}
-          className="w-6 h-6"
+          className="w-5 h-5 md:w-6 md:h-6 shrink-0"
         />
       )
     })}
   </div>
 
   {/* VS */}
-  <div className="text-xs font-bold text-slate-500 mx-2">
+  <div className="text-xs font-bold text-slate-500 md:mx-2">
     VS
   </div>
 
   {/* TEAM B */}
-  <div className="flex gap-1">
+  <div className="flex gap-1 flex-wrap justify-center md:justify-end max-w-[120px]">
     {getPokesByGame(match.reports?.[0]?.team_b_data, i + 1).map((p, idx) => {
       const sprite = pokedex?.[p.name]
       if (!sprite) return null
@@ -360,7 +360,7 @@ const getPokesByGame = (teamData, gameNumber) => {
           key={`b-${idx}`}
           src={sprite}
           alt={p.name}
-          className="w-6 h-6"
+          className="w-5 h-5 md:w-6 md:h-6 shrink-0"
         />
       )
     })}
