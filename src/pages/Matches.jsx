@@ -287,6 +287,17 @@ function MatchModal({ match, team, onClose, onReport }) {
 team &&
 (match.teamA?.id === team.id || match.teamB?.id === team.id)
 
+const parseTeamData = (data) => {
+  if (!data) return []
+  if (Array.isArray(data)) return data
+
+  try {
+    return JSON.parse(data)
+  } catch {
+    return []
+  }
+}
+
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
 
@@ -334,30 +345,45 @@ team &&
                   </a>
                   
                 )}
-                <div className="flex justify-between mt-2">
+
+
+                
+               <div className="flex justify-between mt-2">
 
   {/* TEAM A */}
   <div className="flex gap-1">
-    {match.team_a_data?.map((p, idx) => (
-      <img
-        key={idx}
-        src={pokedex[p.name]}
-        alt={p.name}
-        className="w-6 h-6"
-      />
-    ))}
+    {parseTeamData(match.team_a_data).map((p, idx) => {
+  const sprite = pokedex[p.name]
+
+  if (!sprite) return null
+
+  return (
+    <img
+      key={`a-${idx}`}
+      src={sprite}
+      alt={p.name}
+      className="w-6 h-6"
+    />
+  )
+})}
   </div>
 
   {/* TEAM B */}
   <div className="flex gap-1">
-    {match.team_b_data?.map((p, idx) => (
-      <img
-        key={idx}
-        src={pokedex[p.name]}
-        alt={p.name}
-        className="w-6 h-6"
-      />
-    ))}
+    {parseTeamData(match.team_b_data).map((p, idx) => {
+  const sprite = pokedex[p.name]
+
+  if (!sprite) return null
+
+  return (
+    <img
+      key={`b-${idx}`}
+      src={sprite}
+      alt={p.name}
+      className="w-6 h-6"
+    />
+  )
+})}
   </div>
 
 </div>
