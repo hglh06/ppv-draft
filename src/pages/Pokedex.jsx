@@ -22,12 +22,25 @@ function handleOpen(e){
 
 }
 
+function toggleType(type){
+
+  if(typeFilter.includes(type)){
+    setTypeFilter(typeFilter.filter(t=>t!==type))
+    return
+  }
+
+  if(typeFilter.length === 2) return
+
+  setTypeFilter([...typeFilter,type])
+}
+
   const [pokemon, setPokemon] = useState([])
   const [loading, setLoading] = useState(true)
   const [hoveredPokemon, setHoveredPokemon] = useState(null)
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 })
   const [takenPokemon, setTakenPokemon] = useState({})
   const [search, setSearch] = useState("")
+  const [typeFilter, setTypeFilter] = useState([])
   const [hoverTimer, setHoverTimer] = useState(null)
   
 
@@ -134,6 +147,38 @@ setTakenPokemon(map)
     .map(Number)
     .sort((a, b) => b - a)
 
+const uniqueTypes = [
+  ...new Map(
+    pokemon.flatMap(p => {
+
+      const types = []
+
+      if (p.pokedex.type1) {
+        types.push([
+          p.pokedex.type1,
+          {
+            name: p.pokedex.type1,
+            image: p.pokedex.type1image
+          }
+        ])
+      }
+
+      if (p.pokedex.type2 && p.pokedex.type2 !== "None") {
+        types.push([
+          p.pokedex.type2,
+          {
+            name: p.pokedex.type2,
+            image: p.pokedex.type2image
+          }
+        ])
+      }
+
+      return types
+
+    })
+  ).values()
+]
+
   return (
   <div
   className="min-h-screen -mt-24 pt-32 px-12 pb-4 flex flex-col overflow-hidden"
@@ -166,6 +211,34 @@ setTakenPokemon(map)
     className="w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
   />
 
+  <div className="flex gap-2 flex-wrap justify-center mt-3">
+
+  {uniqueTypes.map(type => {
+
+    const isSelected = typeFilter.includes(type.name)
+    const limitReached = typeFilter.length === 2
+
+    return (
+      <img
+        key={type.name}
+        src={type.image}
+        onClick={() => toggleType(type.name)}
+        className={`h-6 cursor-pointer transition
+
+        ${isSelected
+          ? "ring-2 ring-red-500 scale-110"
+          : limitReached
+          ? "opacity-25"
+          : "opacity-70 hover:opacity-100"}
+
+        `}
+      />
+    )
+
+  })}
+
+</div>
+
 </div>
 
       <div className="flex-1 w-full overflow-x-auto pb-4">
@@ -185,9 +258,35 @@ setTakenPokemon(map)
               <div className="overflow-y-auto overflow-x-hidden flex-1 p-2 space-y-1">
 
                 {grouped[points]
-                  .filter(p =>
-  p.pokedex.name.toLowerCase().includes(search.toLowerCase())
-)
+                  .filter(p => {
+
+  const matchSearch = p.pokedex.name
+    .toLowerCase()
+    .includes(search.toLowerCase())
+
+  if (!matchSearch) return false
+
+  // SIN filtro
+  if (typeFilter.length === 0) return true
+
+  // 1 tipo
+  if (typeFilter.length === 1) {
+    return (
+      p.pokedex.type1 === typeFilter[0] ||
+      p.pokedex.type2 === typeFilter[0]
+    )
+  }
+
+  // 2 tipos exactos
+  const t1 = typeFilter[0]
+  const t2 = typeFilter[1]
+
+  return (
+    (p.pokedex.type1 === t1 && p.pokedex.type2 === t2) ||
+    (p.pokedex.type1 === t2 && p.pokedex.type2 === t1)
+  )
+
+})
 .sort((a, b) =>
   a.pokedex.name.localeCompare(b.pokedex.name)
 )
