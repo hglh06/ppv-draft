@@ -43,17 +43,17 @@ return base
 
 return(
 
-<div className="bg-white border rounded-xl p-6 h-full w-full">
+<div className="bg-white border rounded-xl p-3 md:p-6 h-full w-full">
 
 <h3 className="font-semibold mb-4">
 Pokemon Performance
 </h3>
 
-<table className="w-full text-sm">
+<table className="w-full text-xs md:text-sm">
 
 <thead className="text-center">
 
-<tr className="border-b text-xs text-center">
+<tr className="border-b text-[10px] md:text-xs text-center">
 <th className="text-left">Pokemon</th>
 <th className="text-center">G</th>
 <th className="text-center">K</th>
@@ -73,6 +73,7 @@ return(
   key={i}
   className="border-b text-slate-300"
   style={{height:`${rowHeight}px`}}
+className="border-b h-10 md:h-auto"
 >
 <td>Empty</td>
 <td>0</td>
@@ -90,16 +91,25 @@ return(
   key={i}
   className="border-b"
   style={{height:`${rowHeight}px`}}
+className="border-b h-10 md:h-auto"
 >
 
 <td>
-  <div className="flex items-center gap-2 h-full">
-    <img src={p.sprite} className="w-10"/>
+ <div className="flex items-center gap-1 md:gap-2 h-full">
+
+  <img
+    src={p.sprite}
+    className="w-6 md:w-10"
+  />
+
+  <span className="truncate max-w-[80px] md:max-w-none">
     {p.name}
-  </div>
+  </span>
+
+</div>
 </td>
 
-<td className="text-center">
+<td className="text-center w-8 md:w-auto">
 {s.games}
 </td>
 
