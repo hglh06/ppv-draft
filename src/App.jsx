@@ -22,7 +22,7 @@ export default function App() {
 
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
+const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [draftActive, setDraftActive] = useState(false)
   const [pendingTrades, setPendingTrades] = useState(false)
 
@@ -185,38 +185,38 @@ export default function App() {
 
 {/* DERECHA (HAMBURGUESA SOLO MOBILE) */}
 <button
-  onClick={() => setMenuOpen(!menuOpen)}
+  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
   className="md:hidden text-2xl"
 >
   ☰
 </button>
 
-{menuOpen && (
+{mobileMenuOpen && (
   <div className="md:hidden absolute top-16 right-4 z-50">
 
     <div className="bg-white w-52 rounded-xl shadow-lg p-4 flex flex-col gap-3">
 
-      <NavLink to="/" onClick={()=>setMenuOpen(false)}>Home</NavLink>
-      <NavLink to="/standings" onClick={()=>setMenuOpen(false)}>Standings</NavLink>
-      <NavLink to="/matches" onClick={()=>setMenuOpen(false)}>Matches</NavLink>
-      <NavLink to="/playoffs" onClick={()=>setMenuOpen(false)}>Playoffs</NavLink>
-      <NavLink to="/pokedex" onClick={()=>setMenuOpen(false)}>Pokedex</NavLink>
-      <NavLink to="/teams" onClick={()=>setMenuOpen(false)}>Teams</NavLink>
+      <NavLink to="/" onClick={()=>setMobileMenuOpen(false)}>Home</NavLink>
+      <NavLink to="/standings" onClick={()=>setMobileMenuOpen(false)}>Standings</NavLink>
+      <NavLink to="/matches" onClick={()=>setMobileMenuOpen(false)}>Matches</NavLink>
+      <NavLink to="/playoffs" onClick={()=>setMobileMenuOpen(false)}>Playoffs</NavLink>
+      <NavLink to="/pokedex" onClick={()=>setMobileMenuOpen(false)}>Pokedex</NavLink>
+      <NavLink to="/teams" onClick={()=>setMobileMenuOpen(false)}>Teams</NavLink>
 
       {user && (
-        <NavLink to="/trades" onClick={()=>setMenuOpen(false)}>
+        <NavLink to="/trades" onClick={() => setUserMenuOpen(!userMenuOpen)}>
           Trades
         </NavLink>
       )}
 
       {isAdmin && (
-        <NavLink to="/admin/reports" onClick={()=>setMenuOpen(false)}>
+        <NavLink to="/admin/reports" onClick={() => setUserMenuOpen(!userMenuOpen)}>
           Reports
         </NavLink>
       )}
 
       {!user && (
-        <NavLink to="/login" onClick={()=>setMenuOpen(false)}>
+        <NavLink to="/login" onClick={()=>setMobileMenuOpen(false)}>
           Login
         </NavLink>
       )}
@@ -224,7 +224,7 @@ export default function App() {
       {user && (
         <button
           onClick={() => {
-            setMenuOpen(false)
+            setUserMenuOpen(false)
             logout()
           }}
           className="text-red-600 text-left"
@@ -303,7 +303,7 @@ export default function App() {
 
               {/* TEAM ICON */}
               <button
-                onClick={() => setMenuOpen(!menuOpen)}
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="flex items-center"
               >
 
@@ -320,13 +320,13 @@ export default function App() {
               </button>
 
               {/* DROPDOWN MENU */}
-              {menuOpen && (
+              {mobileMenuOpen && (
                 <div className="absolute right-0 mt-3 w-40 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
 
                   {team && (
                     <NavLink
                       to={`/teams/${team.id}`}
-                      onClick={() => setMenuOpen(false)}
+                      onClick={() => setUserMenuOpen(false)}
                       className="block px-4 py-2 text-sm text-black hover:bg-slate-100"
                     >
                       Ir a Equipo
@@ -335,7 +335,7 @@ export default function App() {
 
                   <button
                     onClick={() => {
-                      setMenuOpen(false)
+                      setUserMenuOpen(false)
                       logout()
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
