@@ -178,16 +178,16 @@ const formatSide=(selected,sideStats)=>
 setSubmitting(true)
 
 const { error } = await supabase
-  .from("matches")
-  .update({
-  games: finalGames,
-  winner: matchWinner,
-  replays: finalGames.map(g => g.replay),
-  team_a_data: formatSide(teamASelected, stats.teamA),
-  team_b_data: formatSide(teamBSelected, stats.teamB),
-  status: "completed"
-})
-  .eq("id", match.id)
+  .from("reports")
+  .insert({
+    match_id: match.id,
+    games: finalGames, // 🔥 IMPORTANTE
+    team_a_data: formatSide(teamASelected, stats.teamA),
+    team_b_data: formatSide(teamBSelected, stats.teamB),
+    replays: finalGames.map(g => g.replay),
+    winner: matchWinner,
+    status: "pending"
+  })
 
 if(error){
   console.error(error)
