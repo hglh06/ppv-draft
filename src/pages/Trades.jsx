@@ -326,7 +326,7 @@ function removeReceiveSlot(index) {
   fetchData()
 }
 
-  if (loading) return <div className="p-6">Cargando...</div>
+  if (loading) return <div className="p-4 md:p-6">Cargando...</div>
 
   const history = transactions.filter(tx => tx.status === "approved")
 
@@ -337,17 +337,17 @@ function removeReceiveSlot(index) {
 
   return (
 
-    <div className="grid grid-cols-[2fr_3fr_2fr] gap-6 min-h-[80vh] bg-slate-50 p-6 rounded-xl">
+    <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr_2fr] gap-4 md:gap-6 min-h-[80vh] bg-slate-50 p-3 md:p-6 rounded-xl">
 
       {/* =====================================
           COLUMNA IZQUIERDA
       ===================================== */}
 
-      <div className="flex flex-col gap-6 h-full">
+      <div className="flex flex-col gap-4 md:gap-6 order-2 md:order-1">
 
         {/* INFO EQUIPO */}
 
-        <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm">
+        <div className="bg-white border border-slate-200 p-4 md:p-6 rounded-xl shadow-sm">
 
           <h3 className="text-lg font-semibold text-slate-700 mb-3">
             Tu equipo
@@ -377,7 +377,7 @@ function removeReceiveSlot(index) {
 
         {/* HISTORIAL */}
 
-        <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm flex flex-col max-h-[500px]">
+        <div className="bg-white border border-slate-200 p-4 md:p-6 rounded-xl shadow-sm flex flex-col max-h-[300px] md:max-h-[500px]">
 
           <h3 className="text-lg font-semibold text-slate-700 mb-4">
             Historial
@@ -443,11 +443,11 @@ function removeReceiveSlot(index) {
           COLUMNA CENTRO
       ===================================== */}
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4 md:gap-6 order-1 md:order-2">
 
         {/* PENDIENTES */}
 
-        <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm">
+        <div className="bg-white border border-slate-200 p-4 md:p-6 rounded-xl shadow-sm">
 
           <h3 className="text-lg font-semibold text-slate-700 mb-4">
             Pendientes
@@ -537,7 +537,7 @@ function removeReceiveSlot(index) {
 
         {/* FREE AGENCY */}
 
-        <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm">
+        <div className="bg-white border border-slate-200 p-4 md:p-6 rounded-xl shadow-sm">
 
           <h3 className="text-lg font-semibold text-slate-700 mb-4">
             Free Agency
@@ -554,7 +554,7 @@ function removeReceiveSlot(index) {
         updated[i] = e.target.value
         setSelectedGiveFA(updated)
       }}
-      className="w-full border p-2 rounded"
+      className="w-full border p-2 text-sm md:text-base rounded"
     >
 
       <option value="">Soltar (opcional)</option>
@@ -604,7 +604,7 @@ function removeReceiveSlot(index) {
         updated[i] = e.target.value
         setSelectedReceiveFA(updated)
       }}
-      className="w-full border p-2 rounded"
+      className="w-full border p-2 text-sm md:text-base rounded"
     >
 
       <option value="">Recoger</option>
@@ -654,7 +654,7 @@ function removeReceiveSlot(index) {
 
         {/* TRADE */}
 
-        <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm">
+        <div className="bg-white border border-slate-200 p-4 md:p-6 rounded-xl shadow-sm">
 
           <h3 className="text-lg font-semibold text-slate-700 mb-4">
             Trade con Jugador
@@ -687,7 +687,7 @@ function removeReceiveSlot(index) {
         updated[i] = e.target.value
         setTradeReceive(updated)
       }}
-      className="w-full border p-2 rounded"
+      className="w-full border p-2 text-sm md:text-base rounded"
     >
 
       <option value="">Recibir</option>
@@ -733,7 +733,7 @@ function removeReceiveSlot(index) {
         updated[i] = e.target.value
         setTradeGive(updated)
       }}
-      className="w-full border p-2 rounded"
+      className="w-full border p-2 text-sm md:text-base rounded"
     >
 
       <option value="">Dar</option>
@@ -783,13 +783,14 @@ function removeReceiveSlot(index) {
           COLUMNA DERECHA
       ===================================== */}
 
-      <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm">
+      <div className="bg-white border border-slate-200 p-4 md:p-6 rounded-xl shadow-sm order-3">
 
         <h3 className="text-lg font-semibold text-slate-700 mb-4">
           Waiver Order
         </h3>
 
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+  <table className="w-full min-w-[300px] text-xs md:text-sm">
 
           <thead className="bg-slate-50 text-slate-600">
 
@@ -831,6 +832,8 @@ function removeReceiveSlot(index) {
           </tbody>
 
         </table>
+
+        </div>
 
       </div>
 
