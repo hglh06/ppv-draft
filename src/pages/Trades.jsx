@@ -77,7 +77,7 @@ export default function Trades() {
     const { data: tx } = await supabase
   .from("transactions")
   .select("*")
-  .order("created_at", { ascending: false })
+  .order("approved_at", { ascending: false })
 
 
     const { data: seasonData } = await supabase
@@ -423,9 +423,10 @@ function removeReceiveSlot(index) {
                 <div className="text-xs text-slate-500 mt-2">
   {tx.approved_at
     ? new Date(tx.approved_at).toLocaleString("es-MX", {
-        dateStyle: "medium",
-        timeStyle: "short"
-      })
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "America/Mexico_City"
+})
     : ""}
 </div>
 
