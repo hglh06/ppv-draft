@@ -327,8 +327,16 @@ let result = "—"
 
 if (match.status === "completed") {
 
-const wins = match.games?.filter(g => g.winner === team.name).length || 0
-const losses = match.games?.filter(g => g.winner === opponent).length || 0
+const side =
+  match.teamA?.name === team.name
+    ? "teamA"
+    : "teamB"
+
+const wins =
+  match.games?.filter(g => g.winner === side).length || 0
+
+const losses =
+  match.games?.filter(g => g.winner !== side).length || 0
 
 result = wins > losses ? "W" : "L"
 }
