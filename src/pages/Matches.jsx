@@ -232,11 +232,14 @@ function MatchCard({ match, onClick }) {
       g => g.winner === "teamB"
     ).length
 
-    if (match.status === "completed") {
-  scoreDisplay =
-    winsA > winsB
-      ? "Winner: " + match.teamA?.name
-      : "Winner: " + match.teamB?.name
+    if (winsA > winsB) {
+  scoreDisplay = "Winner: " + match.teamA?.name
+}
+else if (winsB > winsA) {
+  scoreDisplay = "Winner: " + match.teamB?.name
+}
+else {
+  scoreDisplay = "Match Error"
 }
   }
 
@@ -246,7 +249,7 @@ function MatchCard({ match, onClick }) {
       className="w-full max-w-[220px] md:w-44 bg-white p-3 md:p-4 rounded-xl shadow-sm border border-slate-200 text-center cursor-pointer hover:shadow-md transition"
     >
       <div className="font-medium text-slate-700 text-sm">{match.teamA?.name}</div>
-      <div className="font-bold text-sm md:text-basetext-base my-2 text-slate-900">{scoreDisplay}</div>
+      <div className="font-bold text-sm md:text-base my-2 text-slate-900">{scoreDisplay}</div>
       <div className="font-medium text-slate-700 text-sm">{match.teamB?.name}</div>
 
       {match.status === "completed" && (
