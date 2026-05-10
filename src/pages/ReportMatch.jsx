@@ -119,15 +119,6 @@ const uniqueA = new Set(teamASelected)
 const uniqueB = new Set(teamBSelected)
 
 
-if(uniqueA.size!==6 || teamASelected.includes("")){
-  alert("Team A must select 6 different Pokémon")
-  return
-}
-
-if(uniqueB.size!==6 || teamBSelected.includes("")){
-  alert("Team B must select 6 different Pokémon")
-  return
-}
 
 const validGames = games.filter(g => g.winner !== "")
 
