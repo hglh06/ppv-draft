@@ -158,7 +158,7 @@ function getConferenceTop(conference){
 
         <video
           className="absolute inset-0 w-full h-full object-cover"
-          src="https://ftqjbvtivchkcotgljbc.supabase.co/storage/v1/object/sign/assets/home-bg.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mYTcyNjVjYi0wYjE1LTQ0NzktYWYzZS0zM2M5NGYwMDA5ZjAiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJhc3NldHMvaG9tZS1iZy5tcDQiLCJpYXQiOjE3NzI3NTA2NjgsImV4cCI6MTgwNDI4NjY2OH0.pIvBetHPwrg-fg4-m8RIIl4zvJk8iQ7KiBtrBPlgzPc"
+          src="https://ftqjbvtivchkcotgljbc.supabase.co/storage/v1/object/sign/assets/home-bg.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mYTcyNjVjYi0wYjE1LTQ0NzktYWYzZS0zM2M5NGYwMDA5ZjAiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJhc3NldHMvaG9tZS1iZy5tcDQiLCJpYXQiOjE3Nzg0NTQ0MTAsImV4cCI6MTc3OTA1OTIxMH0.8-oyhaz_XxPj8fTKiBP5-uiAAgXUUEkL1P9Q1aTMByw"
           autoPlay
           muted
           loop
