@@ -190,6 +190,7 @@ const { error } = await supabase
   .insert({
     match_id: match.id,
     games: finalGames, // 🔥 IMPORTANTE
+    replays: finalGames.map(g => g.replay),
     team_a_data: formatSide(teamASelected, stats.teamA),
     team_b_data: formatSide(teamBSelected, stats.teamB),
     winner: matchWinner,
