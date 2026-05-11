@@ -341,7 +341,6 @@ function ConferenceTable({ title, teams, odds }) {
 
           <thead className="border-b border-slate-200 bg-slate-50">
             <tr>
-              <th className="p-4 text-center w-16">#</th>
               <th className="p-4 text-left">Team</th>
               <th className="p-4 text-center">W</th>
               <th className="p-4 text-center">L</th>
