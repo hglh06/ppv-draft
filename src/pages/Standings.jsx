@@ -365,19 +365,13 @@ function ConferenceTable({ title, teams, odds }) {
                   ${isTop4 ? `border-l-4 ${medalColors[index]}` : ""}`}
                 >
 
-                  <td className="p-4 text-center font-bold text-lg">
+                  <td className="p-4 font-medium flex items-center gap-2">
 
-  {isTop4
-    ? medals[index]
-    : index + 1}
+                    {team.name}
 
-</td>
+                    {isTop4 && <span>{medals[index]}</span>}
 
-<td className="p-4 font-medium">
-
-  {team.name}
-
-</td>
+                  </td>
 
                   <td className="p-4 text-center">{team.wins}</td>
                   <td className="p-4 text-center">{team.losses}</td>
