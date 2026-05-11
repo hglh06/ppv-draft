@@ -26,7 +26,6 @@ export default function Standings() {
         teamA:team_a ( name ),
         teamB:team_b ( name )
       `)
-      .eq("status", "completed")
 
     const { data: reportsData } = await supabase
       .from("reports")
@@ -373,8 +372,8 @@ function ConferenceTable({ title, teams, odds }) {
                     {team.points}
                   </td>
                   <td className="p-4 text-center font-semibold text-blue-600">
-  {odds?.[team.name] || 0}%
-</td>
+                  {Math.round(((odds?.[team.name] || 0) / 3000) * 100)}%
+                  </td>
 
                 </tr>
 
