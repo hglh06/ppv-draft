@@ -372,7 +372,7 @@ function ConferenceTable({ title, teams, odds }) {
                     {team.points}
                   </td>
                   <td className="p-4 text-center font-semibold text-blue-600">
-                  {Math.round(((odds?.[team.name] || 0) / 5000) * 100)}%
+                  {Math.round(((odds?.[team.name] || 0) / 5000) * 100).toFixed(1)}%
                   </td>
 
                 </tr>
