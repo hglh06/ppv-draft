@@ -48,7 +48,19 @@ export default function Standings() {
   if (loading) return <div className="text-center mt-20">Cargando standings...</div>
 
   const kantoStandings = calculateStandings(matches, teams, "Kanto")
-  const johtoStandings = calculateStandings(matches, teams, "Johto")
+const johtoStandings = calculateStandings(matches, teams, "Johto")
+
+const kantoOdds = calculatePlayoffOdds(
+  matches,
+  kantoStandings,
+  "Kanto"
+)
+
+const johtoOdds = calculatePlayoffOdds(
+  matches,
+  johtoStandings,
+  "Johto"
+)
 
   const pokemonStandings = calculatePokemonStandings(reports, teams, pokedex)
 
@@ -67,8 +79,17 @@ export default function Standings() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 mb-16">
 
-        <ConferenceTable title="Kanto Conference" teams={kantoStandings} />
-        <ConferenceTable title="Johto Conference" teams={johtoStandings} />
+        <ConferenceTable
+  title="Kanto Conference"
+  teams={kantoStandings}
+  odds={kantoOdds}
+/>
+
+<ConferenceTable
+  title="Johto Conference"
+  teams={johtoStandings}
+  odds={johtoOdds}
+/>
 
       </div>
 
@@ -132,6 +153,72 @@ const winsB = match.games?.filter(g =>
       if (b.diff !== a.diff) return b.diff - a.diff
       return b.wins - a.wins
     })
+}
+
+function calculatePlayoffOdds(matches, standings, conference) {
+
+  const pendingMatches = matches.filter(
+    m =>
+      m.conference === conference &&
+      m.status !== "completed"
+  )
+
+  const simulations = 3000
+
+  const playoffCounts = {}
+
+  standings.forEach(team => {
+    playoffCounts[team.name] = 0
+  })
+
+  for (let i = 0; i < simulations; i++) {
+
+    const simTable = {}
+
+    standings.forEach(team => {
+      simTable[team.name] = {
+        ...team
+      }
+    })
+
+    pendingMatches.forEach(match => {
+
+      const teamA = match.teamA.name
+      const teamB = match.teamB.name
+
+      const winner =
+        Math.random() < 0.5
+          ? teamA
+          : teamB
+
+      const loser =
+        winner === teamA
+          ? teamB
+          : teamA
+
+      simTable[winner].wins += 1
+      simTable[loser].losses += 1
+
+      simTable[winner].points += 3
+    })
+
+    const sorted = Object.values(simTable)
+      .sort((a,b) => {
+        if (b.points !== a.points)
+          return b.points - a.points
+
+        if (b.diff !== a.diff)
+          return b.diff - a.diff
+
+        return b.wins - a.wins
+      })
+
+    sorted.slice(0,4).forEach(team => {
+      playoffCounts[team.name] += 1
+    })
+  }
+
+  return playoffCounts
 }
 
 /* ============================= */
@@ -224,7 +311,7 @@ function fillPokemonTable(data, totalRows){
 
 /* ============================= */
 
-function ConferenceTable({ title, teams }) {
+function ConferenceTable({ title, teams, odds }) {
 
   const medalColors = [
     "border-l-yellow-400",
@@ -253,6 +340,7 @@ function ConferenceTable({ title, teams }) {
               <th className="p-4 text-center">L</th>
               <th className="p-4 text-center">Diff</th>
               <th className="p-4 text-center">Pts</th>
+              <th className="p-4 text-center">PO%</th>
             </tr>
           </thead>
 
@@ -284,6 +372,9 @@ function ConferenceTable({ title, teams }) {
                   <td className="p-4 text-center font-semibold">
                     {team.points}
                   </td>
+                  <td className="p-4 text-center font-semibold text-blue-600">
+  {odds?.[team.name] || 0}%
+</td>
 
                 </tr>
 
