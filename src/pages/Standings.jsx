@@ -162,7 +162,7 @@ function calculatePlayoffOdds(matches, standings, conference) {
       m.status !== "completed"
   )
 
-  const simulations = 3000
+  const simulations = 5000
 
   const playoffCounts = {}
 
