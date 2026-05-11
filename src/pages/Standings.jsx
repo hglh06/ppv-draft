@@ -384,7 +384,7 @@ function ConferenceTable({ title, teams, odds }) {
 
     const po =
       Math.round(
-        ((odds?.[team.name] || 0) / 3000) * 100
+        ((odds?.[team.name] || 0) / 5000) * 100
       )
 
     let color = "text-red-600"
