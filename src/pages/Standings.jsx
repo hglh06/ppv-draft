@@ -319,12 +319,13 @@ function fillPokemonTable(data, totalRows){
 function ConferenceTable({ title, teams, odds }) {
 
   const medalColors = [
-    "border-l-yellow-400",
-    "border-l-slate-400",
-    "border-l-orange-500"
-  ]
+  "border-l-yellow-400",
+  "border-l-slate-400",
+  "border-l-orange-500",
+  "border-l-[#5E8C61]"
+]
 
-  const medals = ["🥇", "🥈", "🥉"]
+  const medals = ["🥇", "🥈", "🥉", "🏅"]
 
   return (
 
@@ -340,6 +341,7 @@ function ConferenceTable({ title, teams, odds }) {
 
           <thead className="border-b border-slate-200 bg-slate-50">
             <tr>
+              <th className="p-4 text-center w-16">#</th>
               <th className="p-4 text-left">Team</th>
               <th className="p-4 text-center">W</th>
               <th className="p-4 text-center">L</th>
@@ -353,23 +355,29 @@ function ConferenceTable({ title, teams, odds }) {
 
             {teams.map((team, index) => {
 
-              const isTop3 = index < 3
+              const isTop4 = index < 4
 
               return (
 
                 <tr
                   key={team.name}
                   className={`border-t border-slate-100 hover:bg-slate-50
-                  ${isTop3 ? `border-l-4 ${medalColors[index]}` : ""}`}
+                  ${isTop4 ? `border-l-4 ${medalColors[index]}` : ""}`}
                 >
 
-                  <td className="p-4 font-medium flex items-center gap-2">
+                  <td className="p-4 text-center font-bold text-lg">
 
-                    {team.name}
+  {isTop4
+    ? medals[index]
+    : index + 1}
 
-                    {isTop3 && <span>{medals[index]}</span>}
+</td>
 
-                  </td>
+<td className="p-4 font-medium">
+
+  {team.name}
+
+</td>
 
                   <td className="p-4 text-center">{team.wins}</td>
                   <td className="p-4 text-center">{team.losses}</td>
