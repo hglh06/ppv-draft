@@ -378,9 +378,37 @@ function ConferenceTable({ title, teams, odds }) {
                   <td className="p-4 text-center font-semibold">
                     {team.points}
                   </td>
-                  <td className="p-4 text-center font-semibold text-blue-600">
-                  {Math.round(((odds?.[team.name] || 0) / 5000) * 100)}%
-                  </td>
+                  <td className="p-4 text-center font-semibold">
+
+  {(() => {
+
+    const po =
+      Math.round(
+        ((odds?.[team.name] || 0) / 5000) * 100
+      )
+
+    let color = "text-red-600"
+
+    if (po >= 75) {
+      color = "text-green-600"
+    }
+    else if (po >= 25) {
+      color = "text-yellow-500"
+    }
+
+    return (
+      <span className={color}>
+
+        {po === 0
+          ? "☠️"
+          : `${po}%`}
+
+      </span>
+    )
+
+  })()}
+
+</td>
 
                 </tr>
 
