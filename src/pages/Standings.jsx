@@ -172,13 +172,19 @@ function calculatePlayoffOdds(matches, standings, conference) {
 
   for (let i = 0; i < simulations; i++) {
 
-    const simTable = {}
+   const simTable = {}
 
-    standings.forEach(team => {
-      simTable[team.name] = {
-        ...team
-      }
-    })
+standings.forEach(team => {
+
+  simTable[team.name] = {
+    name: team.name,
+    wins: Number(team.wins),
+    losses: Number(team.losses),
+    diff: Number(team.diff),
+    points: Number(team.points)
+  }
+
+})
 
     pendingMatches.forEach(match => {
 
