@@ -37,8 +37,13 @@ export default function Playoffs() {
           if (!teams[teamA]) teams[teamA] = { name: teamA, wins: 0 }
           if (!teams[teamB]) teams[teamB] = { name: teamB, wins: 0 }
 
-          const winsA = match.games?.filter(g => g.winner === teamA).length || 0
-          const winsB = match.games?.filter(g => g.winner === teamB).length || 0
+          const winsA = matchData.games?.filter(
+  g => g.winner === "teamA"
+).length || 0
+
+const winsB = matchData.games?.filter(
+  g => g.winner === "teamB"
+).length || 0
 
           if (winsA > winsB) teams[teamA].wins++
           if (winsB > winsA) teams[teamB].wins++
@@ -61,14 +66,14 @@ export default function Playoffs() {
     matches.find(m => m.stage === "playoff" && m.round === round)
 
   const k1 = standings.kanto[0]?.name || "Kanto #1"
-  const k2 = standings.kanto[1]?.name || "Kanto #2"
-  const k3 = standings.kanto[2]?.name || "Kanto #3"
-  const k4 = standings.kanto[3]?.name || "Kanto #4"
+const k2 = standings.kanto[1]?.name || "Kanto #2"
+const k3 = standings.kanto[2]?.name || "Kanto #3"
+const k4 = standings.kanto[3]?.name || "Kanto #4"
 
-  const j1 = standings.johto[0]?.name || "Johto #1"
-  const j2 = standings.johto[1]?.name || "Johto #2"
-  const j3 = standings.johto[2]?.name || "Johto #3"
-  const j4 = standings.johto[3]?.name || "Johto #4"
+const j1 = standings.johto[0]?.name || "Johto #1"
+const j2 = standings.johto[1]?.name || "Johto #2"
+const j3 = standings.johto[2]?.name || "Johto #3"
+const j4 = standings.johto[3]?.name || "Johto #4"
 
   return (
     <div className="relative min-h-screen md:h-[calc(100vh-96px)] overflow-hidden md:overflow-hidden overflow-auto">
@@ -100,7 +105,7 @@ export default function Playoffs() {
 />
 
 <BracketMatch
-  title="Kanto SF"
+  title="Cuartos de Final"
   teamA={j2}
   teamB="Winner WC"
   matchData={getPlayoffMatch("K_SF")}
@@ -108,7 +113,7 @@ export default function Playoffs() {
 />
 
 <BracketMatch
-  title="Kanto Final"
+  title="Semifinal"
   teamA={k1}
   teamB="Winner SF"
   matchData={getPlayoffMatch("K_F")}
@@ -131,7 +136,7 @@ export default function Playoffs() {
           <div className="space-y-6 md:space-y-24">
 
             <BracketMatch
-  title="Johto WC"
+  title="Wildcards 2"
   teamA={j3}
   teamB={k4}
   matchData={getPlayoffMatch("J_WC")}
@@ -139,7 +144,7 @@ export default function Playoffs() {
 />
 
 <BracketMatch
-  title="Johto SF"
+  title="Cuartos de Final"
   teamA={k2}
   teamB="Winner WC"
   matchData={getPlayoffMatch("J_SF")}
@@ -147,7 +152,7 @@ export default function Playoffs() {
 />
 
 <BracketMatch
-  title="Johto Final"
+  title="Semifinal"
   teamA={j1}
   teamB="Winner SF"
   matchData={getPlayoffMatch("J_F")}
@@ -192,8 +197,13 @@ function BracketMatch({ title, teamA, teamB, matchData, onClick, highlight }) {
     const teamAName = matchData.teamA?.name
     const teamBName = matchData.teamB?.name
 
-    const winsA = matchData.games?.filter(g => g.winner === teamAName).length || 0
-    const winsB = matchData.games?.filter(g => g.winner === teamBName).length || 0
+    const winsA = match.games?.filter(
+  g => g.winner === "teamA"
+).length || 0
+
+const winsB = match.games?.filter(
+  g => g.winner === "teamB"
+).length || 0
 
     scoreDisplay = `${winsA} - ${winsB}`
   }
