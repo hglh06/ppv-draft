@@ -197,11 +197,11 @@ function BracketMatch({ title, teamA, teamB, matchData, onClick, highlight }) {
     const teamAName = matchData.teamA?.name
     const teamBName = matchData.teamB?.name
 
-    const winsA = match.games?.filter(
+    const winsA = matchData.games?.filter(
   g => g.winner === "teamA"
 ).length || 0
 
-const winsB = match.games?.filter(
+const winsB = matchData.games?.filter(
   g => g.winner === "teamB"
 ).length || 0
 
