@@ -37,11 +37,11 @@ export default function Playoffs() {
           if (!teams[teamA]) teams[teamA] = { name: teamA, wins: 0 }
           if (!teams[teamB]) teams[teamB] = { name: teamB, wins: 0 }
 
-          const winsA = matchData.games?.filter(
+          const winsA = match.games?.filter(
   g => g.winner === "teamA"
 ).length || 0
 
-const winsB = matchData.games?.filter(
+const winsB = match.games?.filter(
   g => g.winner === "teamB"
 ).length || 0
 
