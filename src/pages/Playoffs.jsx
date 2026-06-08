@@ -125,8 +125,8 @@ const j4 = standings.johto[3]?.name || "Johto #4"
           <div className="flex justify-center">
             <BracketMatch
               title="Grand Final"
-              teamA="Winner Kanto"
-              teamB="Winner Johto"
+              teamA="Finalist 1"
+              teamB="Finalist 2"
               matchData={getPlayoffMatch("FINAL")}
               onClick={setSelectedMatch}
               highlight
