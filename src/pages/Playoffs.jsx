@@ -138,7 +138,7 @@ const j4 = standings.johto[3]?.name || "Johto #4"
             <BracketMatch
   title="Wildcards 2"
   teamA={j3}
-  teamB={k4}
+  teamB="Richampions VGC"
   matchData={getPlayoffMatch("J_WC")}
   onClick={setSelectedMatch}
 />
