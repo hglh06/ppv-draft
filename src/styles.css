@@ -1298,37 +1298,25 @@ body.ready .boot{display:none}
 .login-box{max-width:440px;margin:0 auto}
 .msg-err{color:var(--rojo);font-weight:600}.msg-ok{color:var(--verde);font-weight:600}
 
-/* menu colapsado tambien en laptops: con 11 secciones no caben en una fila */
-@media (max-width:1279px) and (min-width:861px){
-  .nav .wrap{position:relative}
-  .nav-toggle{display:grid}
-  .me-chip{margin-left:auto}
-  .nav nav{position:absolute;left:0;right:0;top:100%;display:none;flex-direction:column;align-items:stretch;gap:0;margin:0;overflow:visible;background:var(--ink);border-bottom:1px solid var(--line);box-shadow:0 24px 40px -16px #000c;padding:6px var(--gut-r) 14px var(--gut-l)}
-  .nav nav.open{display:flex}
-  .nav nav a{padding:14px 2px;font-size:1.05rem;border-bottom:1px solid var(--line)}
-  .nav nav a:last-child{border-bottom:0}
-  .nav nav a.on{color:var(--volt)}
-  .nav nav a.on::after{display:none}
-  .nav-sep{display:none}
-}
-.nav nav a[data-page=temporadas],.nav nav a[data-page=admin]{color:var(--chalk)}
-/* escritorio: marca y controles arriba, todas las secciones en una segunda fila */
-@media (min-width:1280px){
-  .nav .wrap{flex-wrap:wrap;height:auto;row-gap:0;padding-top:10px}
-  .nav .brand{order:1}
-  .nav .nav-search{order:2;margin-left:auto}
-  .nav .cm-btn{order:3}.nav .me-chip{order:4}.nav .me-out{order:5}
-  .nav nav{order:6;flex-basis:100%;margin-left:-9px;overflow:visible;padding:4px 0 2px}
-  .nav nav a.on::after{bottom:-4px}
-}
 
-.news-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-.news{background:var(--ink-2);border:1px solid #232328;border-top:3px solid var(--volt);border-radius:14px;overflow:hidden;display:grid}
-.news.pin{border-top-color:var(--rojo)}
-.news img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
-.news .nb{padding:14px 16px;display:grid;gap:6px}
-.news h3{margin:0;font-family:var(--f-display,"Big Shoulders Display",sans-serif);text-transform:uppercase;font-size:1.4rem;line-height:1}
-.news p{margin:0;color:var(--mute);white-space:pre-line}
-.perm-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px 16px}
-.perm-g label{display:flex;gap:8px;align-items:flex-start;font-size:.92rem}
-.perm-g label small{display:block;color:var(--mute)}
+/* barra en un solo renglon: lo que no cabe pasa al menu "Mas" */
+.nav nav{overflow:visible}
+.nav-more{position:relative;flex:none}
+.nav-more>button{background:none;border:0;color:var(--mute);font-family:var(--f-label);font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-size:.92rem;padding:8px 9px;cursor:pointer;white-space:nowrap}
+.nav-more>button:hover,.nav-more.on>button{color:var(--chalk)}
+.nav-more-m{position:absolute;right:0;top:calc(100% + 14px);background:var(--ink-2);border:1px solid var(--line);box-shadow:0 24px 40px -16px #000c;display:none;flex-direction:column;min-width:200px;padding:6px 0;z-index:60}
+.nav-more.open .nav-more-m{display:flex}
+.nav-more-m a{padding:10px 16px !important}
+.nav-more-m a.on::after{display:none}
+@media (max-width:860px){.nav-more{display:none}}
+@media (min-width:861px){.nav nav{min-width:0;flex:1 1 auto;justify-content:flex-end;overflow:visible}}
+@media (min-width:861px){
+  .nav .wrap{gap:10px}
+  .nav nav a{font-size:.84rem;letter-spacing:.06em;padding:8px 7px}
+  .nav nav a.on::after{left:7px;right:7px}
+  .nav-more>button{font-size:.84rem;letter-spacing:.06em;padding:8px 7px}
+  .nav .cm-btn{display:none !important}
+  .me-chip>span:not(.logo):not(.crest){display:none}
+  .me-chip{padding:4px}
+  .nav .nav-sep{margin:0 2px}
+}

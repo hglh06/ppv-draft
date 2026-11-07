@@ -24,7 +24,7 @@ function applyChrome(P) {
   const S = P.SEASON, st = STATUS[S.status] || ""
   const label = `Temporada ${S.number}${S.subtitle ? " · " + S.subtitle : ""}`
   document.title = `PPV Draft League · Temporada ${S.number}`
-  setText("#brandSeason", label)
+  setText("#brandSeason", `Temporada ${S.number}`)
   document.querySelectorAll(".sl").forEach(e => { e.textContent = label })
   document.querySelectorAll(".cn-r").forEach(e => { e.textContent = P.CONF.rojo.name })
   document.querySelectorAll(".cn-a").forEach(e => { e.textContent = P.CONF.azul.name })
@@ -68,10 +68,54 @@ function applyChrome(P) {
     bar.hidden = false
     bar.innerHTML = `Archivo · estas viendo la Temporada ${S.number}${active ? `<a href="/#home">Ir a la Temporada ${active.number}</a>` : ""}`
   }
+  setText("#fTeams", String(P.TEAMS.length || "—"))
+  setText("#fWeeks", P.WEEKS ? `${P.WEEKS} semanas` : "Por definir")
+  fitNav()
   const dms = document.getElementById("drMineSec")
   if (dms) { if (P.ME < 0 || !P.DRAFT_ORDER.includes(P.ME)) dms.hidden = true; else setText("#drMineTeam", P.TEAMS[P.ME].n) }
   const has = x => P.PERMS.includes("all") || P.PERMS.includes(x)
   if (["admin.access","season.manage","pool.manage","draft.manage","results.approve","market.approve","roles.manage","content.manage"].some(has)) document.getElementById("navAdmin").hidden = false
+}
+
+// barra de un solo renglon: si las secciones no caben, las ultimas pasan a "Mas"
+function fitNav() {
+  const nav = document.getElementById("mainNav"); if (!nav) return
+  if (!window.__navOrder) window.__navOrder = [...nav.querySelectorAll("a[data-page]")].map(a => a.dataset.page)
+  let more = nav.querySelector(".nav-more")
+  if (!more) {
+    more = document.createElement("div"); more.className = "nav-more"
+    more.innerHTML = `<button type="button" aria-haspopup="true" aria-expanded="false">Mas ▾</button><div class="nav-more-m" role="menu"></div>`
+    nav.appendChild(more)
+    more.querySelector("button").addEventListener("click", e => { e.stopPropagation(); const o = more.classList.toggle("open"); e.currentTarget.setAttribute("aria-expanded", o) })
+    document.addEventListener("click", () => more.classList.remove("open"))
+    addEventListener("hashchange", () => { more.classList.remove("open"); markMore() })
+    let t; addEventListener("resize", () => { clearTimeout(t); t = setTimeout(fitNav, 120) })
+  }
+  const menu = more.querySelector(".nav-more-m")
+  // devolver todo a la barra y volver a medir
+  ;[...menu.children].forEach(a => { const ref = [...nav.querySelectorAll(":scope > a[data-page]")].find(x => (window.__navOrder || []).indexOf(x.dataset.page) > (window.__navOrder || []).indexOf(a.dataset.page)); nav.insertBefore(a, ref || more) })
+  more.hidden = true
+  if (getComputedStyle(nav).position === "absolute") return // menu movil
+  nav.style.justifyContent = "flex-start"
+  const ORDER = ["media", "salon", "pokedex", "h2h", "draft", "admin", "playoffs", "teams", "matches", "standings", "home"]
+  const all = [...nav.querySelectorAll(":scope > a[data-page]")]
+  const idx = a => all.indexOf(a)
+  const nextOut = () => { const vis = [...nav.children].filter(x => x !== more && !x.hidden && x.tagName === "A"); return ORDER.map(k => vis.find(a => a.dataset.page === k)).find(Boolean) || vis[vis.length - 1] }
+  const links = () => [...nav.children].filter(x => x !== more && !x.hidden && x.tagName === "A")
+  const overflow = () => nav.scrollWidth > nav.clientWidth + 1
+  if (!overflow()) { nav.style.justifyContent = ""; return }
+  more.hidden = false
+  while (overflow() && links().length > 3) {
+    const a = nextOut(); const after = [...menu.children].find(x => idx(x) > idx(a))
+    menu.insertBefore(a, after || null)
+  }
+  nav.querySelectorAll(".nav-sep").forEach(s => { s.hidden = !s.nextElementSibling || s.nextElementSibling === more })
+  nav.style.justifyContent = ""
+  markMore()
+}
+function markMore() {
+  const more = document.querySelector(".nav-more"); if (!more) return
+  more.classList.toggle("on", !!more.querySelector(".nav-more-m a.on"))
 }
 
 async function start() {
