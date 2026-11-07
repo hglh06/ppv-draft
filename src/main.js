@@ -68,6 +68,8 @@ function applyChrome(P) {
     bar.hidden = false
     bar.innerHTML = `Archivo · estas viendo la Temporada ${S.number}${active ? `<a href="/#home">Ir a la Temporada ${active.number}</a>` : ""}`
   }
+  const dms = document.getElementById("drMineSec")
+  if (dms) { if (P.ME < 0 || !P.DRAFT_ORDER.includes(P.ME)) dms.hidden = true; else setText("#drMineTeam", P.TEAMS[P.ME].n) }
   if (P.ROLE === "admin") document.getElementById("navAdmin").hidden = false
 }
 
