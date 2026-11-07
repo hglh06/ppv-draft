@@ -1320,3 +1320,17 @@ body.ready .boot{display:none}
   .me-chip{padding:4px}
   .nav .nav-sep{margin:0 2px}
 }
+
+/* boton de iniciar sesion: siempre con texto */
+.me-chip.guest{padding:8px 14px !important;background:var(--volt);border-color:var(--volt);color:#111}
+.me-chip.guest>span{display:block !important}
+.me-chip.guest b{color:#111;font-family:var(--f-label);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.85rem}
+.me-chip.guest small{display:none}
+.me-chip.guest:hover{filter:brightness(1.08)}
+.me-chip.guest .guest-ico{display:none}
+@media (max-width:860px){
+  .me-chip.guest{padding:0 !important;width:42px;height:42px;justify-content:center;align-items:center}
+  .me-chip.guest>span{display:none !important}
+  .me-chip.guest .guest-ico{display:block}
+}
+@media (max-width:400px){.brand .name{display:none}.nav .wrap{gap:8px}}

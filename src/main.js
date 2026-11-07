@@ -68,6 +68,17 @@ function applyChrome(P) {
     bar.hidden = false
     bar.innerHTML = `Archivo · estas viendo la Temporada ${S.number}${active ? `<a href="/#home">Ir a la Temporada ${active.number}</a>` : ""}`
   }
+  // sin equipo (visitante o cuenta sin equipo) la ficha es un boton con texto, no un escudo
+  if (P.ME < 0) {
+    const chip = document.getElementById("meChip")
+    if (chip) {
+      const label = P.USER ? "Mi cuenta" : "Entrar"
+      chip.classList.add("guest")
+      chip.setAttribute("aria-label", P.USER ? "Mi cuenta (sin equipo en esta temporada)" : "Iniciar sesion")
+      chip.title = label
+      chip.innerHTML = `<svg class="guest-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg><span><b>${label}</b></span>`
+    }
+  }
   setText("#fTeams", String(P.TEAMS.length || "—"))
   setText("#fWeeks", P.WEEKS ? `${P.WEEKS} semanas` : "Por definir")
   fitNav()
