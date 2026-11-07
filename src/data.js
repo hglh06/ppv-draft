@@ -22,6 +22,7 @@ const ytId = u => {
   return m ? m[1] : null
 }
 const lc = s => (s || "").toLowerCase()
+const typesOf = p => [lc(p.type1), lc(p.type2)].filter(t => t && t !== "none").join("/") || "normal"
 
 export async function loadSeasons() {
   const { data, error } = await supabase.from("seasons").select("*").order("number", { ascending: false })
@@ -123,7 +124,7 @@ export async function loadSeason(season, session) {
   const POOL = []
   pool.forEach(p => {
     const n = p.pokemon?.name; if (!n) return
-    SPRITE[n] = p.pokemon.sprite; POINTS[n] = p.points; TYPES[n] = [lc(p.pokemon.type1), lc(p.pokemon.type2)].filter(Boolean).join("/")
+    SPRITE[n] = p.pokemon.sprite; POINTS[n] = p.points; TYPES[n] = typesOf(p.pokemon)
     if (p.available) POOL.push([n, p.points ?? 0, TYPES[n], POKE_IDS[n] || 0])
   })
   POOL.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
@@ -143,7 +144,7 @@ export async function loadSeason(season, session) {
       SPRITE[n] = SPRITE[n] || p.sprite
       const ab = [p.ability1, p.ability2, p.hiddenability].filter(a => a && a !== "None").join(" / ")
       const s = byTeamMon[t.id + "|" + n] || { g: 0, k: 0, d: 0 }
-      return [n, POINTS[n] ?? 0, [lc(p.type1), lc(p.type2)].filter(Boolean).join("/") || "normal", ab, OBT[r.obtained_method] || "Draft", s.g, s.k, s.d]
+      return [n, POINTS[n] ?? 0, typesOf(p), ab, OBT[r.obtained_method] || "Draft", s.g, s.k, s.d]
     })
     const used = roster.reduce((s, r) => s + r[1], 0)
     const fa = waiverBy[t.id]?.fa_used ?? (txQ.data || []).filter(x => x.type === "free_agent" && x.status === "approved" && x.team_a === t.id).length

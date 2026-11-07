@@ -1637,10 +1637,10 @@ function route(){
   const ti=h.startsWith("team-")?TEAMS.findIndex(t=>"team-"+slug(t)===h):-1;
   const hm=h.match(/^h2h-(\d+)-(\d+)$/);if(hm&&TEAMS[+hm[1]]&&TEAMS[+hm[2]]&&hm[1]!==hm[2])h2=[+hm[1],+hm[2]];
   const p=ti>=0?"profile":hm?"h2h":PAGES.includes(h)?h:"home";
-  if(ti>=0)renderProfile(ti);
-  if(p==="h2h")renderH2H();
-  if(p==="pronosticos")renderPicks();
-  if(p==="media")renderMedia();
+  if(ti>=0)safe(()=>renderProfile(ti),"profile");
+  if(p==="h2h")safe(()=>renderH2H(),"h2h");
+  if(p==="pronosticos")safe(()=>renderPicks(),"picks");
+  if(p==="media")safe(()=>renderMedia(),"media");
   if(PPV.hooks.pages[p])safe(()=>PPV.hooks.pages[p](),p);
   if(p==="mi-equipo"&&ME<0)safe(()=>PPV.hooks.pages.mine(),"mine");
   {const cb=document.getElementById("cmBtn");if(cb)cb.classList.toggle("on",p==="media");}
