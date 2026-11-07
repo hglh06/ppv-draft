@@ -1,16 +1,39 @@
-# React + Vite
+# PPV Draft League · sitio S5
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sitio de la liga con el rediseño (Temporada 5) conectado a Supabase. Cada temporada vive en la misma base de datos y se puede ver por separado; la S4 queda como archivo.
 
-Currently, two official plugins are available:
+## Correr en local
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+npm install
+# .env con VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY (las mismas de Vercel)
+npm run dev
+```
 
-## React Compiler
+## Estructura
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Archivo | Qué hace |
+|---|---|
+| `index.html` | Markup del rediseño (todas las páginas). |
+| `src/main.js` | Arranque: sesión, elige temporada (`?t=4` para ver la S4), carga datos, aplica colores. |
+| `src/data.js` | Lee Supabase y arma los datos con la forma que usa el rediseño (`TEAMS`, `RAW_MATCHES`, `PROFILES`, `POOL`…). |
+| `src/app.js` | Lógica y render del rediseño (lee `window.PPV`). |
+| `src/actions.js` | Login, reportar series, fichajes, trades, sala del draft, página de temporadas, faints en riesgo. |
+| `src/admin.js` | Panel de admin (`#admin`): temporadas, reglas, conferencias, equipos, pool, draft, calendario y aprobaciones. |
+| `supabase/migrations` | Cambios a la base de datos, en orden. |
 
-## Expanding the ESLint configuration
+## Temporadas
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- Solo una temporada está **activa** (`seasons.is_active`): es la que se ve en `/`. Las demás se ven con `/?t=N` o desde **Temporadas**.
+- Reglas por temporada en `league_settings` (roster, presupuesto, puntos por victoria, FA, diferencia en trades, segundos por pick, regla de escape).
+- Conferencias en `conferences` (nombre y color); participación de cada equipo en `season_teams`.
+- Stats por Pokémon y por juego en `pokemon_stats` (se llenan al aprobar un reporte).
+
+## Regla de escape
+
+`league_settings.faint_limit`: al aprobar un reporte, si un Pokémon suma ese número de faints (todas las semanas) sale del roster, se registra en `pokemon_escapes` y en `transactions` (tipo `escape`), y queda libre en waivers. Opciones: reiniciar el contador al cambiar de equipo y contar o no los playoffs.
+
+## Migraciones aplicadas
+
+01 respaldo de la S4 en el esquema `backup_s4` · 02 esquema multi-temporada · 03 S4 pasada al nuevo esquema + S5 creada · 04 funciones por temporada, escape y admin · 04b Champions ID.
+**05 (seguridad / RLS) está pendiente de aprobar.**

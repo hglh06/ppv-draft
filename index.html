@@ -1,13 +1,471 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ppv-draft-s4</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="PPV Draft League · Standings, matches, playoffs, draft y pokedex de la liga.">
+<meta name="theme-color" content="#0B0B0C">
+<link rel="icon" type="image/png" href="meta/favicon.png">
+<link rel="apple-touch-icon" href="meta/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PPV Draft League">
+<meta property="og:title" content="PPV Draft League">
+<meta property="og:description" content="Standings, matches, playoffs, draft y pokedex de la liga.">
+<meta property="og:url" content="https://ppvdraftleague.com/">
+<meta property="og:image" content="https://ppvdraftleague.com/meta/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://ppvdraftleague.com/meta/og-image.jpg">
+<title>PPV Draft League</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
+
+<div class="ticker" aria-label="Resumen de la temporada">
+  <div class="tag"><span class="dot"></span>En vivo</div>
+  <div class="track" id="ticker"></div>
+</div>
+
+<div class="season-bar" id="seasonBar" hidden></div>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#home" aria-label="PPV Draft League, inicio">
+      <span class="mark"><img src="logos/logo-ppv-white.png" alt=""></span>
+      <span class="name">PPV DRAFT LEAGUE<small id="brandSeason">&nbsp;</small></span>
+    </a>
+    <nav aria-label="Principal" id="mainNav">
+      <a href="#home" data-page="home">Home</a>
+      <a href="#standings" data-page="standings">Standings</a>
+      <a href="#matches" data-page="matches">Matches</a>
+      <a href="#h2h" data-page="h2h">H2H</a>
+      <a href="#playoffs" data-page="playoffs">Playoffs</a>
+      <span class="nav-sep" aria-hidden="true"></span>
+      <a href="#teams" data-page="teams">Teams</a>
+      <a href="#draft" data-page="draft">Draft</a>
+      <a href="#pokedex" data-page="pokedex">Pokedex</a>
+      <a href="#salon" data-page="salon">H.O.F.</a>
+      <a href="#temporadas" data-page="temporadas">Temporadas</a>
+      <a href="#admin" data-page="admin" class="cm-link" id="navAdmin" hidden>Admin</a>
+      <a href="#media" data-page="media" class="cm-link" id="navMedia" hidden>Media<small>CM</small></a>
+    </nav>
+    <button type="button" class="nav-search" id="searchBtn" aria-label="Buscar (atajo: tecla /)" title="Buscar (/)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button>
+    <a class="cm-btn" id="cmBtn" href="#media" hidden title="Media · kit del community manager" aria-label="Media: kit del community manager">CM</a>
+    <a class="me-chip" id="meChip" href="#"></a>
+    <button type="button" class="me-out" id="meOut">Salir</button>
+    <button type="button" class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="mainNav" aria-label="Abrir menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- ================= HOME ================= -->
+<main id="page-home">
+  <section class="hero">
+    <div class="hero-media" id="heroMedia" aria-hidden="true">
+      <video id="heroVideo" muted loop playsinline preload="metadata" poster="media/hero-poster.jpg">
+        <source src="media/hero-web.mp4" type="video/mp4">
+      </video>
+    </div>
+    <div class="wrap">
+      <div>
+        <div class="season"><span class="a"><i>Temporada 5</i></span><span class="b"><i>Playoffs</i></span></div>
+        <h1><span class="ln k">Arma tu equipo.</span><span class="ln j">Vence a todos.</span></h1>
+        <p class="lede">18 entrenadores, dos conferencias y un solo campeon. Cada draft construye historias, cada trade redefine destinos y cada batalla acerca al titulo.</p>
+        <div class="cta">
+          <a class="btn" href="#playoffs">Ver playoffs</a>
+          <a class="btn ghost" href="#teams">Conoce los equipos</a>
+        </div>
+        <div class="cd" id="countdown"></div>
+      </div>
+    </div>
+  </section>
+  <div class="strip">
+    <div class="wrap">
+      <div class="stat"><b>18</b><span>Equipos en liga</span></div>
+      <div class="stat"><b>2</b><span>Conferencias</span></div>
+      <div class="stat"><b>8</b><span>Semanas de fase regular</span></div>
+      <div class="stat"><b>8</b><span>Boletos a playoffs</span></div>
+    </div>
+  </div>
+
+
+  <section class="block">
+    <div class="wrap">
+      <div class="sec-head"><div><div class="label">Formato de la temporada</div><h2>Del draft al <em>titulo</em></h2></div></div>
+      <div class="format">
+        <div class="step"><div class="label">Fase 1</div><h3>Draft</h3><p>Cada trainer arma su roster pick por pick.</p></div>
+        <div class="step"><div class="label">Fase 2</div><h3>Trades</h3><p>Intercambios entre entrenadores para ajustar el equipo.</p></div>
+        <div class="step"><div class="label">Fase 3</div><h3>Waivers</h3><p>Pokemon libres disponibles para reforzarse a media temporada.</p></div>
+        <div class="step now"><div class="label">En curso</div><h3>Playoffs</h3><p>Los 8 mejores pelean por el campeonato.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><div class="label">Fase regular · Final</div><h2>Tabla de <em>posiciones</em></h2></div>
+        <a class="link" href="#standings">Standings completos</a>
+      </div>
+      <div class="confs" id="tables"></div>
+      <div class="legend"><span><i></i>Linea de playoffs</span><span>Victoria = 3 pts</span><span>Diff = balance de KOs (derrotados menos perdidos)</span></div>
+    </div>
+  </section>
+
+  <section class="block" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><div class="label">Pokemon Leaderboard</div><h2>Lideres en <em>KOs</em></h2></div>
+        <div class="sh-btns"><button type="button" class="btn ghost sh-sm" data-sharek="leaders">⤴ Compartir</button><a class="link" href="#pokedex">Ver Pokedex</a></div>
+      </div>
+      <div class="lead">
+        <div class="mvp">
+          <div><div class="label">Lider en KOs · Temporada 5</div><h3>Blastoise</h3><div class="mvp-team" id="mvpTeam"></div></div>
+          <img class="mvp-art" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/9.gif" alt="">
+          <div class="kd">
+            <div><b class="num">24</b><span>Kills</span></div>
+            <div><b class="num">8</b><span>Deaths</span></div>
+            <div><b class="num">18</b><span>Partidas</span></div>
+            <div><b class="num">3.00</b><span data-tip="kd" tabindex="0">K/D</span></div>
+          </div>
+        </div>
+        <div class="bars" id="bars"></div>
+      </div>
+      <div class="potw-w" id="homePotw"></div>
+    </div>
+  </section>
+
+
+  <section class="block" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><div class="label" id="hpLabel">Power ranking</div><h2>Power <em>ranking</em></h2></div>
+        <div class="sh-btns"><button type="button" class="btn ghost sh-sm" data-sharek="power">⤴ Compartir</button><a class="link" href="#standings" data-goview="power">Ranking completo</a></div>
+      </div>
+      <ol class="pw-list" id="homePower"></ol>
+    </div>
+  </section>
+
+  <section class="block" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head"><div><div class="label">Mas de la liga</div><h2>Juega y <em>compara</em></h2></div></div>
+      <div class="pr-promos">
+        <a class="pr-promo" href="#pronosticos"><div><span class="label">Juego de la comunidad</span><b>Pronosticos</b><p>Elige quien gana cada serie y compite contra los demas trainers.</p></div><span class="arr" aria-hidden="true">→</span></a>
+        <a class="pr-promo" href="#h2h" style="border-left-color:var(--rojo)"><div><span class="label">Comparador</span><b>Cara a cara</b><p>Dos equipos lado a lado: numeros, historial y ventaja de tipos.</p></div><span class="arr" aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ================= TEAMS ================= -->
+<main id="page-teams" hidden>
+  <section class="t-hero tm-hero">
+    <div class="wrap">
+      <div><div class="label"><span class="sl">&nbsp;</span></div><h1>Teams</h1></div>
+      <div class="confsum" id="confsum"></div>
+    </div>
+  </section>
+  <div class="toolbar">
+    <div class="wrap">
+      <div class="seg" role="group" aria-label="Filtrar por conferencia">
+        <button type="button" data-f="all" aria-pressed="true">Todos</button>
+        <button type="button" data-f="rojo" aria-pressed="false"><span class="cn-r">FireRed</span></button>
+        <button type="button" data-f="azul" aria-pressed="false"><span class="cn-a">LeafGreen</span></button>
+      </div>
+      <label class="search" for="q">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+        <input id="q" type="search" placeholder="Buscar equipo" autocomplete="off">
+      </label>
+      <select id="sort" aria-label="Ordenar equipos">
+        <option value="rank">Por posicion</option>
+        <option value="az">A – Z</option>
+        <option value="diff">Por diff</option>
+      </select>
+      <button type="button" class="btn ghost sh-sm" data-sharek="confs">⤴ Compartir conferencias</button>
+      <span class="label count" id="count"></span>
+    </div>
+  </div>
+  <div class="wrap grid-sec" id="grid"></div>
+</main>
+
+<!-- ================= STANDINGS ================= -->
+<main id="page-standings" hidden>
+  <section class="t-hero s-hero">
+    <div class="wrap">
+      <div><div class="label"><span class="sl">&nbsp;</span> · Fase regular</div><h1>Standings</h1></div>
+      <div class="leaders" id="leaders"></div>
+    </div>
+  </section>
+  <div class="toolbar">
+    <div class="wrap">
+      <div class="seg" role="group" aria-label="Vista de la tabla" id="sview">
+        <button type="button" data-v="conf" aria-pressed="true">Por conferencia</button>
+        <button type="button" data-v="all" aria-pressed="false">General</button>
+        <button type="button" data-v="power" aria-pressed="false">Power ranking</button>
+      </div>
+      <button type="button" class="link jump" id="toMons">Pokemon Leaderboard ↓</button>
+      <button type="button" class="btn ghost sh-sm" data-sharek="table">⤴ Compartir tabla</button>
+      <span class="label count">Top 4 de cada conferencia van a playoffs · Victoria = 3 pts</span>
+    </div>
+  </div>
+  <div class="wrap s-body">
+    <div id="stables"></div>
+    <section id="mons-sec">
+      <div class="sec-head"><div><div class="label">Rendimiento individual</div><h2>Pokemon <em>Leaderboard</em></h2></div><button type="button" class="btn ghost sh-sm" data-sharek="leaders">⤴ Compartir</button></div>
+      <div class="mtiles" id="mtiles"></div>
+      <div class="table"><div class="rows"><table class="st m" id="mtable"></table></div></div>
+    </section>
+  </div>
+</main>
+
+<!-- ================= MATCHES ================= -->
+<main id="page-matches" hidden>
+  <section class="t-hero m-hero">
+    <div class="wrap">
+      <div><div class="label"><span class="sl">&nbsp;</span> · Series al mejor de 3</div><h1>Matches</h1></div>
+      <div class="weeks" id="weeks" role="group" aria-label="Elegir semana"></div>
+    </div>
+  </section>
+  <div class="toolbar">
+    <div class="wrap">
+      <div class="seg" role="group" aria-label="Filtrar por conferencia" id="mconf">
+        <button type="button" data-mc="all" aria-pressed="true">Todas</button>
+        <button type="button" data-mc="rojo" aria-pressed="false"><span class="cn-r">FireRed</span></button>
+        <button type="button" data-mc="azul" aria-pressed="false"><span class="cn-a">LeafGreen</span></button>
+      </div>
+      <select id="mteam" aria-label="Ver las series de un equipo"><option value="">Todos los equipos</option></select>
+      <span class="label count" id="mcount"></span>
+      <a class="link" href="#pronosticos">Pronosticos</a>
+    </div>
+  </div>
+  <div class="wrap s-body" id="mbody"></div>
+</main>
+
+<!-- ================= CARA A CARA ================= -->
+<main id="page-h2h" hidden>
+  <section class="t-hero">
+    <div class="wrap">
+      <div><div class="label"><span class="sl">&nbsp;</span> · Comparador</div><h1>Cara a cara</h1></div>
+      <div class="h2-pick"><select id="h2A" aria-label="Primer equipo"></select><span class="h2-vs" aria-hidden="true">VS</span><select id="h2B" aria-label="Segundo equipo"></select><button type="button" class="btn ghost sh-sm" id="h2Swap" aria-label="Intercambiar equipos">⇄ Invertir</button></div>
+    </div>
+  </section>
+  <div class="wrap s-body" id="h2Body"></div>
+</main>
+
+<!-- ================= PRONOSTICOS ================= -->
+<main id="page-pronosticos" hidden>
+  <section class="t-hero pr-hero">
+    <div class="wrap">
+      <div><div class="label"><span class="sl">&nbsp;</span> · Juego de la comunidad</div><h1>Pronosticos</h1></div>
+      <div class="weeks" id="prWeeks" role="group" aria-label="Elegir semana"></div>
+    </div>
+  </section>
+  <div class="wrap s-body">
+    <section id="prBody"></section>
+    <section><div class="sec-head"><div><div class="label" id="prTabLabel"></div><h2>Tabla de <em>aciertos</em></h2></div><button type="button" class="btn ghost sh-sm" data-sharek="pickTable" id="prTabShare" hidden>⤴ Compartir tabla</button></div><div id="prTable"></div></section>
+  </div>
+</main>
+
+<!-- ================= MEDIA (community manager) ================= -->
+<main id="page-media" hidden>
+  <section class="t-hero md-hero">
+    <div class="wrap">
+      <div><div class="label">Community manager · Kit de la semana</div><h1>Media</h1></div>
+      <div class="weeks" id="mdWeeks" role="group" aria-label="Elegir semana"></div>
+    </div>
+  </section>
+  <div class="toolbar">
+    <div class="wrap">
+      <div class="seg" role="group" aria-label="Formato de las imagenes" id="mdFmt"><button type="button" data-fm="post" aria-pressed="true">Post 4:5</button><button type="button" data-fm="story" aria-pressed="false">Historia 9:16</button></div>
+      <button type="button" class="btn sh-sm" id="mdAll" disabled>⤓ Descargar todas</button>
+      <span class="label count" id="mdCount"></span>
+    </div>
+  </div>
+  <div class="wrap s-body">
+    <div class="md-g" id="mdGrid"></div>
+    <p class="md-note">Solo las cuentas con rol de community manager o admin ven esta pagina. Las imagenes se generan con los datos de la temporada que estas viendo.</p>
+  </div>
+</main>
+
+<!-- ================= PLAYOFFS ================= -->
+<main id="page-playoffs" hidden>
+  <section class="t-hero po-hero">
+    <div class="wrap">
+      <div><div class="label"><span class="sl">&nbsp;</span> · Fase final</div><h1>Playoffs</h1></div>
+      <div class="po-status" id="po-status"></div>
+    </div>
+  </section>
+  <div class="wrap s-body">
+    <section>
+      <div class="sec-head"><div><div class="label">Formato escalera · Series al mejor de 3 · Cruce de conferencias</div><h2>El <em>bracket</em></h2></div><div class="sh-btns"><button type="button" class="btn ghost sh-sm" data-sharek="bracket">⤴ Compartir bracket</button><button type="button" class="btn ghost sh-sm" data-sharek="champ">⤴ Compartir campeon</button></div></div>
+      <div class="bk-w" id="bracket"></div>
+    </section>
+    <section>
+      <div class="sec-head"><div><div class="label">Como se llega al titulo</div><h2>El camino a la <em>final</em></h2></div></div>
+      <div class="format" id="po-format">
+        <div class="step" data-r="wc"><div class="label">Ronda 1</div><h3>Wild Card</h3><p>El #3 de cada conferencia contra el #4 de la otra.</p></div>
+        <div class="step" data-r="qf"><div class="label">Ronda 2</div><h3>Cuartos</h3><p>El ganador enfrenta al #2 de la conferencia contraria.</p></div>
+        <div class="step" data-r="sf"><div class="label">Ronda 3</div><h3>Semifinal</h3><p>Los #1 de conferencia esperan aqui con doble bye.</p></div>
+        <div class="step" data-r="final"><div class="label">Ronda 4</div><h3>Gran Final</h3><p>Los ganadores de cada lado juegan por el titulo.</p></div>
+      </div>
+    </section>
+    <section>
+      <div class="sec-head"><div><div class="label">Ocho boletos</div><h2>Los <em>clasificados</em></h2></div></div>
+      <div class="seeds-g" id="po-seeds"></div>
+    </section>
+  </div>
+</main>
+
+<!-- ================= POKEDEX ================= -->
+<main id="page-pokedex" hidden>
+  <section class="t-hero dx-hero">
+    <div class="wrap">
+      <div><div class="label"><span class="sl">&nbsp;</span> · Pool del draft</div><h1>Pokedex</h1></div>
+      <div class="dx-stats" id="dxStats"></div>
+    </div>
+  </section>
+  <div class="toolbar">
+    <div class="wrap">
+      <div class="seg" role="group" aria-label="Filtrar por disponibilidad" id="dxSeg">
+        <button type="button" data-s="all" aria-pressed="true">Todos</button>
+        <button type="button" data-s="free" aria-pressed="false">Libres</button>
+        <button type="button" data-s="owned" aria-pressed="false">Con dueño</button>
+        <button type="button" data-s="mine" aria-pressed="false">Mi equipo</button>
+      </div>
+      <label class="search" for="dxQ">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+        <input id="dxQ" type="search" placeholder="Buscar Pokemon" autocomplete="off">
+      </label>
+      <select id="dxType" aria-label="Filtrar por tipo"></select>
+      <span class="label count" id="dxCount"></span>
+    </div>
+  </div>
+  <div class="wrap s-body" id="dxBody"></div>
+</main>
+
+<!-- ================= DRAFT ================= -->
+<main id="page-draft" hidden>
+  <section class="t-hero dr-hero">
+    <div class="wrap">
+      <div><div class="label"><span class="sl">&nbsp;</span> · Formato snake</div><h1>Draft</h1></div>
+      <div class="dx-stats" id="drStats"></div>
+    </div>
+  </section>
+  <div class="wrap s-body">
+    <section>
+      <div class="sec-head"><div><div class="label">Richampions VGC</div><h2>Tu <em>draft</em></h2></div><button type="button" class="btn ghost sh-sm" data-sharek="draft">⤴ Compartir mi draft</button></div>
+      <div class="my-sum" id="drMineSum"></div>
+      <div class="my-g" id="drMine"></div>
+    </section>
+    <section>
+      <div class="sec-head"><div><div class="label">Una fila por equipo en orden de draft · ↓ ↑ indican el sentido de cada ronda (snake)</div><h2>El <em>tablero</em></h2></div></div>
+      <div class="db-w" id="drBoard"></div>
+    </section>
+    <section id="txSec">
+      <div class="sec-head"><div><div class="label" id="txCount"></div><h2>Trades y <em>fichajes</em></h2></div><div class="seg" role="group" aria-label="Filtrar movimientos" id="txSeg"><button type="button" data-tx="all" aria-pressed="true">Todos</button><button type="button" data-tx="trade" aria-pressed="false">Trades</button><button type="button" data-tx="fa" aria-pressed="false">Free agency</button></div></div>
+      <p class="mv-note">Se deducen comparando el tablero del draft con los rosters actuales: si un Pokemon paso de un equipo a otro cuenta como trade, y si llego o se fue a la bolsa de libres cuenta como free agency. El sitio actual no guarda la fecha de cada movimiento.</p>
+      <div class="tx-g" id="txFeed"></div>
+    </section>
+    <section>
+      <div class="sec-head"><div><div class="label" id="drMovesCount"></div><h2>Movimientos desde el <em>draft</em></h2></div></div>
+      <p class="mv-note">Resumen por equipo: lo que llego y lo que salio, comparando el tablero del draft con los rosters actuales.</p>
+      <div class="mv-g" id="drMoves"></div>
+    </section>
+    <section>
+      <div class="sec-head"><div><div class="label" id="drFaCount"></div><h2>Free <em>agency</em></h2></div><a class="link" href="#pokedex">Ver Pokedex completa</a></div>
+      <div class="fa-note" id="drFaNote"></div>
+      <div class="table"><div class="rows"><table class="fa" id="drFa"></table></div></div>
+    </section>
+  </div>
+</main>
+
+<!-- ================= MI EQUIPO ================= -->
+<main id="page-mi-equipo" hidden></main>
+
+<!-- ================= SALON DE LA FAMA ================= -->
+<main id="page-salon" hidden>
+  <section class="t-hero hof-hero">
+    <div class="wrap">
+      <div><div class="label">Historia de la PPV Draft League</div><h1>Hall of Fame</h1></div>
+    </div>
+  </section>
+  <div class="wrap s-body">
+    <section>
+      <div class="sec-head"><div><div class="label">Un titulo por temporada</div><h2>Los <em>campeones</em></h2></div><button type="button" class="btn ghost sh-sm" data-sharek="champ">⤴ Compartir campeon</button></div>
+      <div class="champs" id="hofChamps"></div>
+      <p class="hof-note">Las temporadas 1 a 3 salen de los titulos de cada trainer en su perfil. Se muestra el equipo actual del trainer: el nombre del equipo pudo ser otro en esa temporada.</p>
+    </section>
+    <section>
+      <div class="sec-head"><div><div class="label">Fase regular y playoffs</div><h2>La temporada 4 en <em>numeros</em></h2></div></div>
+      <div class="hof-g" id="hofRecords"></div>
+    </section>
+  </div>
+</main>
+
+<!-- ================= TEAM PROFILE ================= -->
+<main id="page-profile" hidden></main>
+<main id="page-admin" hidden></main>
+<main id="page-login" hidden></main>
+<main id="page-temporadas" hidden></main>
+
+<footer class="site">
+  <div class="wrap f-top">
+    <div class="f-brand">
+      <div class="f-id"><img class="flogo" src="logos/logo-ppv-white.png" alt=""><strong>PPV DRAFT LEAGUE<small><span class="sl">&nbsp;</span></small></strong></div>
+      <p>Una comunidad de entrenadores que arma su equipo pick por pick, negocia trades y se juega cada semana en series al mejor de 3.</p>
+      <div class="f-social">
+        <a href="https://www.youtube.com/@PPVDRAFTLEAGUE-f5z" target="_blank" rel="noopener" aria-label="YouTube de PPV Draft League"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12a31 31 0 0 0 .5 4.8 3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8zM9.7 15.1V8.9L15.5 12z"/></svg><span>YouTube</span></a>
+        <a href="https://www.instagram.com/ppvstagram/" target="_blank" rel="noopener" aria-label="Instagram de PPV Draft League"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" d="M7 2.5h10A4.5 4.5 0 0 1 21.5 7v10a4.5 4.5 0 0 1-4.5 4.5H7A4.5 4.5 0 0 1 2.5 17V7A4.5 4.5 0 0 1 7 2.5z"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.6" cy="6.4" r="1.3" fill="currentColor"/></svg><span>Instagram</span></a>
+      </div>
+    </div>
+    <nav class="f-col" aria-label="Navegacion del pie">
+      <h4>Navegacion</h4>
+      <ul>
+        <li><a href="#home">Home</a></li>
+        <li><a href="#standings">Standings</a></li>
+        <li><a href="#matches">Matches</a></li>
+        <li><a href="#h2h">Cara a cara</a></li>
+        <li><a href="#pronosticos">Pronosticos</a></li>
+        <li><a href="#playoffs">Playoffs</a></li>
+        <li><a href="#teams">Teams</a></li>
+      </ul>
+    </nav>
+    <div class="f-col">
+      <h4>La liga</h4>
+      <ul>
+        <li><a href="#teams"><span class="dot-r" aria-hidden="true"></span>Conferencia <span class="cn-r">FireRed</span></a></li>
+        <li><a href="#teams"><span class="dot-a" aria-hidden="true"></span>Conferencia <span class="cn-a">LeafGreen</span></a></li>
+        <li><a href="#draft">Draft</a></li>
+        <li><a href="#pokedex">Pokedex</a></li>
+        <li><a href="#salon">Hall of Fame</a></li>
+        <li><a href="#" id="fMine">Mi equipo</a></li>
+      </ul>
+    </div>
+    <div class="f-col">
+      <h4 class="sl-n">&nbsp;</h4>
+      <dl>
+        <div><dt>Campeon</dt><dd id="fChamp">Por definir</dd></div>
+        <div><dt>Equipos</dt><dd>18</dd></div>
+        <div><dt>Fase regular</dt><dd>9 semanas</dd></div>
+        <div><dt>Formato</dt><dd>Series al mejor de 3</dd></div>
+      </dl>
+    </div>
+  </div>
+  <div class="wrap f-bottom">
+    <span>© 2026 PPV Draft League. Proyecto de fans sin fines de lucro, no afiliado a Nintendo, Game Freak ni The Pokemon Company. Sprites: <a href="https://pokeapi.co/" target="_blank" rel="noopener">PokeAPI</a>.</span>
+    <span><button type="button" class="f-up" id="installBtn" hidden>⤓ Instalar app</button> <button type="button" class="f-up" id="fUp">↑ Volver arriba</button></span>
+  </div>
+</footer>
+
+<div class="drawer" id="drawer" hidden></div>
+<div class="toast" id="toast" hidden></div>
+<div class="srch" id="srch" hidden>
+  <div class="srch-box" role="dialog" aria-modal="true" aria-label="Buscar en el sitio">
+    <label class="search" for="srchQ"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="srchQ" type="search" placeholder="Equipo, trainer, Pokemon o seccion" autocomplete="off" aria-controls="srchRes"></label>
+    <div class="srch-res" id="srchRes" role="listbox" aria-label="Resultados"></div>
+    <p class="srch-hint">↑ ↓ para moverte · Enter para abrir · Esc para cerrar · atajo: tecla /</p>
+  </div>
+</div>
+
+
+<script type="module" src="/src/main.js"></script>
