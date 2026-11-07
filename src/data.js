@@ -38,7 +38,7 @@ export function pickSeason(seasons) {
 
 export async function loadSeason(season, session) {
   const sid = season.id
-  const [settingsQ, confsQ, stQ, matchesQ, stats, rosters, pool, orderQ, picksQ, txQ, waiversQ, escQ, seasonsAll, nickQ, postsQ, predQ, predTabQ] = await Promise.all([
+  const [settingsQ, confsQ, stQ, matchesQ, stats, rosters, pool, orderQ, picksQ, txQ, waiversQ, escQ, seasonsAll, nickQ, postsQ, predQ, predTabQ, repPendQ] = await Promise.all([
     supabase.from("league_settings").select("*").eq("season_id", sid).maybeSingle(),
     supabase.from("conferences").select("*").eq("season_id", sid).order("sort"),
     supabase.from("season_teams").select("*, team:team_id(id,name,user_id,coach_title,favorite_pokemon,logo,champions_id)").eq("season_id", sid),
@@ -55,7 +55,8 @@ export async function loadSeason(season, session) {
     supabase.from("pokemon_nicknames").select("team_id,pokemon_name,nickname").eq("season_id", sid),
     supabase.from("posts").select("*").or(`season_id.is.null,season_id.eq.${sid}`).order("pinned", { ascending: false }).order("created_at", { ascending: false }).limit(12),
     supabase.from("predictions").select("match_id,user_id,pick").eq("season_id", sid),
-    supabase.rpc("prediction_table", { p_season: sid })
+    supabase.rpc("prediction_table", { p_season: sid }),
+    supabase.from("reports").select("match_id").eq("season_id", sid).eq("status", "pending")
   ])
   const RULES = Object.assign({ roster_size: 8, max_points: 60, points_win: 3, points_loss: 0, playoff_teams: 8, max_fa: 10, faint_limit: null, trade_max_diff: 3, best_of: 3, allow_duplicates: false, starters_per_team: 0 }, settingsQ.data || {})
   const confs = confsQ.data || []
@@ -120,7 +121,7 @@ export async function loadSeason(season, session) {
     ]))
   })
   const PENDING = regular.filter(m => m.status !== "completed" && IDX[m.team_a] != null && IDX[m.team_b] != null)
-    .map(m => ({ id: m.id, w: m.week, a: IDX[m.team_a], b: IDX[m.team_b], c: TEAMS[IDX[m.team_a]].c, at: m.scheduled_at }))
+    .map(m => ({ id: m.id, w: m.week, a: IDX[m.team_a], b: IDX[m.team_b], c: TEAMS[IDX[m.team_a]].c, at: m.scheduled_at, reported: (repPendQ.data || []).some(r => r.match_id === m.id) }))
   const WEEKS = Math.max(0, ...regular.map(m => m.week || 0))
 
   // ---------- pool y sprites ----------

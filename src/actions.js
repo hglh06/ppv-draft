@@ -73,7 +73,7 @@ function pendingCard(p) {
   return `<article class="mc pend ${p.a === P.ME || p.b === P.ME ? "mine" : ""}" style="--c:${P.CONF[p.c].v}">
     <div class="side">${window.__crest(A)}<a class="nm" href="#team-${slugT(A)}"><span class="full">${esc(A.n)}</span><span class="short">#${esc(A.ab)}</span></a></div>
     <div class="side">${window.__crest(B)}<a class="nm" href="#team-${slugT(B)}"><span class="full">${esc(B.n)}</span><span class="short">#${esc(B.ab)}</span></a></div>
-    <div class="pend-row"><span class="label">${esc(when)}</span>${ok ? `<button type="button" class="btn sm" data-report="${p.id}">Reportar resultado</button>` : ""}</div></article>`
+    <div class="pend-row"><span class="label">${esc(when)}</span>${p.reported ? `<span class="pill warn">Reporte en revision</span>` : ok ? `<button type="button" class="btn sm" data-report="${p.id}">Reportar resultado</button>` : ""}</div></article>`
 }
 const slugT = t => t.n.toLowerCase().replace(/\s+/g, "-")
 
@@ -164,6 +164,7 @@ async function mineExtras() {
   const minePend = P.TX.filter(t => ["pending_player", "pending_admin"].includes(t.status) && t.team_a === me.id)
   const tn = id => P.TEAMS.find(t => t.id === id)?.n || "?"
   const myEsc = P.ESCAPES.filter(e => e.team_id === me.id)
+  const hist = P.TX.filter(t => (t.team_a === me.id || t.team_b === me.id) && ["approved", "rejected", "cancelled"].includes(t.status)).slice(0, 6)
   sec.innerHTML = `<div class="sec-head"><div><div class="label">${esc(STATUS[P.SEASON.status] || "")}</div><h2>Tu <em>mercado</em></h2></div>
       ${P.IS_ARCHIVE ? "" : `<button class="btn" id="tdNew">⇄ Proponer trade</button>`}</div>
     <div class="m-cards">
@@ -172,7 +173,9 @@ async function mineExtras() {
         <div class="acts"><button class="btn sm" data-acc="${t.id}">Aceptar</button><button class="btn ghost sm" data-dec="${t.id}">Rechazar</button></div></div>`).join("") : "<p>Nada por ahora.</p>"}</div>
       <div class="m-card"><span class="label">Tus solicitudes</span>${minePend.length ? minePend.map(t => `<div class="q-item"><header><b>${t.type === "trade" ? "Trade con " + esc(tn(t.team_b)) : "Free agency"}</b><span class="pill">${t.status === "pending_player" ? "Espera al otro trainer" : "Espera al admin"}</span></header>
         <div class="mons">Das: ${esc((t.give || []).join(", ") || "—")} · Recibes: ${esc((t.receive || []).join(", ") || "—")}</div>
-        ${t.type === "trade" && t.status === "pending_player" ? `<div class="acts"><button class="btn ghost sm" data-can="${t.id}">Cancelar</button></div>` : ""}</div>`).join("") : "<p>No tienes solicitudes abiertas.</p>"}</div>
+        ${(t.type === "trade" && t.status === "pending_player") || (t.type === "free_agent" && t.status === "pending_admin") ? `<div class="acts"><button class="btn ghost sm" data-can="${t.id}">Retirar</button></div>` : ""}</div>`).join("") : "<p>No tienes solicitudes abiertas.</p>"}
+        ${hist.length ? `<div class="label" style="margin-top:14px">Ultimos movimientos</div>${hist.map(t => `<div class="mons" style="margin-top:6px"><span class="pill ${t.status === "approved" ? "ok" : t.status === "rejected" ? "bad" : ""}">${{ approved: "Aprobado", rejected: "Rechazado", cancelled: "Retirado" }[t.status] || t.status}</span>
+          ${t.type === "escape" ? "Escape" : t.type === "trade" ? "Trade" : "FA"}: ${esc((t.receive || []).join(", ") || "—")}${(t.give || []).length ? " por " + esc(t.give.join(", ")) : ""}${t.note ? ` · <i>${esc(t.note)}</i>` : ""}</div>`).join("")}` : ""}</div>
       <div class="m-card" style="--c:var(--rojo)"><span class="label">Faints · regla de escape</span>
         ${lim ? `<p>Con <b>${lim} faints</b> un Pokemon se escapa y vuelve a waivers.${P.RULES.starters_per_team ? " Los starters no se escapan." : ""}</p><div class="risk">${faints.map(f => `<div class="r ${!f.is_starter && f.faints >= lim - 1 ? "hot" : ""}"><span style="min-width:120px">${esc(f.pokemon_name)}${f.is_starter ? ' <span class="pill ok">Starter</span>' : ""}</span><span class="bar"><i style="width:${f.is_starter ? 0 : Math.min(100, f.faints / lim * 100)}%"></i></span><b class="num">${f.is_starter ? "—" : f.faints + "/" + lim}</b></div>`).join("") || "<p>Sin faints todavia.</p>"}</div>`
         : "<p>La regla de escape no esta activa en esta temporada.</p>"}
@@ -187,7 +190,7 @@ async function mineExtras() {
     try {
       if (b.dataset.acc) { await rpc("accept_trade", { p_transaction_id: b.dataset.acc }); toast("Trade aceptado: ahora lo revisa el admin."); location.reload() }
       if (b.dataset.dec) { await rpc("decline_trade", { p_transaction_id: b.dataset.dec }); toast("Trade rechazado."); location.reload() }
-      if (b.dataset.can) { await rpc("cancel_trade", { p_transaction_id: b.dataset.can }); toast("Trade cancelado."); location.reload() }
+      if (b.dataset.can) { await rpc("cancel_trade", { p_transaction_id: b.dataset.can }); toast("Solicitud retirada."); location.reload() }
       if (b.id === "tdNew") openTrade()
       if (b.dataset.st) { await rpc("set_starter", { p_roster_id: b.dataset.st, p_on: b.dataset.on === "1" }); toast("Starter actualizado."); location.reload() }
     } catch (err) { toast(err.message) }
@@ -299,7 +302,7 @@ function nextSeries() {
     ? `<h3>Sin series pendientes</h3><p>Ya jugaste todas tus series programadas.</p>`
     : `<h3>Calendario por publicar</h3><p>Cuando el admin publique el calendario, aqui aparecen tu rival y la semana.</p>`
   const o = team(mine.a === P.ME ? mine.b : mine.a)
-  return `<h3>Semana ${mine.w} vs ${esc(o.n)}</h3><p><button type="button" class="btn sm" data-report="${mine.id}">Reportar resultado</button> <a class="btn ghost sm" href="#h2h-${P.ME}-${P.TEAMS.indexOf(o)}">Scouting</a></p>`
+  return `<h3>Semana ${mine.w} vs ${esc(o.n)}</h3><p>${mine.reported ? `<span class="pill warn">Reporte en revision del admin</span>` : `<button type="button" class="btn sm" data-report="${mine.id}">Reportar resultado</button>`} <a class="btn ghost sm" href="#h2h-${P.ME}-${P.TEAMS.indexOf(o)}">Scouting</a></p>`
 }
 function pendingSummary() {
   const me = myTeam(); if (!me) return "<h3>—</h3>"

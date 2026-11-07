@@ -40,7 +40,7 @@ export async function renderAdmin(P, ui) {
     <div class="wrap s-body"><div class="adm"><div class="adm-tabs" id="admTabs"></div><div id="admBody"><p>Cargando…</p></div></div></div>`
 
   el.querySelector("#admSeason").onchange = e => { const s = (P.SEASONS || []).find(x => String(x.number) === e.target.value); location.href = (s?.is_active ? "/" : "/?t=" + e.target.value) + "#admin" }
-  const [settingsQ, confsQ, teamsQ, stQ, profQ, orderQ, repQ, txQ, wQ, dsQ, seasonsQ, rolesQ, postsQ] = await Promise.all([
+  const [settingsQ, confsQ, teamsQ, stQ, profQ, orderQ, repQ, txQ, wQ, dsQ, seasonsQ, rolesQ, rosQ, waitQ, postsQ] = await Promise.all([
     supabase.from("league_settings").select("*").eq("season_id", sid).maybeSingle(),
     supabase.from("conferences").select("*").eq("season_id", sid).order("sort"),
     supabase.from("teams").select("*").order("name"),
@@ -53,6 +53,8 @@ export async function renderAdmin(P, ui) {
     supabase.from("draft_state").select("*").eq("season_id", sid).maybeSingle(),
     supabase.from("seasons").select("*").order("number"),
     supabase.from("roles").select("*").order("created_at"),
+    supabase.from("rosters").select("team_id,points_paid").eq("season_id", sid),
+    supabase.from("transactions").select("*").eq("status", "pending_player").eq("season_id", sid).order("created_at"),
     supabase.from("posts").select("*").order("created_at", { ascending: false })
   ])
   const settings = settingsQ.data || {}, confs = confsQ.data || [], teams = teamsQ.data || [], st = stQ.data || []
@@ -60,6 +62,10 @@ export async function renderAdmin(P, ui) {
   const reports = (repQ.data || []).filter(r => (r.match?.season_id || r.season_id) === sid)
   const txs = (txQ.data || []).filter(t => (t.season_id || sid) === sid)
   const wpos = Object.fromEntries((wQ.data || []).map(w => [w.team_id, w.position]))
+  const faUsed = Object.fromEntries((wQ.data || []).map(w => [w.team_id, w.fa_used || 0]))
+  const tPts = {}, tCnt = {}; (rosQ.data || []).forEach(r => { tPts[r.team_id] = (tPts[r.team_id] || 0) + (r.points_paid || 0); tCnt[r.team_id] = (tCnt[r.team_id] || 0) + 1 })
+  const waiting = waitQ.data || []
+  const teamState = id => `${tPts[id] || 0}/${settings.max_points ?? "?"} pts · ${tCnt[id] || 0}/${settings.roster_size ?? "?"} Pokemon · FA ${faUsed[id] ?? 0}/${settings.max_fa ?? "?"}`
   const tname = id => st.find(x => x.team_id === id)?.display_name || teams.find(t => t.id === id)?.name || "?"
   const fail = e => toast(e.message || String(e))
   const reload = () => renderAdmin(P, ui)
@@ -78,7 +84,9 @@ export async function renderAdmin(P, ui) {
   function pend() {
     const fa = txs.filter(t => t.type === "free_agent"), tr = txs.filter(t => t.type === "trade")
     const byMon = {}; fa.forEach(t => { const k = (t.receive || [])[0] || "—"; (byMon[k] = byMon[k] || []).push(t) })
-    Object.values(byMon).forEach(l => l.sort((a, b) => (wpos[a.team_a] ?? 99) - (wpos[b.team_a] ?? 99)))
+    Object.values(byMon).forEach(l => l.sort((a, b) => (wpos[a.team_a] ?? 99) - (wpos[b.team_a] ?? 99) || new Date(a.created_at) - new Date(b.created_at)))
+    // los Pokemon se resuelven en el orden de la mejor prioridad de waivers que los pide
+    const groups = Object.entries(byMon).sort((a, b) => (wpos[a[1][0].team_a] ?? 99) - (wpos[b[1][0].team_a] ?? 99))
     const side = (arr) => (arr || []).map(m => `${esc(m.name)} (${m.games.map(g => `J${g.game}: ${g.kills}K/${g.deaths}D`).join(", ")})`).join(" · ") || "—"
     body.innerHTML = `<div class="adm">
       <div class="card-a"><h3>Reportes de series (${reports.length})</h3>${reports.map(r => {
@@ -87,12 +95,18 @@ export async function renderAdmin(P, ui) {
           <div>${games}</div><div class="mons"><b>${esc(tname(m.team_a))}:</b> ${side(r.team_a_data)}</div><div class="mons"><b>${esc(tname(m.team_b))}:</b> ${side(r.team_b_data)}</div>
           <div class="acts"><button class="btn sm" data-ar="${r.id}">Aprobar</button><button class="btn ghost sm" data-rr="${r.id}">Rechazar</button></div></div>`
       }).join("") || "<p>No hay reportes pendientes.</p>"}</div>
-      <div class="card-a"><h3>Free agency (${fa.length})</h3><p class="hint">Agrupado por Pokemon y ordenado por prioridad de waivers.</p>${Object.entries(byMon).map(([mon, l]) => `<div class="q-item"><header><b>${esc(mon)}</b><span class="pill">${l.length} solicitud(es)</span></header>
-        ${l.map(t => `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="pill warn">Waiver #${wpos[t.team_a] ?? "?"}</span><b>${esc(tname(t.team_a))}</b><span class="mons">suelta: ${esc((t.give || []).join(", ") || "nadie")}</span>
+      <div class="card-a"><h3>Waivers · free agency (${fa.length})</h3>
+        <p class="hint">Resuelve de arriba hacia abajo. En cada Pokemon, la primera solicitud es la de mayor prioridad: al aprobarla, el equipo pasa al final del orden y las solicitudes que ya no se puedan cumplir se rechazan solas. Al aprobar se revisan otra vez puntos, roster y FA.</p>
+        <div class="acts" style="margin:0 0 12px"><span class="label">Orden actual:</span>${Object.entries(wpos).sort((a, b) => a[1] - b[1]).map(([id, p]) => `<span class="pill">#${p} ${esc(tname(id))}</span>`).join(" ") || '<span class="pill">Sin orden (se crea al exportar el draft)</span>'}</div>
+        ${groups.map(([mon, l], gi) => `<div class="q-item"><header><span class="pill warn">${gi + 1}</span><b>${esc(mon)}</b><span class="pill">${l.length} solicitud(es)</span></header>
+        ${l.map((t, k) => `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;${k ? "opacity:.75" : ""}"><span class="pill ${k ? "" : "ok"}">Waiver #${wpos[t.team_a] ?? "?"}</span><b>${esc(tname(t.team_a))}</b>
+          <span class="mons">suelta: ${esc((t.give || []).join(", ") || "nadie")} · ${teamState(t.team_a)}</span>
           <button class="btn sm" data-at="${t.id}">Aprobar</button><button class="btn ghost sm" data-rt="${t.id}">Rechazar</button></div>`).join("")}</div>`).join("") || "<p>No hay solicitudes.</p>"}</div>
       <div class="card-a"><h3>Trades (${tr.length})</h3>${tr.map(t => `<div class="q-item"><header><b>${esc(tname(t.team_a))} ⇄ ${esc(tname(t.team_b))}</b></header>
         <div class="mons">${esc(tname(t.team_a))} da: ${esc((t.give || []).join(", "))}</div><div class="mons">${esc(tname(t.team_b))} da: ${esc((t.receive || []).join(", "))}</div>
-        <div class="acts"><button class="btn sm" data-at="${t.id}">Aprobar</button><button class="btn ghost sm" data-rt="${t.id}">Rechazar</button></div></div>`).join("") || "<p>No hay trades por aprobar.</p>"}</div></div>`
+        <div class="mons">${esc(tname(t.team_a))}: ${teamState(t.team_a)} · ${esc(tname(t.team_b))}: ${teamState(t.team_b)}</div>
+        <div class="acts"><button class="btn sm" data-at="${t.id}">Aprobar</button><button class="btn ghost sm" data-rt="${t.id}">Rechazar</button></div></div>`).join("") || "<p>No hay trades por aprobar.</p>"}
+        ${waiting.length ? `<p class="hint" style="margin-top:14px">Esperando respuesta del otro trainer: ${waiting.map(t => `${esc(tname(t.team_a))} → ${esc(tname(t.team_b))} (${esc((t.give || []).join(", "))} por ${esc((t.receive || []).join(", "))})`).join(" · ")}</p>` : ""}</div></div>`
     body.onclick = async e => {
       const b = e.target.closest("button"); if (!b) return
       b.disabled = true
@@ -103,7 +117,11 @@ export async function renderAdmin(P, ui) {
           toast(esc_.length ? `Aprobado. Se escaparon: ${esc_.map(x => x.pokemon + " (" + x.faints + " faints)").join(", ")}` : "Reporte aprobado.")
         }
         if (b.dataset.rr) { await rpc("reject_report", { p_report_id: b.dataset.rr }); toast("Reporte rechazado.") }
-        if (b.dataset.at) { await rpc("approve_transaction", { p_transaction_id: b.dataset.at }); toast("Movimiento aprobado.") }
+        if (b.dataset.at) {
+          const r = await rpc("approve_transaction", { p_transaction_id: b.dataset.at })
+          const n = (r?.auto_rejected || []).length
+          toast(n ? `Aprobado. ${n} solicitud(es) que ya no se podian cumplir se rechazaron solas.` : "Movimiento aprobado.")
+        }
         if (b.dataset.rt) { await rpc("reject_transaction", { p_transaction_id: b.dataset.rt }); toast("Movimiento rechazado.") }
         reload()
       } catch (err) { b.disabled = false; fail(err) }
