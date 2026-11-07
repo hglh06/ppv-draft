@@ -1,4 +1,3 @@
--- ⚠️ PENDIENTE DE APLICAR: requiere aprobacion. Cierra las tablas con RLS (ver README).
 -- Seguridad: RLS en todas las tablas, lectura publica de datos de liga,
 -- escritura solo por admin o por RPCs que validan permisos.
 

@@ -70,7 +70,8 @@ function applyChrome(P) {
   }
   const dms = document.getElementById("drMineSec")
   if (dms) { if (P.ME < 0 || !P.DRAFT_ORDER.includes(P.ME)) dms.hidden = true; else setText("#drMineTeam", P.TEAMS[P.ME].n) }
-  if (P.ROLE === "admin") document.getElementById("navAdmin").hidden = false
+  const has = x => P.PERMS.includes("all") || P.PERMS.includes(x)
+  if (["admin.access","season.manage","pool.manage","draft.manage","results.approve","market.approve","roles.manage","content.manage"].some(has)) document.getElementById("navAdmin").hidden = false
 }
 
 async function start() {

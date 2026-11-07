@@ -1321,3 +1321,14 @@ body.ready .boot{display:none}
   .nav nav{order:6;flex-basis:100%;margin-left:-9px;overflow:visible;padding:4px 0 2px}
   .nav nav a.on::after{bottom:-4px}
 }
+
+.news-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.news{background:var(--ink-2);border:1px solid #232328;border-top:3px solid var(--volt);border-radius:14px;overflow:hidden;display:grid}
+.news.pin{border-top-color:var(--rojo)}
+.news img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.news .nb{padding:14px 16px;display:grid;gap:6px}
+.news h3{margin:0;font-family:var(--f-display,"Big Shoulders Display",sans-serif);text-transform:uppercase;font-size:1.4rem;line-height:1}
+.news p{margin:0;color:var(--mute);white-space:pre-line}
+.perm-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px 16px}
+.perm-g label{display:flex;gap:8px;align-items:flex-start;font-size:.92rem}
+.perm-g label small{display:block;color:var(--mute)}

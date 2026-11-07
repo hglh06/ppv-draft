@@ -33,7 +33,20 @@ npm run dev
 
 `league_settings.faint_limit`: al aprobar un reporte, si un Pokémon suma ese número de faints (todas las semanas) sale del roster, se registra en `pokemon_escapes` y en `transactions` (tipo `escape`), y queda libre en waivers. Opciones: reiniciar el contador al cambiar de equipo y contar o no los playoffs.
 
+## Roles y permisos
+
+Tabla `roles` (editable en Admin → Roles y usuarios). Roles base: Administrador (`all`), CM (panel, contenido, kit de redes) y Jugador (jugar con su equipo, pronosticos). Se pueden crear roles nuevos y elegir sus permisos: `admin.access`, `season.manage`, `pool.manage`, `draft.manage`, `results.approve`, `market.approve`, `roles.manage`, `content.manage`, `media.access`, `team.play`, `predictions.play`. Las politicas RLS y las funciones usan `has_perm()`.
+
+## Repetidos y starters
+
+- Reglas → "Permitir Pokemon repetidos". En Pool, cada Pokemon tiene `max_copies` y `copy_surcharge`: la copia N cuesta `puntos + sobrecosto × (N-1)`. Lo que paga cada equipo queda en `rosters.points_paid`.
+- Reglas → "Starters por equipo": cada trainer marca sus starters en Mi equipo (hasta que empieza la fase regular); los starters no se escapan.
+
+## Pronosticos, apodos y noticias
+
+`predictions` (los de otros se ven al terminar la serie; tabla de aciertos con `prediction_table`), `pokemon_nicknames` y `posts` (con imagenes en el bucket `media`).
+
 ## Migraciones aplicadas
 
 01 respaldo de la S4 en el esquema `backup_s4` · 02 esquema multi-temporada · 03 S4 pasada al nuevo esquema + S5 creada · 04 funciones por temporada, escape y admin · 04b Champions ID.
-**05 (seguridad / RLS) está pendiente de aprobar.**
+05 seguridad / RLS · 06 roles, pronosticos, apodos, repetidos, starters y noticias · 07 funciones con permisos y copias · 08 restriccion de draft para copias.

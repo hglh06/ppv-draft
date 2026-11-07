@@ -38,22 +38,26 @@ export function pickSeason(seasons) {
 
 export async function loadSeason(season, session) {
   const sid = season.id
-  const [settingsQ, confsQ, stQ, matchesQ, stats, rosters, pool, orderQ, picksQ, txQ, waiversQ, escQ, seasonsAll] = await Promise.all([
+  const [settingsQ, confsQ, stQ, matchesQ, stats, rosters, pool, orderQ, picksQ, txQ, waiversQ, escQ, seasonsAll, nickQ, postsQ, predQ, predTabQ] = await Promise.all([
     supabase.from("league_settings").select("*").eq("season_id", sid).maybeSingle(),
     supabase.from("conferences").select("*").eq("season_id", sid).order("sort"),
     supabase.from("season_teams").select("*, team:team_id(id,name,user_id,coach_title,favorite_pokemon,logo,champions_id)").eq("season_id", sid),
     supabase.from("matches").select("*").eq("season_id", sid).order("week", { ascending: true }),
     fetchAll(() => supabase.from("pokemon_stats").select("match_id,team_id,pokemon_name,game,kills,deaths,stage,week").eq("season_id", sid).order("id")),
-    fetchAll(() => supabase.from("rosters").select("id,team_id,obtained_method,obtained_week,created_at,pokemon:pokemon_id(name,type1,type2,ability1,ability2,hiddenability,sprite)").eq("season_id", sid).order("id")),
-    fetchAll(() => supabase.from("season_pokemon").select("points,available,pokemon:pokemon_id(id,name,type1,type2,sprite)").eq("season_id", sid).order("id")),
+    fetchAll(() => supabase.from("rosters").select("id,team_id,obtained_method,obtained_week,created_at,points_paid,is_starter,pokemon:pokemon_id(name,type1,type2,ability1,ability2,hiddenability,sprite)").eq("season_id", sid).order("id")),
+    fetchAll(() => supabase.from("season_pokemon").select("points,available,max_copies,copy_surcharge,pokemon:pokemon_id(id,name,type1,type2,sprite)").eq("season_id", sid).order("id")),
     supabase.from("draft_order").select("team_id,draft_position").eq("season_id", sid).order("draft_position"),
     supabase.from("draft_picks").select("team_id,round,pick_number,pokemon:pokemon_id(name)").eq("season_id", sid).order("pick_number"),
     supabase.from("transactions").select("*").eq("season_id", sid).order("created_at", { ascending: false }),
     supabase.from("waiver_order").select("*").eq("season_id", sid).order("position"),
     supabase.from("pokemon_escapes").select("*, pokemon:pokemon_id(name)").eq("season_id", sid).order("created_at", { ascending: false }),
-    supabase.from("seasons").select("id,number,champion_team_id,status").order("number")
+    supabase.from("seasons").select("id,number,champion_team_id,status").order("number"),
+    supabase.from("pokemon_nicknames").select("team_id,pokemon_name,nickname").eq("season_id", sid),
+    supabase.from("posts").select("*").or(`season_id.is.null,season_id.eq.${sid}`).order("pinned", { ascending: false }).order("created_at", { ascending: false }).limit(12),
+    supabase.from("predictions").select("match_id,user_id,pick").eq("season_id", sid),
+    supabase.rpc("prediction_table", { p_season: sid })
   ])
-  const RULES = Object.assign({ roster_size: 8, max_points: 60, points_win: 3, points_loss: 0, playoff_teams: 8, max_fa: 10, faint_limit: null, trade_max_diff: 3, best_of: 3 }, settingsQ.data || {})
+  const RULES = Object.assign({ roster_size: 8, max_points: 60, points_win: 3, points_loss: 0, playoff_teams: 8, max_fa: 10, faint_limit: null, trade_max_diff: 3, best_of: 3, allow_duplicates: false, starters_per_team: 0 }, settingsQ.data || {})
   const confs = confsQ.data || []
   const KEYS = ["rojo", "azul"]
   const confKey = {}; confs.slice(0, 2).forEach((c, i) => { confKey[c.id] = KEYS[i] })
@@ -120,11 +124,12 @@ export async function loadSeason(season, session) {
   const WEEKS = Math.max(0, ...regular.map(m => m.week || 0))
 
   // ---------- pool y sprites ----------
-  const SPRITE = {}, POINTS = {}, TYPES = {}
+  const SPRITE = {}, POINTS = {}, TYPES = {}, COPIES = {}, MON_ID = {}
   const POOL = []
   pool.forEach(p => {
     const n = p.pokemon?.name; if (!n) return
-    SPRITE[n] = p.pokemon.sprite; POINTS[n] = p.points; TYPES[n] = typesOf(p.pokemon)
+    SPRITE[n] = p.pokemon.sprite; POINTS[n] = p.points; TYPES[n] = typesOf(p.pokemon); MON_ID[n] = p.pokemon.id
+    COPIES[n] = { max: RULES.allow_duplicates ? Math.max(1, p.max_copies || 1) : 1, surcharge: p.copy_surcharge || 0 }
     if (p.available) POOL.push([n, p.points ?? 0, TYPES[n], POKE_IDS[n] || 0])
   })
   POOL.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
@@ -144,12 +149,20 @@ export async function loadSeason(season, session) {
       SPRITE[n] = SPRITE[n] || p.sprite
       const ab = [p.ability1, p.ability2, p.hiddenability].filter(a => a && a !== "None").join(" / ")
       const s = byTeamMon[t.id + "|" + n] || { g: 0, k: 0, d: 0 }
-      return [n, POINTS[n] ?? 0, typesOf(p), ab, OBT[r.obtained_method] || "Draft", s.g, s.k, s.d]
+      return [n, r.points_paid ?? POINTS[n] ?? 0, typesOf(p), ab, OBT[r.obtained_method] || "Draft", s.g, s.k, s.d, r.id, !!r.is_starter]
     })
     const used = roster.reduce((s, r) => s + r[1], 0)
     const fa = waiverBy[t.id]?.fa_used ?? (txQ.data || []).filter(x => x.type === "free_agent" && x.status === "approved" && x.team_a === t.id).length
     return [t.coach || "Por definir", t.title || "-", `${used}/${RULES.max_points}`, fa, t.fav || "-", roster]
   })
+  // dueños por Pokemon (con copias repetidas puede haber varios)
+  const OWNERS = {}
+  rosters.forEach(r => { const n = r.pokemon?.name, i = IDX[r.team_id]; if (n && i != null) (OWNERS[n] = OWNERS[n] || []).push(i) })
+  Object.keys(COPIES).forEach(n => { const c = COPIES[n], taken = (OWNERS[n] || []).length; c.taken = taken; c.next = (POINTS[n] ?? 0) + c.surcharge * taken })
+  const NICKS = {}
+  ;(nickQ.data || []).forEach(x => { const i = IDX[x.team_id]; if (i == null) return; (NICKS[i] = NICKS[i] || {})[x.pokemon_name] = x.nickname })
+  const PREDS = predQ.data || [], PRED_TABLE = predTabQ.data || []
+  const POSTS = postsQ.data || []
   const CHAMPIONS_ID = {}; TEAMS.forEach((t, i) => { if (t.champions_id) CHAMPIONS_ID[i] = t.champions_id })
 
   // ---------- leaderboard ----------
@@ -197,14 +210,18 @@ export async function loadSeason(season, session) {
   })
 
   // ---------- sesion ----------
-  let ME = -1, ROLES = {}, role = null
+  let ME = -1, ROLES = {}, role = null, PERMS = []
   if (session?.user) {
-    const { data: prof } = await supabase.from("profiles").select("role").eq("id", session.user.id).maybeSingle()
+    const [{ data: prof }, { data: perms }] = await Promise.all([
+      supabase.from("profiles").select("role,display_name").eq("id", session.user.id).maybeSingle(),
+      supabase.rpc("my_permissions")
+    ])
     role = prof?.role || "player"
-    const mine = TEAMS.findIndex(t => t.user_id === session.user.id)
-    ME = mine
-    const r = ["trainer"]; if (role === "admin" || role === "cm") r.push("cm"); if (role === "admin") r.push("admin")
-    ROLES[mine] = r
+    PERMS = perms || []
+    ME = TEAMS.findIndex(t => t.user_id === session.user.id)
+    const can = p => PERMS.includes("all") || PERMS.includes(p)
+    const r = ["trainer"]; if (can("media.access")) r.push("cm"); if (can("all")) r.push("admin")
+    ROLES[ME] = r
   }
 
   const theme = season.theme || {}
@@ -213,7 +230,8 @@ export async function loadSeason(season, session) {
     RAW_MATCHES, MATCH_IDS, GAMES, PENDING, WEEKS, PROFILES, CHAMPIONS_ID,
     MONS, MONS_FULL, POOL, SPRITE, POINTS, TYPES, DRAFT_ORDER, DRAFT_ROUNDS, PLAYOFFS, SEEDS, HOF,
     TX: txQ.data || [], WAIVERS: waiversQ.data || [], ESCAPES: escQ.data || [],
-    NEXT_EVENT: season.next_event || null, ME, ROLES, ROLE: role, USER: session?.user || null,
+    NEXT_EVENT: season.next_event || null, ME, ROLES, ROLE: role, PERMS, USER: session?.user || null,
+    COPIES, OWNERS, MON_ID, NICKS, PREDS, PRED_TABLE, POSTS, ALL_MATCHES: matchesQ.data || [],
     THEME: { rojo: CONF.rojo.hex, verde: CONF.azul.hex, volt: theme.accent || "#FFB62E", azul: theme.immune || null },
     IS_ARCHIVE: !season.is_active, HAS_GAMES: RAW_MATCHES.length > 0
   }

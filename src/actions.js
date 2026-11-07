@@ -8,6 +8,7 @@ export const toast = m => { const t = document.getElementById("toast"); if (!t) 
 const STATUS = { setup: "Pretemporada", draft: "Draft", regular: "Fase regular", playoffs: "Playoffs", finished: "Finalizada" }
 
 let P
+export const can = perm => !!P && (P.PERMS.includes("all") || P.PERMS.includes(perm))
 const team = i => P.TEAMS[i]
 const myTeam = () => P.ME >= 0 ? P.TEAMS[P.ME] : null
 const roster = i => (P.PROFILES[i] || [])[5] || []
@@ -67,12 +68,12 @@ async function logout() { await supabase.auth.signOut(); location.hash = "#home"
 // ---------------- Matches: series por jugar + reporte ----------------
 function pendingCard(p) {
   const A = team(p.a), B = team(p.b)
-  const can = !P.IS_ARCHIVE && (P.ROLE === "admin" || p.a === P.ME || p.b === P.ME)
+  const ok = !P.IS_ARCHIVE && (can("results.approve") || ((p.a === P.ME || p.b === P.ME) && can("team.play")))
   const when = p.at ? new Date(p.at).toLocaleString("es-MX", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "Por jugar"
   return `<article class="mc pend ${p.a === P.ME || p.b === P.ME ? "mine" : ""}" style="--c:${P.CONF[p.c].v}">
     <div class="side">${window.__crest(A)}<a class="nm" href="#team-${slugT(A)}"><span class="full">${esc(A.n)}</span><span class="short">#${esc(A.ab)}</span></a></div>
     <div class="side">${window.__crest(B)}<a class="nm" href="#team-${slugT(B)}"><span class="full">${esc(B.n)}</span><span class="short">#${esc(B.ab)}</span></a></div>
-    <div class="pend-row"><span class="label">${esc(when)}</span>${can ? `<button type="button" class="btn sm" data-report="${p.id}">Reportar resultado</button>` : ""}</div></article>`
+    <div class="pend-row"><span class="label">${esc(when)}</span>${ok ? `<button type="button" class="btn sm" data-report="${p.id}">Reportar resultado</button>` : ""}</div></article>`
 }
 const slugT = t => t.n.toLowerCase().replace(/\s+/g, "-")
 
@@ -134,10 +135,10 @@ function openReport(matchId) {
 function requestFA(name) {
   if (P.IS_ARCHIVE) return toast("Esta temporada ya termino.")
   if (P.ME < 0) { location.hash = "#login"; return toast("Inicia sesion con tu cuenta de trainer.") }
-  const mine = roster(P.ME), cost = P.POINTS[name] ?? 0
+  const mine = roster(P.ME), cost = P.COPIES[name]?.next ?? P.POINTS[name] ?? 0
   const used = mine.reduce((s, r) => s + r[1], 0)
   const m = modal(`<div class="label">Free agency · waivers</div><h2>Fichar a ${esc(name)}</h2>
-    <p>Cuesta <b>${cost} pts</b>. Usas ${used}/${P.RULES.max_points} pts y tienes ${mine.length}/${P.RULES.roster_size} Pokemon.</p>
+    <p>Cuesta <b>${cost} pts</b>${(P.COPIES[name]?.taken || 0) > 0 ? ` (copia ${P.COPIES[name].taken + 1} de ${P.COPIES[name].max}, con sobrecosto)` : ""}. Usas ${used}/${P.RULES.max_points} pts y tienes ${mine.length}/${P.RULES.roster_size} Pokemon.</p>
     <div class="card-a"><h3>¿A quien sueltas?</h3><p class="hint">Opcional si tienes lugar y puntos.</p>
     <div class="fgrid">${mine.map(r => `<label class="fld chk"><input type="checkbox" value="${esc(r[0])}"><span>${esc(r[0])} · ${r[1]} pts</span></label>`).join("") || "<p>Roster vacio</p>"}</div></div>
     <div class="acts"><button class="btn" id="faGo">Enviar solicitud</button><span id="faMsg"></span></div>`)
@@ -173,9 +174,13 @@ async function mineExtras() {
         <div class="mons">Das: ${esc((t.give || []).join(", ") || "—")} · Recibes: ${esc((t.receive || []).join(", ") || "—")}</div>
         ${t.type === "trade" && t.status === "pending_player" ? `<div class="acts"><button class="btn ghost sm" data-can="${t.id}">Cancelar</button></div>` : ""}</div>`).join("") : "<p>No tienes solicitudes abiertas.</p>"}</div>
       <div class="m-card" style="--c:var(--rojo)"><span class="label">Faints · regla de escape</span>
-        ${lim ? `<p>Con <b>${lim} faints</b> un Pokemon se escapa y vuelve a waivers.</p><div class="risk">${faints.map(f => `<div class="r ${f.faints >= lim - 1 ? "hot" : ""}"><span style="min-width:120px">${esc(f.pokemon_name)}</span><span class="bar"><i style="width:${Math.min(100, f.faints / lim * 100)}%"></i></span><b class="num">${f.faints}/${lim}</b></div>`).join("") || "<p>Sin faints todavia.</p>"}</div>`
+        ${lim ? `<p>Con <b>${lim} faints</b> un Pokemon se escapa y vuelve a waivers.${P.RULES.starters_per_team ? " Los starters no se escapan." : ""}</p><div class="risk">${faints.map(f => `<div class="r ${!f.is_starter && f.faints >= lim - 1 ? "hot" : ""}"><span style="min-width:120px">${esc(f.pokemon_name)}${f.is_starter ? ' <span class="pill ok">Starter</span>' : ""}</span><span class="bar"><i style="width:${f.is_starter ? 0 : Math.min(100, f.faints / lim * 100)}%"></i></span><b class="num">${f.is_starter ? "—" : f.faints + "/" + lim}</b></div>`).join("") || "<p>Sin faints todavia.</p>"}</div>`
         : "<p>La regla de escape no esta activa en esta temporada.</p>"}
         ${myEsc.length ? `<p class="hint" style="margin-top:10px">Se escaparon: ${myEsc.map(e => esc(e.pokemon?.name)).join(", ")}</p>` : ""}</div>
+      ${P.RULES.starters_per_team ? `<div class="m-card" style="--c:var(--volt)"><span class="label">Starters · ${P.RULES.starters_per_team} por equipo</span>
+        <p>Tu starter no se escapa aunque junte faints.${["setup", "draft"].includes(P.SEASON.status) ? " Puedes cambiarlo hasta que empiece la fase regular." : " Ya no se puede cambiar (solo el admin)."}</p>
+        <div class="risk">${roster(P.ME).map(r => `<div class="r"><span style="min-width:140px">${esc(r[0])}</span>${r[9] ? '<span class="pill ok">Starter</span>' : ""}
+          ${["setup", "draft"].includes(P.SEASON.status) || can("market.approve") ? `<button class="btn ${r[9] ? "ghost" : ""} sm" data-st="${r[8]}" data-on="${r[9] ? 0 : 1}" style="margin-left:auto">${r[9] ? "Quitar" : "Hacer starter"}</button>` : ""}</div>`).join("") || "<p>Tu roster esta vacio.</p>"}</div></div>` : ""}
     </div>`
   sec.onclick = async e => {
     const b = e.target.closest("button"); if (!b) return
@@ -184,6 +189,7 @@ async function mineExtras() {
       if (b.dataset.dec) { await rpc("decline_trade", { p_transaction_id: b.dataset.dec }); toast("Trade rechazado."); location.reload() }
       if (b.dataset.can) { await rpc("cancel_trade", { p_transaction_id: b.dataset.can }); toast("Trade cancelado."); location.reload() }
       if (b.id === "tdNew") openTrade()
+      if (b.dataset.st) { await rpc("set_starter", { p_roster_id: b.dataset.st, p_on: b.dataset.on === "1" }); toast("Starter actualizado."); location.reload() }
     } catch (err) { toast(err.message) }
   }
 }
@@ -221,7 +227,7 @@ async function seasonsPage() {
   const el = document.getElementById("page-temporadas")
   const ids = P.SEASONS.map(s => s.champion_team_id).filter(Boolean)
   const { data: champs } = ids.length ? await supabase.from("teams").select("id,name,logo").in("id", ids) : { data: [] }
-  const list = P.SEASONS.filter(s => s.status !== "setup" || s.is_active || P.ROLE === "admin")
+  const list = P.SEASONS.filter(s => s.status !== "setup" || s.is_active || can("season.manage"))
   el.innerHTML = `<section class="t-hero"><div class="wrap"><div class="label">Historia de la liga</div><h1 style="font-family:var(--f-display);font-weight:900;text-transform:uppercase;font-size:clamp(2.6rem,7vw,5rem);line-height:.9;margin:.2em 0">Temporadas</h1>
     <p style="color:var(--mute);max-width:620px">Cada temporada guarda sus standings, series, rosters, draft y playoffs. Elige una para verla tal como quedo.</p></div></section>
     <div class="wrap s-body"><div class="ss-grid">${list.map(s => {
@@ -244,19 +250,21 @@ async function draftRoom() {
   const { data: ds } = await supabase.from("draft_state").select("*").eq("season_id", P.SEASON.id).maybeSingle()
   if (!ds || (!ds.is_active && !ds.is_finished)) { box.innerHTML = P.DRAFT_ORDER.length ? "" : `<div class="dr-room"><div class="label">Draft</div><h3 style="margin:.2em 0">El draft aun no empieza</h3><p style="color:var(--mute)">${esc(P.NEXT_EVENT?.label || "")}</p></div>`; return }
   if (ds.is_finished) { box.innerHTML = ""; return }
-  const { data: picks } = await supabase.from("draft_picks").select("pokemon_id,team_id,pokemon:pokemon_id(name)").eq("season_id", P.SEASON.id)
-  const taken = new Set((picks || []).map(p => p.pokemon?.name))
+  const { data: picks } = await supabase.from("draft_picks").select("pokemon_id,team_id,points_paid,pokemon:pokemon_id(name)").eq("season_id", P.SEASON.id)
+  const takenN = {}; (picks || []).forEach(p => { const n = p.pokemon?.name; takenN[n] = (takenN[n] || 0) + 1 })
   const cur = P.TEAMS.find(t => t.id === ds.current_team_id)
-  const myTurn = cur && (cur.id === myTeam()?.id || P.ROLE === "admin")
-  const myPicks = (picks || []).filter(p => p.team_id === ds.current_team_id).map(p => p.pokemon?.name)
-  const used = myPicks.reduce((s, n) => s + (P.POINTS[n] || 0), 0), left = P.RULES.max_points - used
-  const free = P.POOL.filter(p => !taken.has(p[0]))
+  const myTurn = cur && ((cur.id === myTeam()?.id && can("team.play")) || can("draft.manage"))
+  const curPicks = (picks || []).filter(p => p.team_id === ds.current_team_id)
+  const myPicks = curPicks.map(p => p.pokemon?.name)
+  const used = curPicks.reduce((s, p) => s + (p.points_paid ?? P.POINTS[p.pokemon?.name] ?? 0), 0), left = P.RULES.max_points - used
+  const costOf = n => (P.POINTS[n] ?? 0) + (P.COPIES[n]?.surcharge || 0) * (takenN[n] || 0)
+  const free = P.POOL.filter(p => (takenN[p[0]] || 0) < (P.COPIES[p[0]]?.max || 1) && !myPicks.includes(p[0]))
   box.innerHTML = `<div class="dr-room"><div class="now">${cur ? window.__crest(cur) : ""}<div><div class="label">Ronda ${ds.current_round} · Pick #${ds.current_pick}${ds.is_paused ? " · PAUSADO" : ""}</div>
       <h3 style="margin:.1em 0;font-family:var(--f-display);text-transform:uppercase;font-size:1.8rem">Turno de ${esc(cur?.n || "?")}</h3>
       <span style="color:var(--mute)">${used}/${P.RULES.max_points} pts usados · ${myPicks.length}/${P.RULES.roster_size} Pokemon</span></div>
       <div class="timer" id="drTimer">--</div></div>
     ${myTurn && !ds.is_paused ? `<input class="inp" id="drQ" placeholder="Buscar Pokemon libre…" style="margin-top:12px">
-      <div class="pick-list" id="drList">${free.map(p => `<button type="button" data-pk="${esc(p[0])}" ${p[1] > left ? "disabled" : ""}>${p[3] ? `<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/${p[3]}.png" alt="">` : P.SPRITE[p[0]] ? `<img src="${P.SPRITE[p[0]]}" alt="">` : ""}<span>${esc(p[0])}<br><small>${p[1]} pts</small></span></button>`).join("")}</div>
+      <div class="pick-list" id="drList">${free.map(p => `<button type="button" data-pk="${esc(p[0])}" ${costOf(p[0]) > left ? "disabled" : ""}>${p[3] ? `<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/${p[3]}.png" alt="">` : P.SPRITE[p[0]] ? `<img src="${P.SPRITE[p[0]]}" alt="">` : ""}<span>${esc(p[0])}<br><small>${costOf(p[0])} pts${(P.COPIES[p[0]]?.max || 1) > 1 ? ` · copia ${(takenN[p[0]] || 0) + 1}/${P.COPIES[p[0]].max}` : ""}</small></span></button>`).join("")}</div>
       ${cur.id === myTeam()?.id ? `<div class="acts"><button class="btn ghost sm" id="drPass">Pasar turno</button></div>` : ""}` : ""}
   </div>`
   const q = box.querySelector("#drQ")
@@ -266,8 +274,7 @@ async function draftRoom() {
     try {
       if (b) {
         if (!confirm(`¿Elegir a ${b.dataset.pk}?`)) return
-        const { data: mon } = await supabase.from("pokedex").select("id").eq("name", b.dataset.pk).single()
-        await rpc("make_draft_pick", { p_team_id: cur.id, p_pokemon_id: mon.id }); location.reload()
+        await rpc("make_draft_pick", { p_team_id: cur.id, p_pokemon_id: P.MON_ID[b.dataset.pk] }); location.reload()
       }
       if (pass) { await rpc("pass_draft_pick", { p_team_id: cur.id }); location.reload() }
     } catch (err) { toast(err.message) }
@@ -301,11 +308,38 @@ function pendingSummary() {
   return open ? `<h3>${open} movimiento(s) abiertos</h3><p>${inbox ? `${inbox} trade(s) esperan tu respuesta. ` : ""}Revisalos en "Tu mercado".</p>` : `<h3>Nada por ahora</h3><p>No tienes trades ni fichajes pendientes.</p>`
 }
 
+// ---------------- pronosticos y apodos (Supabase) ----------------
+async function savePick(matchId, pick) {
+  if (!P.USER) { location.hash = "#login"; throw new Error("Inicia sesion para hacer pronosticos.") }
+  await rpc("save_prediction", { p_match: matchId, p_pick: pick })
+}
+async function saveNick(name, nick) {
+  const me = myTeam(); if (!me) return
+  const q = nick
+    ? supabase.from("pokemon_nicknames").upsert({ season_id: P.SEASON.id, team_id: me.id, pokemon_name: name, nickname: nick, updated_at: new Date().toISOString() }, { onConflict: "season_id,team_id,pokemon_name" })
+    : supabase.from("pokemon_nicknames").delete().eq("season_id", P.SEASON.id).eq("team_id", me.id).eq("pokemon_name", name)
+  const { error } = await q
+  if (error) toast("No se pudo guardar el apodo: " + error.message)
+}
+
+// ---------------- noticias del CM en el inicio ----------------
+function renderPosts() {
+  if (!P.POSTS.length) return
+  const home = document.getElementById("page-home"); if (!home) return
+  const anchor = home.querySelector("section.block"); if (!anchor) return
+  const sec = document.createElement("section")
+  sec.className = "block"; sec.id = "homeNews"
+  sec.innerHTML = `<div class="wrap"><div class="sec-head"><div><div class="label">De la liga</div><h2>Ultimas <em>noticias</em></h2></div></div>
+    <div class="news-g">${P.POSTS.slice(0, 6).map(p => `<article class="news ${p.pinned ? "pin" : ""}">${p.image_url ? `<img src="${esc(p.image_url)}" alt="" loading="lazy">` : ""}
+      <div class="nb"><span class="label">${p.pinned ? "Fijado · " : ""}${new Date(p.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "short" })}</span><h3>${esc(p.title)}</h3>${p.body ? `<p>${esc(p.body)}</p>` : ""}${p.link_url ? `<a class="link" href="${esc(p.link_url)}" target="_blank" rel="noopener">Ver mas</a>` : ""}</div></article>`).join("")}</div></div>`
+  anchor.before(sec)
+}
+
 // ---------------- instalacion ----------------
 export function installHooks(ppv) {
   P = ppv
   P.hooks = {
-    logout, requestFA, pendingCard, nextSeries, pendingSummary, recovery: () => renderLogin("recovery"),
+    logout, requestFA, pendingCard, nextSeries, pendingSummary, savePick, saveNick, recovery: () => renderLogin("recovery"),
     pages: {
       login: () => renderLogin(), mine: minePage, temporadas: seasonsPage,
       admin: () => renderAdmin(P, { modal, toast, esc })
@@ -316,7 +350,7 @@ export function installHooks(ppv) {
 export function afterApp(ppv) {
   P = ppv
   document.addEventListener("click", e => { const b = e.target.closest("[data-report]"); if (b) openReport(b.dataset.report) })
-  safeRun(mineExtras); safeRun(draftRoom)
+  safeRun(mineExtras); safeRun(draftRoom); safeRun(renderPosts)
   if (location.hash === "#login" || location.hash === "#admin" || location.hash === "#temporadas") window.PPV_ROUTE?.()
 }
 function safeRun(f) { Promise.resolve().then(f).catch(e => console.warn("[PPV]", e)) }

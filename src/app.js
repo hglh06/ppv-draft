@@ -363,10 +363,9 @@ function refreshLeaderNicks(){
   const mt=document.getElementById("mvpTeam");if(mt){let o=null;try{o=OWNER[MONS[0][0]];}catch(e){}mt.innerHTML=o!=null?`${crest(TEAMS[o])}<div><small>Equipo actual</small><a href="#team-${slug(TEAMS[o])}">${esc(TEAMS[o].n)}</a></div>`:"<div><small>Equipo actual</small><span>Agente libre</span></div>";}
 }
 /* apodos de Pokemon (demo: se guardan en este navegador; en el sitio real irian a la base de datos) */
-const NICK_KEY="ppv-apodos-v1";
-let NICKS={};try{NICKS=JSON.parse(localStorage.getItem(NICK_KEY)||"{}")||{};}catch(e){NICKS={};}
+let NICKS=PPV.NICKS||{};
 const getNick=(ti,n)=>(NICKS[ti]&&NICKS[ti][n])||"";
-function setNick(ti,n,v){v=(v||"").replace(/[<>]/g,"").replace(/\s+/g," ").trim().slice(0,16);NICKS[ti]=NICKS[ti]||{};if(v)NICKS[ti][n]=v;else delete NICKS[ti][n];try{localStorage.setItem(NICK_KEY,JSON.stringify(NICKS));}catch(e){}return v;}
+function setNick(ti,n,v){v=(v||"").replace(/[<>]/g,"").replace(/\s+/g," ").trim().slice(0,16);NICKS[ti]=NICKS[ti]||{};if(v)NICKS[ti][n]=v;else delete NICKS[ti][n];PPV.hooks.saveNick(n,v);return v;}
 function openNick(n){
   const cur=getNick(ME,n);
   drawer.innerHTML=`<div class="panel nk-panel" role="dialog" aria-modal="true" aria-label="Apodo para ${esc(n)}" style="--cc:${CONF[TEAMS[ME].c].v}">
@@ -376,7 +375,7 @@ function openNick(n){
       <label class="label" for="nkIn">Apodo (maximo 16 caracteres)</label>
       <input id="nkIn" type="text" maxlength="16" value="${esc(cur)}" placeholder="Ej. El Tanque">
       <div class="sh-actions"><button type="submit" class="btn">Guardar apodo</button>${cur?'<button type="button" class="btn ghost" id="nkDel">Quitar apodo</button>':""}</div>
-      <p class="sc-note">Por ahora el apodo se guarda solo en este navegador.</p>
+      <p class="sc-note">El apodo lo ve todo el que visite el perfil de tu equipo.</p>
     </form></div>`;
   drawer.hidden=false;const inp=document.getElementById("nkIn");inp.focus();inp.select();
   const done=v=>{setNick(ME,n,v);closeD();refreshLeaderNicks();if(location.hash==="#team-"+slug(TEAMS[ME]))renderProfile(ME);toastMsg(v?`${n} ahora se llama “${getNick(ME,n)}”.`:`Quitaste el apodo de ${n}.`);};
@@ -546,32 +545,33 @@ const OWNER={};PROFILES.forEach((p,i)=>p[5].forEach(r=>{OWNER[r[0]]=i;}));
 let dxS="all",dxT="";
 const dxQ=document.getElementById("dxQ"),dxType=document.getElementById("dxType");
 dxType.innerHTML='<option value="">Todos los tipos</option>'+TYPE_ORDER.map(t=>`<option value="${t}">${TYPE[t][0]}</option>`).join("");
-const owned=POOL.filter(p=>OWNER[p[0]]!=null).length;
+const ownersOf=n=>(PPV.OWNERS[n]||[]),copiesOf=n=>(PPV.COPIES[n]||{max:1,surcharge:0,next:0}),dxFree=n=>ownersOf(n).length<copiesOf(n).max,nextCost=n=>copiesOf(n).next??(POOL.find(p=>p[0]===n)||[0,0])[1];
+const owned=POOL.filter(p=>ownersOf(p[0]).length).length;
 document.getElementById("dxStats").innerHTML=`
   <div><b class="num">${POOL.length}</b><span class="label">Pokemon en el pool</span></div>
   <div><b class="num">${owned}</b><span class="label">Con dueño</span></div>
   <div><b class="num">${POOL.length-owned}</b><span class="label">Libres</span></div>
   <div><b class="num">${new Set(POOL.map(p=>p[1])).size}</b><span class="label">Niveles (15 a 1 pts)</span></div>`;
 function dxCard(p){
-  const [n,pts,types]=p,ts=types.split("/"),own=OWNER[n];
+  const [n,pts,types]=p,ts=types.split("/"),owns=ownersOf(n),own=owns.includes(ME)?ME:owns[0],cp=copiesOf(n),left=cp.max-owns.length;
   const c1=TYPE[ts[0]][1],c2=TYPE[ts[1]||ts[0]][1];
-  const owner=own!=null?`<a href="#team-${slug(TEAMS[own])}" style="--c:${CONF[TEAMS[own].c].v}">${crest(TEAMS[own])}<span title="${esc(TEAMS[own].n)}">#${TEAMS[own].ab}</span></a>`:`<span class="chip lib"><i>Libre</i></span>`;
-  return `<article class="dx ${own==null?"free":""} ${own===ME?"mine":""}" style="--t1:${c1};--t2:${c2}">${own===ME?'<span class="mine-tag">Tu equipo</span>':""}
+  const owner=owns.map(o=>`<a href="#team-${slug(TEAMS[o])}" style="--c:${CONF[TEAMS[o].c].v}">${crest(TEAMS[o])}<span title="${esc(TEAMS[o].n)}">#${TEAMS[o].ab}</span></a>`).join("")+(left>0?`<span class="chip lib"><i>${owns.length?`${left} copia${left>1?"s":""} · ${cp.next} pts`:cp.max>1?`Libre · ${cp.max} copias`:"Libre"}</i></span>`:"");
+  return `<article class="dx ${left>0?"free":""} ${owns.includes(ME)?"mine":""}" style="--t1:${c1};--t2:${c2}">${own===ME?'<span class="mine-tag">Tu equipo</span>':""}
     ${spr(n,"dx-spr")}<h3>${esc(n)}</h3>
     <div class="types">${ts.map(x=>`<span class="ty" style="--tc:${TYPE[x][1]}"><i>${TYPE[x][0]}</i></span>`).join("")}</div>
     <div class="own">${owner}</div></article>`;
 }
 function renderDex(){
   const q=dxQ.value.trim().toLowerCase();
-  const list=POOL.filter(p=>{const own=OWNER[p[0]];
+  const list=POOL.filter(p=>{const owns=ownersOf(p[0]),own=owns.includes(ME)?ME:owns.length?owns[0]:null;
     if(q&&!p[0].toLowerCase().includes(q))return false;
     if(dxT&&!p[2].split("/").includes(dxT))return false;
-    if(dxS==="free"&&own!=null)return false;
+    if(dxS==="free"&&!dxFree(p[0]))return false;
     if(dxS==="owned"&&own==null)return false;
     if(dxS==="mine"&&own!==ME)return false;
     return true;});
   const tiers=[...new Set(list.map(p=>p[1]))].sort((a,b)=>b-a);
-  document.getElementById("dxBody").innerHTML=tiers.length?tiers.map(t=>{const g=list.filter(p=>p[1]===t),fr=g.filter(p=>OWNER[p[0]]==null).length;
+  document.getElementById("dxBody").innerHTML=tiers.length?tiers.map(t=>{const g=list.filter(p=>p[1]===t),fr=g.filter(p=>dxFree(p[0])).length;
     return `<section class="tier"><div class="tier-h"><h2 class="num">${t}<small>pts</small></h2><span class="label">${g.length} Pokemon · ${fr} libres</span><span class="rule"></span></div><div class="dx-g">${g.map(dxCard).join("")}</div></section>`;}).join("")
     :`<div class="empty">Ningun Pokemon coincide con esos filtros. Prueba con otro nombre o tipo.</div>`;
   document.getElementById("dxCount").textContent=`${list.length} de ${POOL.length}`;
@@ -605,10 +605,10 @@ function renderDraft(){
     <thead><tr><th class="tmh" scope="col">Equipo</th>${DRAFT_ROUNDS.map((_,ri)=>`<th scope="col">Ronda ${ri+1}<span aria-label="${ri%2?"de abajo hacia arriba":"de arriba hacia abajo"}">${ri%2?"↑":"↓"}</span></th>`).join("")}</tr></thead>
     <tbody>${DRAFT_ORDER.map((ti,ci)=>{const T=TEAMS[ti];return `<tr class="${ti===ME?"mine":""}" style="--c:${CONF[T.c].v}"><th class="tm" scope="row"><a href="#team-${slug(T)}"><span class="dpos num">${ci+1}</span>${crest(T)}<span class="tn"><b class="ab">#${T.ab}</b><small>${esc(T.n)}</small></span>${ti===ME?'<span class="you">Tu</span>':""}</a></th>${DRAFT_ROUNDS.map((row,ri)=>{const n=row[ci];return `<td><div class="${n?"":"empty"}">${n?`${box(n,"db-spr")}<b>${esc(n)}</b><small>${PTS[n]??"?"} pts · ${ri+1}.${pickNo(ri,ci)}</small>`:`<b>Sin pick</b><small>${ri+1}.${pickNo(ri,ci)}</small>`}</div></td>`;}).join("")}</tr>`;}).join("")}</tbody></table>`;
   // free agency
-  const free=POOL.filter(p=>OWNER[p[0]]==null).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+  const free=POOL.filter(p=>dxFree(p[0])&&!ownersOf(p[0]).includes(ME)).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
   const left=MAXP-PROFILES[ME][5].reduce((s,r)=>s+r[1],0);
   document.getElementById("drFaNote").innerHTML=`<span>Te quedan <b>${left} pts</b> de presupuesto.</span><span>${left>0?"Puedes fichar Pokemon que cuesten hasta "+left+" pts.":"Para fichar a alguien tendrias que liberar primero a un Pokemon de tu roster."}</span>`;
-  document.getElementById("drFa").innerHTML=`<thead><tr><th>Pokemon</th><th>Tipos</th><th>Costo</th><th></th></tr></thead><tbody>${free.map(p=>`<tr><td><span class="fa-n">${box(p[0],"")}${esc(p[0])}</span></td><td><div class="types">${p[2].split("/").map(x=>`<span class="ty" style="--tc:${TYPE[x][1]}"><i>${TYPE[x][0]}</i></span>`).join("")}</div></td><td class="pts num">${p[1]}</td><td><button type="button" class="fa-btn" data-fa="${esc(p[0])}">Solicitar</button></td></tr>`).join("")}</tbody>`;
+  document.getElementById("drFa").innerHTML=`<thead><tr><th>Pokemon</th><th>Tipos</th><th>Costo</th><th></th></tr></thead><tbody>${free.map(p=>`<tr><td><span class="fa-n">${box(p[0],"")}${esc(p[0])}</span></td><td><div class="types">${p[2].split("/").map(x=>`<span class="ty" style="--tc:${TYPE[x][1]}"><i>${TYPE[x][0]}</i></span>`).join("")}</div></td><td class="pts num">${nextCost(p[0])}${ownersOf(p[0]).length?`<small> copia ${ownersOf(p[0]).length+1}</small>`:""}</td><td><button type="button" class="fa-btn" data-fa="${esc(p[0])}">Solicitar</button></td></tr>`).join("")}</tbody>`;
   document.getElementById("drFaCount").textContent=`${free.length} Pokemon libres`;
 }
 document.getElementById("drFa").addEventListener("click",e=>{const b=e.target.closest("[data-fa]");if(!b)return;PPV.hooks.requestFA(b.dataset.fa);});
@@ -1496,40 +1496,47 @@ function renderH2H(){const [a,b]=h2,A=TEAMS[a],B=TEAMS[b],H=h2hData(a,b),CA=CONF
   sB.addEventListener("change",()=>{const v=+sB.value;h2=[v===h2[0]?h2[1]:h2[0],v];go();});
   document.getElementById("h2Swap").addEventListener("click",()=>{h2=[h2[1],h2[0]];go();});})();
 
-/* ---------- pronosticos (demo: tus picks se guardan en este navegador; los de los demas trainers son simulados) ---------- */
-const PICK_KEY="ppv-pronosticos-v1";let PICKS={};try{PICKS=JSON.parse(localStorage.getItem(PICK_KEY))||{};}catch(e){PICKS={};}
-const savePicks=()=>{try{localStorage.setItem(PICK_KEY,JSON.stringify(PICKS));}catch(e){}};
-let prWeek=1;
+/* ---------- pronosticos (Supabase: cada trainer guarda los suyos; los de los demas se ven al terminar cada serie) ---------- */
+const MYPICK={};(PPV.PREDS||[]).forEach(p=>{if(PPV.USER&&p.user_id===PPV.USER.id)MYPICK[p.match_id]=p.pick;});
+const PICKS={};
 const winSide=m=>m.ga>m.gb?"a":"b";
-const prState=w=>PICKS[w]=PICKS[w]||{p:{},rev:false};
-const hash01=(a,b)=>{let h=Math.imul(a+1,2654435761)^Math.imul(b+7,1597334677);h=Math.imul(h^(h>>>15),2246822507);h^=h>>>13;return (h>>>0)/4294967296;};
-function simPick(ti,m){if(m.a===ti)return "a";if(m.b===ti)return "b";const A=TEAMS[m.a],B=TEAMS[m.b],fav=(A.w-B.w||A.d-B.d)>=0?"a":"b";return hash01(ti,m.i)<.66?fav:(fav==="a"?"b":"a");}
-function prCard(m,st){const pk=st.p[m.i],rev=st.rev,ws=winSide(m);
-  const opt=(s,t)=>`<button type="button" class="pr-opt ${pk===s?"on":""} ${rev?(ws===s?"won":"lost"):""}" data-pm="${m.i}" data-ps="${s}" ${rev?"disabled":""} aria-pressed="${pk===s}" style="--c:${CONF[t.c].v}">${crest(t)}<span class="full">${esc(t.n)}</span><span class="short">#${t.ab}</span>${rev?`<b class="num">${s==="a"?m.ga:m.gb}</b>`:""}</button>`;
-  return `<article class="pr ${rev&&pk?(pk===ws?"hit":"miss"):""}">${opt("a",TEAMS[m.a])}<span class="pr-vs" aria-label="${rev?(pk===ws?"Acertaste":"Fallaste"):"contra"}">${rev?(pk===ws?"✓":"✗"):"VS"}</span>${opt("b",TEAMS[m.b])}</article>`;}
-function renderPicks(){const wk=MATCHES.filter(m=>m.w===prWeek),st=prState(prWeek),done=wk.filter(m=>st.p[m.i]).length,hits=wk.filter(m=>st.p[m.i]===winSide(m)).length;
-  document.querySelectorAll("#prWeeks button").forEach(b=>{const w=+b.dataset.w,s=PICKS[w];b.setAttribute("aria-pressed",w===prWeek);b.querySelector("small").textContent=s&&s.rev?"Revelada":"Semana";});
-  document.getElementById("prBody").innerHTML=`<p class="pr-intro">Elige quien gana cada serie de la semana y revela los resultados para ver cuantas atinaste. Por ahora se juega con las semanas ya disputadas. Cuando arranque la temporada, los pronosticos se cerraran antes de cada jornada.</p>
-    <div class="pr-bar">${st.rev?`<span class="pr-score num">${hits}<small>/ ${wk.length} aciertos</small></span><div class="pr-acts"><button type="button" class="btn ghost sh-sm" data-sharek="picks" data-arg="${prWeek}" ${done?"":"disabled"} title="${done?"Compartir tus pronosticos":"Elige al menos una serie para compartir"}">⤴ Compartir</button><button type="button" class="btn ghost sh-sm" id="prReset">Volver a jugar la semana</button></div>`:`<span class="label">${done} de ${wk.length} series elegidas</span><div class="pr-acts"><button type="button" class="btn ghost sh-sm" data-sharek="picks" data-arg="${prWeek}" ${done?"":"disabled"} title="${done?"Compartir tus pronosticos":"Elige al menos una serie para compartir"}">⤴ Compartir</button><button type="button" class="btn" id="prReveal" ${done<wk.length?"disabled":""}>Revelar resultados</button></div>`}</div>
-    <div class="pr-g">${wk.map(m=>prCard(m,st)).join("")}</div>`;
+const prState=w=>{const s=PICKS[w]=PICKS[w]||{p:{},rev:true};MATCHES.filter(m=>m.w===w).forEach(m=>{if(MYPICK[m.id])s.p[m.i]=MYPICK[m.id];});return s;};
+let prWeek=(PPV.PENDING.length?Math.min(...PPV.PENDING.map(p=>p.w)):WEEKS);
+const canPick=()=>!!PPV.USER&&!PPV.IS_ARCHIVE&&(PPV.PERMS.includes("all")||PPV.PERMS.includes("predictions.play"));
+function prOpen(p){const pk=MYPICK[p.id],dis=canPick()?"":"disabled";
+  const opt=(s,ti)=>{const t=TEAMS[ti];return `<button type="button" class="pr-opt ${pk===s?"on":""}" data-pid="${p.id}" data-ps="${s}" aria-pressed="${pk===s}" style="--c:${CONF[t.c].v}" ${dis}>${crest(t)}<span class="full">${esc(t.n)}</span><span class="short">#${t.ab}</span></button>`;};
+  return `<article class="pr">${opt("a",p.a)}<span class="pr-vs">VS</span>${opt("b",p.b)}</article>`;}
+function prCard(m){const pk=MYPICK[m.id],ws=winSide(m);
+  const opt=(s,t)=>`<button type="button" class="pr-opt ${pk===s?"on":""} ${ws===s?"won":"lost"}" disabled aria-pressed="${pk===s}" style="--c:${CONF[t.c].v}">${crest(t)}<span class="full">${esc(t.n)}</span><span class="short">#${t.ab}</span><b class="num">${s==="a"?m.ga:m.gb}</b></button>`;
+  return `<article class="pr ${pk?(pk===ws?"hit":"miss"):""}">${opt("a",TEAMS[m.a])}<span class="pr-vs">${pk?(pk===ws?"✓":"✗"):"VS"}</span>${opt("b",TEAMS[m.b])}</article>`;}
+function renderPicks(){
+  document.querySelectorAll("#prWeeks button").forEach(b=>{const w=+b.dataset.w;b.setAttribute("aria-pressed",w===prWeek);b.querySelector("small").textContent=PPV.PENDING.some(p=>p.w===w)?"Abierta":"Semana";});
+  const done=MATCHES.filter(m=>m.w===prWeek),open=PPV.PENDING.filter(p=>p.w===prWeek);
+  const made=done.filter(m=>MYPICK[m.id]).length,hits=done.filter(m=>MYPICK[m.id]&&MYPICK[m.id]===winSide(m)).length;
+  const intro=!PPV.USER?`Entra con tu cuenta para hacer tus pronosticos. <a href="#login">Entrar</a>`:PPV.IS_ARCHIVE?"Esta temporada ya termino: aqui ves como te fue.":canPick()?"Elige quien gana cada serie antes de que se juegue. Se cierra cuando se reporta el resultado. Los picks de los demas se ven al terminar cada serie.":"Tu rol no puede hacer pronosticos.";
+  document.getElementById("prBody").innerHTML=`<p class="pr-intro">${intro}</p>
+    ${done.length?`<div class="pr-bar"><span class="pr-score num">${hits}<small>/ ${made} aciertos</small></span><div class="pr-acts"><button type="button" class="btn ghost sh-sm" data-sharek="picks" data-arg="${prWeek}" ${made?"":"disabled"}>⤴ Compartir mis pronosticos</button></div></div>`:""}
+    ${open.length?`<div class="label" style="margin:14px 0 8px">Por jugar · ${open.filter(p=>MYPICK[p.id]).length}/${open.length} elegidos</div><div class="pr-g">${open.map(prOpen).join("")}</div>`:""}
+    ${done.length?`<div class="label" style="margin:18px 0 8px">Resultados</div><div class="pr-g">${done.map(prCard).join("")}</div>`:""}
+    ${!open.length&&!done.length?`<div class="empty">No hay series en esta semana.</div>`:""}`;
   renderPickTable();}
-function pickRows(){const revW=Object.keys(PICKS).filter(w=>PICKS[w].rev).map(Number).sort((a,b)=>a-b),ms=MATCHES.filter(m=>revW.includes(m.w));
-  const rows=TEAMS.map((t,ti)=>{const ok=ms.filter(m=>(ti===ME?PICKS[m.w].p[m.i]:simPick(ti,m))===winSide(m)).length;return {t,ti,ok};}).sort((a,b)=>b.ok-a.ok||(a.ti===ME?-1:b.ti===ME?1:a.t.n.localeCompare(b.t.n)));
+function pickRows(){const ms=MATCHES;
+  const rows=(PPV.PRED_TABLE||[]).map(r=>{let ti=TEAMS.findIndex(t=>t.id===r.team_id);const t=ti>=0?TEAMS[ti]:{n:r.label,c:"rojo",ph:true,h:[200,230],ab:"",w:0,l:0,d:0};if(ti<0)ti=-100-Math.random();return {t,ti,ok:r.hits,tot:r.total,uid:r.user_id};})
+    .sort((a,b)=>b.ok-a.ok||(a.tot?a.ok/a.tot:0)-(b.tot?b.ok/b.tot:0)||a.t.n.localeCompare(b.t.n));
   rows.forEach((r,k)=>r.pos=k&&rows[k-1].ok===r.ok?rows[k-1].pos:k+1);
-  return {revW,ms,rows,lab:`${revW.length===1?"Semana "+revW[0]:revW.length+" semanas reveladas"} · ${ms.length} series`};}
-function renderPickTable(){const {revW,ms,rows,lab:tabLab}=pickRows();
+  return {revW:[],ms,rows,lab:`${rows.length} participantes · ${ms.length} series jugadas`};}
+function renderPickTable(){const {ms,rows,lab:tabLab}=pickRows();
   const lab=document.getElementById("prTabLabel"),box_=document.getElementById("prTable");
-  document.getElementById("prTabShare").hidden=!ms.length;
-  if(!ms.length){lab.textContent="Revela al menos una semana";box_.innerHTML=`<div class="empty">Cuando reveles una semana, aqui veras como vas contra los demas trainers.</div>`;return;}
-  lab.textContent=tabLab;
-  box_.innerHTML=`<div class="table" style="--c:var(--volt)"><div class="rows"><table class="st pr-st"><thead><tr><th class="l">#</th><th class="l">Trainer</th><th>Aciertos</th><th>%</th></tr></thead><tbody>${rows.map(r=>`<tr class="${r.pos<=3?"in":"out"}${r.ti===ME?" mine":""}" style="--c:${CONF[r.t.c].v}"><td class="pos l">${r.pos}</td><td class="l"><span class="tm">${crest(r.t)}<span class="nm">${esc(PROFILES[r.ti][0])}</span><span class="label">#${r.t.ab}</span>${r.ti===ME?'<span class="you">Tu</span>':""}</span></td><td class="pts">${r.ok}<small style="font-size:.9rem;color:var(--mute)">/${ms.length}</small></td><td>${Math.round(r.ok/ms.length*100)}%</td></tr>`).join("")}</tbody></table></div></div>
-  <p class="pr-note">Beta: tus pronosticos se guardan en este navegador. Los de los demas trainers todavia son de ejemplo.</p>`;}
+  document.getElementById("prTabShare").hidden=!rows.length;
+  if(!rows.length){lab.textContent="Aun sin aciertos";box_.innerHTML=`<div class="empty">Cuando termine la primera serie con pronosticos, aqui aparece la tabla de aciertos.</div>`;return;}
+  lab.textContent=tabLab;const me=PPV.USER?PPV.USER.id:null;
+  box_.innerHTML=`<div class="table" style="--c:var(--volt)"><div class="rows"><table class="st pr-st"><thead><tr><th class="l">#</th><th class="l">Trainer</th><th>Aciertos</th><th>%</th></tr></thead><tbody>${rows.map(r=>`<tr class="${r.pos<=3?"in":"out"}${r.uid===me?" mine":""}" style="--c:${CONF[r.t.c].v}"><td class="pos l">${r.pos}</td><td class="l"><span class="tm">${crest(r.t)}<span class="nm"><span class="full">${esc(r.t.n)}</span></span>${r.uid===me?'<span class="you">Tu</span>':""}</span></td><td>${r.ok}/${r.tot}</td><td>${r.tot?Math.round(r.ok/r.tot*100):0}%</td></tr>`).join("")}</tbody></table></div></div>`;}
 document.getElementById("prWeeks").innerHTML=Array.from({length:WEEKS},(_,i)=>`<button type="button" data-w="${i+1}"><small>Semana</small>${i+1}</button>`).join("");
 document.getElementById("prWeeks").addEventListener("click",e=>{const b=e.target.closest("button[data-w]");if(!b)return;prWeek=+b.dataset.w;renderPicks();});
-document.getElementById("prBody").addEventListener("click",e=>{const st=prState(prWeek);
-  const o=e.target.closest("[data-pm]");if(o&&!st.rev){st.p[o.dataset.pm]=o.dataset.ps;savePicks();renderPicks();const nb=document.querySelector(`#prBody [data-pm="${o.dataset.pm}"][data-ps="${o.dataset.ps}"]`);if(nb)nb.focus();return;}
-  if(e.target.id==="prReveal"){st.rev=true;savePicks();renderPicks();return;}
-  if(e.target.id==="prReset"){PICKS[prWeek]={p:{},rev:false};savePicks();renderPicks();}});
+document.getElementById("prBody").addEventListener("click",async e=>{const o=e.target.closest("[data-pid]");if(!o||!canPick())return;
+  const id=o.dataset.pid,s=MYPICK[id]===o.dataset.ps?null:o.dataset.ps;
+  try{await PPV.hooks.savePick(id,s);if(s)MYPICK[id]=s;else delete MYPICK[id];renderPicks();const nb=document.querySelector(`#prBody [data-pid="${id}"][data-ps="${o.dataset.ps}"]`);if(nb)nb.focus();}
+  catch(err){toastMsg(err.message||"No se pudo guardar el pronostico.");}});
 safe(()=>renderPicks(),"renderPicks");
 
 /* ---------- buscador global ---------- */
