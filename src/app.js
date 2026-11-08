@@ -542,9 +542,11 @@ const toastMsg=m=>{const t=document.getElementById("toast");t.textContent=m;t.hi
 const POOL=PPV.POOL;
 POOL.forEach(p=>{SPR_IDS[p[0]]=p[3];});
 const OWNER={};PROFILES.forEach((p,i)=>p[5].forEach(r=>{OWNER[r[0]]=i;}));
-let dxS="all",dxT="";
+let dxS="all",dxT=[];
 const dxQ=document.getElementById("dxQ"),dxType=document.getElementById("dxType");
-dxType.innerHTML='<option value="">Todos los tipos</option>'+TYPE_ORDER.map(t=>`<option value="${t}">${TYPE[t][0]}</option>`).join("");
+const TYPE_ICON=t=>`https://raw.githubusercontent.com/partywhale/pokemon-type-icons/fcbe6978c61c359680bc07636c3f9bdc0f346b43/icons/${t}.svg`;
+function paintTypes(){dxType.innerHTML=`<span class="dx-tlab">Tipo</span>`+TYPE_ORDER.map(t=>{const on=dxT.includes(t);return `<button type="button" data-ty="${t}" aria-pressed="${on}" title="${TYPE[t][0]}" aria-label="${TYPE[t][0]}" style="--c:${TYPE[t][1]}" ${!on&&dxT.length>=2?"disabled":""}><img src="${TYPE_ICON(t)}" alt="" loading="lazy"></button>`;}).join("")+(dxT.length?`<button type="button" class="dx-tclear" data-ty="">Quitar tipos</button>`:"");}
+paintTypes();
 const ownersOf=n=>(PPV.OWNERS[n]||[]),copiesOf=n=>(PPV.COPIES[n]||{max:1,surcharge:0,next:0}),dxFree=n=>ownersOf(n).length<copiesOf(n).max,nextCost=n=>copiesOf(n).next??(POOL.find(p=>p[0]===n)||[0,0])[1];
 const owned=POOL.filter(p=>ownersOf(p[0]).length).length;
 document.getElementById("dxStats").innerHTML=`
@@ -565,7 +567,7 @@ function renderDex(){
   const q=dxQ.value.trim().toLowerCase();
   const list=POOL.filter(p=>{const owns=ownersOf(p[0]),own=owns.includes(ME)?ME:owns.length?owns[0]:null;
     if(q&&!p[0].toLowerCase().includes(q))return false;
-    if(dxT&&!p[2].split("/").includes(dxT))return false;
+    if(dxT.length&&!dxT.every(t=>p[2].split("/").includes(t)))return false;
     if(dxS==="free"&&!dxFree(p[0]))return false;
     if(dxS==="owned"&&own==null)return false;
     if(dxS==="mine"&&own!==ME)return false;
@@ -577,7 +579,7 @@ function renderDex(){
   document.getElementById("dxCount").textContent=`${list.length} de ${POOL.length}`;
 }
 document.querySelectorAll("#dxSeg button").forEach(b=>b.addEventListener("click",()=>{dxS=b.dataset.s;document.querySelectorAll("#dxSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b));renderDex();}));
-dxQ.addEventListener("input",renderDex);dxType.addEventListener("change",()=>{dxT=dxType.value;renderDex();});
+dxQ.addEventListener("input",renderDex);dxType.addEventListener("click",e=>{const b=e.target.closest("[data-ty]");if(!b||b.disabled)return;const t=b.dataset.ty;if(!t)dxT=[];else if(dxT.includes(t))dxT=dxT.filter(x=>x!==t);else if(dxT.length<2)dxT=[...dxT,t];paintTypes();renderDex();});
 safe(()=>renderDex(),"renderDex");
 
 /* ---------- Draft: tablero snake (ppvdraftleague.com/draft). Cada ronda va en el orden de columnas de DRAFT_ORDER. ---------- */

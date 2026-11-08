@@ -24,7 +24,7 @@ function applyChrome(P) {
   const S = P.SEASON, st = STATUS[S.status] || ""
   const label = `Temporada ${S.number}${S.subtitle ? " · " + S.subtitle : ""}`
   document.title = `PPV Draft League · Temporada ${S.number}`
-  setText("#brandSeason", `Temporada ${S.number}`)
+  setText("#brandSeason", label)
   document.querySelectorAll(".sl").forEach(e => { e.textContent = label })
   document.querySelectorAll(".cn-r").forEach(e => { e.textContent = P.CONF.rojo.name })
   document.querySelectorAll(".cn-a").forEach(e => { e.textContent = P.CONF.azul.name })
