@@ -110,6 +110,7 @@ function fitNav() {
   more.hidden = true
   if (getComputedStyle(nav).position === "absolute") return // menu movil
   nav.style.justifyContent = "flex-start"
+  nav.style.flex = "1000 1 0" // medir contra todo el espacio libre, no contra el ancho del contenido
   const ORDER = ["media", "salon", "pokedex", "h2h", "draft", "admin", "playoffs", "teams", "matches", "standings", "home"]
   const all = [...nav.querySelectorAll(":scope > a[data-page]")]
   const idx = a => all.indexOf(a)
@@ -121,14 +122,14 @@ function fitNav() {
     const last = kids[kids.length - 1]; if (!last) return false
     return last.getBoundingClientRect().right - nav.getBoundingClientRect().left > nav.clientWidth - 16
   }
-  if (!overflow()) { nav.style.justifyContent = ""; return }
+  if (!overflow()) { nav.style.justifyContent = ""; nav.style.flex = ""; return }
   more.hidden = false
   while (overflow() && links().length > 3) {
     const a = nextOut(); const after = [...menu.children].find(x => idx(x) > idx(a))
     menu.insertBefore(a, after || null)
   }
   nav.querySelectorAll(".nav-sep").forEach(s => { s.hidden = !s.nextElementSibling || s.nextElementSibling === more })
-  nav.style.justifyContent = ""
+  nav.style.justifyContent = ""; nav.style.flex = ""
   markMore()
 }
 function markMore() {

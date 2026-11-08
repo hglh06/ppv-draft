@@ -1361,3 +1361,27 @@ body.ready .boot{display:none}
   .nav nav a.on::after{left:11px;right:11px}
   .nav .nav-sep{margin:0 8px}
 }
+/* barra centrada en la pagina: marca y controles ocupan lo mismo a cada lado */
+.nav-right{display:contents}
+@media (min-width:861px){
+  .nav .brand{flex:1 1 0;min-width:max-content}
+  .nav-right{display:flex;align-items:center;gap:12px;flex:1 1 0;min-width:max-content;justify-content:flex-end}
+  .nav .wrap>nav{flex:0 1 auto;min-width:0;justify-content:center}
+}
+/* Pokedex: disponibilidad, buscador y tipos en un solo renglon */
+@media (min-width:1100px){
+  #page-pokedex .toolbar .wrap{flex-wrap:nowrap;gap:12px}
+  #page-pokedex .toolbar .seg{flex:none}
+  #page-pokedex .toolbar .search{flex:1 1 200px;min-width:150px;max-width:280px}
+  #page-pokedex .toolbar .count{flex:none;white-space:nowrap}
+}
+.dx-types{flex-wrap:wrap;gap:3px;border:0;padding:0;background:none}
+.dx-types button{width:24px;height:24px;padding:2px;border-width:1.5px}
+.dx-types button:hover{transform:translateY(-1px)}
+.dx-types button[aria-pressed="true"]{box-shadow:0 0 0 1.5px var(--c)}
+.dx-types .dx-tclear{width:24px;height:24px;padding:0;border-radius:50%;font-size:.75rem;letter-spacing:0;display:grid;place-items:center}
+@media (min-width:1100px){.dx-types{flex-wrap:nowrap}}
+.sr-only{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#dxType.dx-types{padding:6px 8px}
+@media (min-width:1100px){#page-pokedex .toolbar .search{min-width:200px;max-width:320px}}
+@media (min-width:1100px) and (max-width:1300px){#page-pokedex .toolbar .seg button{padding-inline:12px}.dx-types{gap:2px}.dx-types button{width:22px;height:22px}}
