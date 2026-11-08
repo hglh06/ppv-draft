@@ -1355,11 +1355,11 @@ body.ready .boot{display:none}
 .dx-types .dx-tlab{font:600 .8rem var(--f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-right:4px}
 /* barra superior: mas ancha que el contenido para que quepan todas las secciones en un renglon */
 @media (min-width:861px){
-  .nav .wrap{max-width:1720px;gap:20px}
+  .nav .wrap{gap:20px}
   .nav nav{gap:2px}
-  .nav nav a,.nav-more>button{padding:8px 11px;letter-spacing:.07em}
-  .nav nav a.on::after{left:11px;right:11px}
-  .nav .nav-sep{margin:0 8px}
+  .nav nav a,.nav-more>button{padding:8px 9px;letter-spacing:.06em}
+  .nav nav a.on::after{left:9px;right:9px}
+  .nav .nav-sep{margin:0 6px}
 }
 /* barra centrada en la pagina: marca y controles ocupan lo mismo a cada lado */
 .nav-right{display:contents}
