@@ -1312,9 +1312,9 @@ body.ready .boot{display:none}
 @media (min-width:861px){.nav nav{min-width:0;flex:1 1 auto;justify-content:flex-end;overflow:visible}}
 @media (min-width:861px){
   .nav .wrap{gap:10px}
-  .nav nav a{font-size:.84rem;letter-spacing:.06em;padding:8px 7px}
-  .nav nav a.on::after{left:7px;right:7px}
-  .nav-more>button{font-size:.84rem;letter-spacing:.06em;padding:8px 7px}
+  .nav nav a{font-size:.9rem;letter-spacing:.05em;padding:8px 8px}
+  .nav nav a.on::after{left:8px;right:8px}
+  .nav-more>button{font-size:.9rem;letter-spacing:.05em;padding:8px 8px}
   .nav .cm-btn{display:none !important}
   .me-chip>span:not(.logo):not(.crest){display:none}
   .me-chip{padding:4px}
@@ -1350,3 +1350,4 @@ body.ready .boot{display:none}
 .perm-g input{margin-top:3px;flex:none;width:16px;height:16px;accent-color:var(--volt)}
 .perm-g label>span{display:grid;gap:3px;font:700 .95rem "Barlow Condensed",sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--chalk)}
 .perm-g label small{display:block;font:500 .85rem "Barlow",sans-serif;letter-spacing:0;text-transform:none;color:var(--mute)}
+@media (min-width:861px){.nav nav{justify-content:center;margin-left:0;flex:1 1 0;min-width:0}}

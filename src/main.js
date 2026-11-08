@@ -101,6 +101,8 @@ function fitNav() {
     document.addEventListener("click", () => more.classList.remove("open"))
     addEventListener("hashchange", () => { more.classList.remove("open"); markMore() })
     let t; addEventListener("resize", () => { clearTimeout(t); t = setTimeout(fitNav, 120) })
+    document.fonts?.ready.then(() => fitNav())
+    addEventListener("load", () => fitNav())
   }
   const menu = more.querySelector(".nav-more-m")
   // devolver todo a la barra y volver a medir
@@ -113,7 +115,12 @@ function fitNav() {
   const idx = a => all.indexOf(a)
   const nextOut = () => { const vis = [...nav.children].filter(x => x !== more && !x.hidden && x.tagName === "A"); return ORDER.map(k => vis.find(a => a.dataset.page === k)).find(Boolean) || vis[vis.length - 1] }
   const links = () => [...nav.children].filter(x => x !== more && !x.hidden && x.tagName === "A")
-  const overflow = () => nav.scrollWidth > nav.clientWidth + 1
+  // ancho real de los links (con alineacion a la izquierda), dejando aire a los lados al centrar
+  const overflow = () => {
+    const kids = [...nav.children].filter(x => !x.hidden && getComputedStyle(x).display !== "none")
+    const last = kids[kids.length - 1]; if (!last) return false
+    return last.getBoundingClientRect().right - nav.getBoundingClientRect().left > nav.clientWidth - 16
+  }
   if (!overflow()) { nav.style.justifyContent = ""; return }
   more.hidden = false
   while (overflow() && links().length > 3) {
