@@ -9,7 +9,7 @@ const RULE_FIELDS = [
   ["playoff_teams", "Equipos a playoffs", "number"], ["max_fa", "Movimientos de FA por equipo", "number"], ["trade_max_diff", "Diferencia max. en trades (pts)", "number"],
   ["draft_pick_seconds", "Segundos por pick", "number"], ["regular_weeks", "Semanas de fase regular", "number"]
 ]
-let tab = null
+let tab = (() => { try { return sessionStorage.getItem("ppvAdmTab") } catch (e) { return null } })()
 // catalogo de permisos (lo que puede ver y editar cada rol)
 export const PERMS = [
   ["all", "Acceso total", "Todo lo de abajo, incluso roles"],
@@ -57,6 +57,10 @@ export async function renderAdmin(P, ui) {
     supabase.from("transactions").select("*").eq("status", "pending_player").eq("season_id", sid).order("created_at"),
     supabase.from("posts").select("*").order("created_at", { ascending: false })
   ])
+  // los datos de la temporada se leen frescos de la BD (no de la copia cargada al abrir el sitio)
+  Object.assign(S, (seasonsQ.data || []).find(x => x.id === sid) || {})
+  // tras guardar algo que se ve en todo el sitio, se recarga la pagina para aplicarlo de inmediato
+  const refreshSite = msg => { toast(msg + " Aplicando…"); try { sessionStorage.setItem("ppvAdmTab", tab) } catch (e) { } setTimeout(() => location.reload(), 600) }
   const settings = settingsQ.data || {}, confs = confsQ.data || [], teams = teamsQ.data || [], st = stQ.data || []
   const profiles = profQ.data || [], seasons = seasonsQ.data || [], roles = rolesQ.data || [], posts = postsQ.data || []
   const reports = (repQ.data || []).filter(r => (r.match?.season_id || r.season_id) === sid)
@@ -73,7 +77,7 @@ export async function renderAdmin(P, ui) {
   const TABS = [["pend", "Pendientes", reports.length + txs.length], ["season", "Temporada"], ["rules", "Reglas y puntos"], ["teams", "Conferencias y equipos"], ["pool", "Pool y precios"], ["draft", "Draft y calendario"], ["roles", "Roles y usuarios"], ["content", "Contenido"]].filter(([k]) => allowed.includes(k))
   const tabs = el.querySelector("#admTabs")
   tabs.innerHTML = TABS.map(([k, l, n]) => `<button type="button" data-t="${k}" aria-pressed="${tab === k}">${l}${n ? `<span class="bdg">${n}</span>` : ""}</button>`).join("")
-  tabs.onclick = e => { const b = e.target.closest("[data-t]"); if (!b) return; tab = b.dataset.t; tabs.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); draw() }
+  tabs.onclick = e => { const b = e.target.closest("[data-t]"); if (!b) return; tab = b.dataset.t; try { sessionStorage.setItem("ppvAdmTab", tab) } catch (e) { } tabs.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); draw() }
   const body = el.querySelector("#admBody")
 
   function draw() {
@@ -162,7 +166,7 @@ export async function renderAdmin(P, ui) {
             champion_team_id: f("champion") || null
           }).eq("id", sid)
           if (error) throw error
-          toast("Temporada guardada. Recarga para ver los cambios en el sitio.")
+          refreshSite("Temporada guardada.")
         }
         if (b.id === "sAct") { if (!confirm(`¿Hacer activa la Temporada ${S.number}? Las demas pasan a archivo.`)) return; await rpc("activate_season", { p_season_id: sid }); toast("Temporada activada."); location.href = "/#admin" }
         if (b.id === "nsGo") {
@@ -203,7 +207,7 @@ export async function renderAdmin(P, ui) {
       ;["roster_size", "max_points", "points_win", "points_loss", "best_of", "playoff_teams", "max_fa", "trade_max_diff", "draft_pick_seconds"].forEach(k => { if (row[k] == null) delete row[k] })
       const { error } = settings.id ? await supabase.from("league_settings").update(row).eq("id", settings.id) : await supabase.from("league_settings").insert(row)
       if (error) return fail(error)
-      toast("Reglas guardadas."); reload()
+      refreshSite("Reglas guardadas.")
     }
   }
 
@@ -241,7 +245,7 @@ export async function renderAdmin(P, ui) {
             const { error } = await supabase.from("conferences").update({ name: body.querySelector(`[data-cn="${c.id}"]`).value, color: body.querySelector(`[data-cc="${c.id}"]`).value }).eq("id", c.id)
             if (error) throw error
           }
-          toast("Conferencias guardadas.")
+          refreshSite("Conferencias guardadas.")
         }
         if (b.id === "tRand") {
           const rows = [...body.querySelectorAll("tr[data-tid]")].filter(r => r.querySelector('[data-f="on"]').checked).sort(() => Math.random() - .5)
@@ -262,7 +266,7 @@ export async function renderAdmin(P, ui) {
           for (const u of userUps) { const { error } = await supabase.from("teams").update({ user_id: u.user_id }).eq("id", u.id); if (error) throw error }
           if (ups.length) { const { error } = await supabase.from("season_teams").upsert(ups, { onConflict: "season_id,team_id" }); if (error) throw error }
           if (dels.length) { const { error } = await supabase.from("season_teams").delete().eq("season_id", sid).in("team_id", dels); if (error) throw error }
-          toast("Equipos guardados."); reload()
+          refreshSite("Equipos guardados.")
         }
         if (b.id === "ntGo") {
           const name = body.querySelector("#ntName").value.trim(); if (!name) throw new Error("Falta el nombre")

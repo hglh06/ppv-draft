@@ -58,7 +58,7 @@ header.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;backgroun
 .nav .wrap{display:flex;align-items:center;gap:24px;height:64px}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none}
 .brand .mark{width:46px;height:46px;flex:none;display:grid;place-items:center}
-.brand .mark img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--rojo) 55%,transparent))}
+.brand .mark img{width:100%;height:100%;object-fit:contain}
 .flogo{height:36px;width:auto;object-fit:contain;vertical-align:middle;margin-right:10px}
 .brand .name{font-family:var(--f-display);font-weight:900;font-size:1.35rem;letter-spacing:.04em;line-height:1}
 .brand .name small{display:block;font-family:var(--f-label);font-size:.66rem;letter-spacing:.3em;color:var(--volt);font-weight:600}
@@ -1334,3 +1334,19 @@ body.ready .boot{display:none}
   .me-chip.guest .guest-ico{display:block}
 }
 @media (max-width:400px){.brand .name{display:none}.nav .wrap{gap:8px}}
+
+/* noticias del CM en el inicio */
+.news-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.news{background:var(--ink-2);border:1px solid #232328;border-top:3px solid var(--volt);border-radius:14px;overflow:hidden;display:grid}
+.news.pin{border-top-color:var(--rojo)}
+.news img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.news .nb{padding:14px 16px;display:grid;gap:6px}
+.news h3{margin:0;font-family:var(--f-display,"Big Shoulders Display",sans-serif);text-transform:uppercase;font-size:1.4rem;line-height:1}
+.news p{margin:0;color:var(--mute);white-space:pre-line}
+/* permisos de cada rol */
+.perm-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.perm-g label{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid #2a2a30;border-radius:10px;background:var(--ink);cursor:pointer;line-height:1.25}
+.perm-g label:has(input:checked){border-color:var(--volt);background:color-mix(in srgb,var(--volt) 8%,var(--ink))}
+.perm-g input{margin-top:3px;flex:none;width:16px;height:16px;accent-color:var(--volt)}
+.perm-g label>span{display:grid;gap:3px;font:700 .95rem "Barlow Condensed",sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--chalk)}
+.perm-g label small{display:block;font:500 .85rem "Barlow",sans-serif;letter-spacing:0;text-transform:none;color:var(--mute)}

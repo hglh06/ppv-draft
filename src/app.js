@@ -162,7 +162,7 @@ function srow(t,cut){
    <td class="${t.d>0?"up":""}">${sign(t.d)}</td>
    <td><span class="wp" aria-hidden="true"><i style="width:${pct}%"></i></span><span class="wpn">${pct}%</span></td>
    <td class="pts">${t.pts}</td>
-   <td>${t.q?'<span class="chip q"><i>Playoffs</i></span>':'<span class="chip x"><i>${PPV.HAS_GAMES?"Eliminado":"Por jugar"}</i></span>'}</td></tr>`;
+   <td>${t.q?'<span class="chip q"><i>Playoffs</i></span>':'<span class="chip x"><i>'+(PPV.HAS_GAMES?'Eliminado':'Por jugar')+'</i></span>'}</td></tr>`;
 }
 function renderStandings(){
   const box=document.getElementById("stables");
