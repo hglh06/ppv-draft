@@ -26,11 +26,80 @@ export const PERMS = [
   ["predictions.play", "Pronosticos", "Hacer pronosticos de cada serie"]
 ]
 
+// ---------- calendario: generadores por formato ----------
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]] } return a }
+// round robin (metodo del circulo); con "weeks" mayor a n-1 se repite con local y visita invertidos
+function roundRobin(ids, weeks) {
+  let t = shuffle(ids); if (t.length % 2) t.push(null)
+  const n = t.length, rounds = []
+  for (let r = 0; r < n - 1; r++) {
+    const pairs = []
+    for (let i = 0; i < n / 2; i++) { const a = t[i], b = t[n - 1 - i]; if (a && b) pairs.push(r % 2 ? [b, a] : [a, b]) }
+    rounds.push(pairs); t = [t[0], t[n - 1], ...t.slice(1, n - 1)]
+  }
+  const W = weeks || rounds.length, out = []
+  for (let w = 0; w < W; w++) { const base = rounds[w % rounds.length], flip = Math.floor(w / rounds.length) % 2; out.push(base.map(([a, b]) => flip ? [b, a] : [a, b])) }
+  return out
+}
+// bombos: cada jornada es un emparejamiento completo; nadie repite rival y cada equipo
+// juega mas o menos lo mismo contra cada bombo (exacto si las jornadas se dividen entre los bombos)
+function potsSchedule(teams, pots, weeks) {
+  const ids = teams.map(t => t.team_id), potOf = Object.fromEntries(teams.map(t => [t.team_id, t.pot]))
+  if (ids.some(id => !potOf[id])) throw new Error("Hay equipos sin bombo asignado (Conferencias y equipos)")
+  const cap = Math.ceil(weeks / pots), BYE = "__bye__"
+  const list = ids.length % 2 ? [...ids, BYE] : ids
+  for (let attempt = 0; attempt < 400; attempt++) {
+    const played = new Set(), cnt = {}; ids.forEach(id => { cnt[id] = {} })
+    const key = (a, b) => a < b ? a + "|" + b : b + "|" + a
+    const ok = (a, b) => {
+      if (played.has(key(a, b))) return false
+      if (a === BYE || b === BYE) return true
+      return (cnt[a][potOf[b]] || 0) < cap && (cnt[b][potOf[a]] || 0) < cap
+    }
+    const out = []; let failed = false
+    for (let w = 0; w < weeks && !failed; w++) {
+      let steps = 0
+      const solve = (left, acc) => {
+        if (++steps > 20000) return null
+        if (!left.length) return acc
+        const [a, ...rest] = left
+        for (const b of shuffle(rest)) {
+          if (!ok(a, b)) continue
+          const r = solve(rest.filter(x => x !== b), [...acc, [a, b]]); if (r) return r
+        }
+        return null
+      }
+      const pairs = solve(shuffle(list), [])
+      if (!pairs) { failed = true; break }
+      pairs.forEach(([a, b]) => { played.add(key(a, b)); if (a !== BYE && b !== BYE) { cnt[a][potOf[b]] = (cnt[a][potOf[b]] || 0) + 1; cnt[b][potOf[a]] = (cnt[b][potOf[a]] || 0) + 1 } })
+      out.push(pairs.filter(([a, b]) => a !== BYE && b !== BYE))
+    }
+    if (!failed) return out
+  }
+  throw new Error("No se encontro un calendario valido con esos bombos y jornadas. Prueba con otro numero de jornadas o revisa los bombos.")
+}
+function buildSchedule(fmt, st, settings) {
+  const plan = [], push = (rounds, conf) => rounds.forEach((pairs, w) => pairs.forEach(([a, b]) => plan.push({ week: w + 1, a, b, conference_id: conf || null })))
+  const W = settings.regular_weeks || null
+  if (fmt === "conferences") {
+    const byC = {}; st.filter(x => x.conference_id).forEach(x => { (byC[x.conference_id] = byC[x.conference_id] || []).push(x.team_id) })
+    if (!Object.keys(byC).length) throw new Error("No hay equipos asignados a conferencias")
+    Object.entries(byC).forEach(([c, ids]) => { if (ids.length > 1) push(roundRobin(ids, W || ids.length - (ids.length % 2 ? 0 : 1)), c) })
+  } else if (fmt === "table") {
+    const ids = st.map(x => x.team_id); if (ids.length < 2) throw new Error("Faltan equipos")
+    push(roundRobin(ids, W || ids.length - (ids.length % 2 ? 0 : 1)))
+  } else {
+    if (!W) throw new Error('Define las jornadas en "Semanas de fase regular"')
+    push(potsSchedule(st, settings.pots_count || 3, W))
+  }
+  return plan
+}
+
 export async function renderAdmin(P, ui) {
   const { esc, toast, modal } = ui
   const el = document.getElementById("page-admin")
   const can = x => P.PERMS.includes("all") || P.PERMS.includes(x)
-  const TAB_PERM = { pend: ["results.approve", "market.approve"], season: ["season.manage"], rules: ["season.manage"], teams: ["season.manage"], pool: ["pool.manage"], draft: ["draft.manage"], roles: ["roles.manage"], content: ["content.manage"] }
+  const TAB_PERM = { pend: ["results.approve", "market.approve"], season: ["season.manage"], rules: ["season.manage"], teams: ["season.manage"], pool: ["pool.manage"], draft: ["draft.manage"], roles: ["roles.manage"], content: ["content.manage"], cards: ["season.manage"] }
   const allowed = Object.keys(TAB_PERM).filter(k => TAB_PERM[k].some(can))
   if (!allowed.length) { el.innerHTML = `<section class="block"><div class="wrap login-box card-a"><h3>Sin acceso</h3><p>${P.USER ? "Tu rol no tiene permisos de administracion." : "Entra con tu cuenta."}</p>${P.USER ? "" : '<a class="btn" href="#login">Entrar</a>'}</div></section>`; return }
   if (!tab || !allowed.includes(tab)) tab = allowed[0]
@@ -74,14 +143,14 @@ export async function renderAdmin(P, ui) {
   const fail = e => toast(e.message || String(e))
   const reload = () => renderAdmin(P, ui)
 
-  const TABS = [["pend", "Pendientes", reports.length + txs.length], ["season", "Temporada"], ["rules", "Reglas y puntos"], ["teams", "Conferencias y equipos"], ["pool", "Pool y precios"], ["draft", "Draft y calendario"], ["roles", "Roles y usuarios"], ["content", "Contenido"]].filter(([k]) => allowed.includes(k))
+  const TABS = [["pend", "Pendientes", reports.length + txs.length], ["season", "Temporada"], ["rules", "Reglas y puntos"], ["teams", "Conferencias y equipos"], ["pool", "Pool y precios"], ["draft", "Draft y calendario"], ["cards", "Tarjetas"], ["roles", "Roles y usuarios"], ["content", "Contenido"]].filter(([k]) => allowed.includes(k))
   const tabs = el.querySelector("#admTabs")
   tabs.innerHTML = TABS.map(([k, l, n]) => `<button type="button" data-t="${k}" aria-pressed="${tab === k}">${l}${n ? `<span class="bdg">${n}</span>` : ""}</button>`).join("")
   tabs.onclick = e => { const b = e.target.closest("[data-t]"); if (!b) return; tab = b.dataset.t; try { sessionStorage.setItem("ppvAdmTab", tab) } catch (e) { } tabs.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); draw() }
   const body = el.querySelector("#admBody")
 
   function draw() {
-    ({ pend, season, rules, teams: teamsTab, pool, draft, roles: rolesTab, content })[tab]()
+    ({ pend, season, rules, teams: teamsTab, pool, draft, roles: rolesTab, content, cards: cardsTab })[tab]()
   }
 
   // ---------- pendientes ----------
@@ -193,6 +262,19 @@ export async function renderAdmin(P, ui) {
       <div class="fgrid">
         <label class="fld chk"><input name="allow_duplicates" type="checkbox" ${settings.allow_duplicates ? "checked" : ""}><span>Permitir Pokemon repetidos</span></label>
         <label class="fld"><span>Starters por equipo (0 = no hay)</span><input name="starters_per_team" type="number" min="0" max="6" value="${settings.starters_per_team ?? 0}"></label>
+        <label class="fld"><span>Repetidos maximo por equipo (vacio = sin tope)</span><input name="max_copies_per_team" type="number" min="0" value="${settings.max_copies_per_team ?? ""}"></label>
+      </div><p class="hint" style="margin-top:10px">La segunda copia de un Pokemon (la que cuesta mas) aparece <b>shiny</b> en el draft y en los rosters.</p></div>
+      <div class="card-a" style="border-color:var(--verde)"><h3>Formato de la temporada</h3>
+      <p class="hint">Conferencias: cada conferencia con su tabla y su round robin. Tabla general: todos en una tabla. Bombos (estilo Champions): todos en una tabla y cada equipo juega contra rivales de cada bombo; los bombos se asignan en "Conferencias y equipos". Las jornadas son "Semanas de fase regular" y los que pasan son "Equipos a playoffs".</p>
+      <div class="fgrid">
+        <label class="fld"><span>Formato</span><select name="season_format">${[["conferences", "Conferencias"], ["table", "Tabla general"], ["pots", "Bombos (estilo Champions)"]].map(([k, l]) => `<option value="${k}" ${(settings.season_format || "conferences") === k ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+        <label class="fld"><span>Numero de bombos</span><input name="pots_count" type="number" min="2" max="8" value="${settings.pots_count ?? 3}"></label>
+      </div></div>
+      <div class="card-a"><h3>Calendario con revelado semanal</h3>
+      <p class="hint">El calendario se genera completo desde el inicio, pero los jugadores solo ven el enfrentamiento de cada jornada a partir de su fecha de revelado (una semana despues de la anterior). Tu siempre ves todo.</p>
+      <div class="fgrid">
+        <label class="fld chk"><input name="reveal_weekly" type="checkbox" ${settings.reveal_weekly ? "checked" : ""}><span>Revelar un enfrentamiento por semana</span></label>
+        <label class="fld"><span>Se revela la jornada 1 (hora CDMX; las demas cada 7 dias)</span><input name="schedule_start" type="datetime-local" value="${settings.schedule_start ? new Date(settings.schedule_start).toLocaleString("sv-SE", { timeZone: "America/Mexico_City" }).slice(0, 16).replace(" ", "T") : ""}"></label>
       </div></div>
       <div class="acts"><button class="btn" id="rSave">Guardar reglas</button></div></div>`
     body.querySelector("#rSave").onclick = async () => {
@@ -204,6 +286,13 @@ export async function renderAdmin(P, ui) {
       row.faint_in_playoffs = body.querySelector('[name="faint_in_playoffs"]').checked
       row.allow_duplicates = body.querySelector('[name="allow_duplicates"]').checked
       row.starters_per_team = +body.querySelector('[name="starters_per_team"]').value || 0
+      const mc = body.querySelector('[name="max_copies_per_team"]').value
+      row.max_copies_per_team = mc === "" ? null : +mc
+      row.season_format = body.querySelector('[name="season_format"]').value
+      row.pots_count = Math.max(2, +body.querySelector('[name="pots_count"]').value || 3)
+      row.reveal_weekly = body.querySelector('[name="reveal_weekly"]').checked
+      const ss = body.querySelector('[name="schedule_start"]').value
+      row.schedule_start = ss ? new Date(ss + ":00-06:00").toISOString() : null
       ;["roster_size", "max_points", "points_win", "points_loss", "best_of", "playoff_teams", "max_fa", "trade_max_diff", "draft_pick_seconds"].forEach(k => { if (row[k] == null) delete row[k] })
       const { error } = settings.id ? await supabase.from("league_settings").update(row).eq("id", settings.id) : await supabase.from("league_settings").insert(row)
       if (error) return fail(error)
@@ -213,6 +302,7 @@ export async function renderAdmin(P, ui) {
 
   // ---------- conferencias y equipos ----------
   function teamsTab() {
+    const fmt = settings.season_format || "conferences", nPots = settings.pots_count || 3
     const inSeason = Object.fromEntries(st.map(x => [x.team_id, x]))
     const cnt = Object.fromEntries(confs.map(c => [c.id, st.filter(x => x.conference_id === c.id).length]))
     body.innerHTML = `<div class="adm">
@@ -222,17 +312,18 @@ export async function renderAdmin(P, ui) {
         <div class="acts"><button class="btn" id="cSave">Guardar conferencias</button></div></div>
       <div class="card-a"><h3>Equipos de la temporada</h3>
         <p class="hint">${st.length} equipos inscritos · ${confs.map(c => `${esc(c.name)}: ${cnt[c.id] || 0}`).join(" · ")}${settings.max_teams ? ` · cupo ${esc(settings.max_teams)}` : ""}. El trainer se liga por su cuenta (correo).</p>
-        <div class="atbl-w"><table class="atbl"><thead><tr><th>Juega</th><th>Equipo (nombre en la temporada)</th><th>Abrev.</th><th>Conferencia</th><th>Trainer</th><th>Cuenta</th><th>Logo (URL)</th></tr></thead><tbody>
+        <div class="atbl-w"><table class="atbl"><thead><tr><th>Juega</th><th>Equipo (nombre en la temporada)</th><th>Abrev.</th>${fmt === "conferences" ? "<th>Conferencia</th>" : ""}${fmt === "pots" ? "<th>Bombo</th>" : ""}<th>Trainer</th><th>Cuenta</th><th>Logo (URL)</th></tr></thead><tbody>
         ${teams.map(t => { const x = inSeason[t.id]; return `<tr data-tid="${t.id}" class="${x ? "" : "off"}">
           <td><input type="checkbox" data-f="on" ${x ? "checked" : ""}></td>
           <td><input class="inp" data-f="display_name" value="${esc(x?.display_name || t.name)}"></td>
           <td><input class="inp" data-f="abbr" value="${esc(x?.abbr || "")}" maxlength="4" style="width:70px"></td>
-          <td><select class="inp" data-f="conference_id"><option value="">Sin asignar</option>${confs.map(c => `<option value="${c.id}" ${x?.conference_id === c.id ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></td>
+          ${fmt === "conferences" ? `<td><select class="inp" data-f="conference_id"><option value="">Sin asignar</option>${confs.map(c => `<option value="${c.id}" ${x?.conference_id === c.id ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></td>` : ""}
+          ${fmt === "pots" ? `<td><select class="inp" data-f="pot"><option value="">—</option>${Array.from({ length: nPots }, (_, i) => `<option value="${i + 1}" ${x?.pot === i + 1 ? "selected" : ""}>Bombo ${i + 1}</option>`).join("")}</select></td>` : ""}
           <td><input class="inp" data-f="coach_name" value="${esc(x?.coach_name || t.coach_name || "")}"></td>
           <td><select class="inp" data-f="user_id"><option value="">—</option>${profiles.map(p => `<option value="${p.id}" ${t.user_id === p.id ? "selected" : ""}>${esc(p.email)}</option>`).join("")}</select></td>
           <td><input class="inp" data-f="logo" value="${esc(x?.logo || t.logo || "")}"></td></tr>` }).join("")}
         </tbody></table></div>
-        <div class="acts"><button class="btn" id="tSave">Guardar equipos</button><button class="btn ghost" id="tRand">Repartir al azar en conferencias</button></div></div>
+        <div class="acts"><button class="btn" id="tSave">Guardar equipos</button>${fmt === "conferences" ? '<button class="btn ghost" id="tRand">Repartir al azar en conferencias</button>' : ""}${fmt === "pots" ? '<button class="btn ghost" id="tPots">Repartir al azar en bombos</button>' : ""}</div></div>
       <div class="card-a"><h3>Equipo nuevo</h3><div class="fgrid">
         <label class="fld"><span>Nombre</span><input id="ntName"></label><label class="fld"><span>Trainer</span><input id="ntCoach"></label>
         <label class="fld"><span>Cuenta</span><select id="ntUser"><option value="">—</option>${profiles.filter(p => !teams.some(t => t.user_id === p.id)).map(p => `<option value="${p.id}">${esc(p.email)}</option>`).join("")}</select></label>
@@ -252,13 +343,19 @@ export async function renderAdmin(P, ui) {
           rows.forEach((r, i) => { r.querySelector('[data-f="conference_id"]').value = confs[i % confs.length]?.id || "" })
           toast("Repartidos. Revisa y dale Guardar.")
         }
+        if (b.id === "tPots") {
+          const rows = [...body.querySelectorAll("tr[data-tid]")].filter(r => r.querySelector('[data-f="on"]').checked).sort(() => Math.random() - .5)
+          const per = Math.ceil(rows.length / nPots)
+          rows.forEach((r, i) => { r.querySelector('[data-f="pot"]').value = String(Math.floor(i / per) + 1) })
+          toast("Repartidos. Revisa y dale Guardar.")
+        }
         if (b.id === "tSave") {
           const ups = [], dels = [], userUps = []
           body.querySelectorAll("tr[data-tid]").forEach(r => {
             const id = r.dataset.tid, v = f => r.querySelector(`[data-f="${f}"]`)
             const t = teams.find(x => x.id === id)
             if (v("user_id").value !== (t.user_id || "")) userUps.push({ id, user_id: v("user_id").value || null })
-            if (v("on").checked) ups.push({ season_id: sid, team_id: id, display_name: v("display_name").value, abbr: v("abbr").value.toUpperCase() || null, conference_id: v("conference_id").value || null, coach_name: v("coach_name").value || null, logo: v("logo").value || null })
+            if (v("on").checked) ups.push({ season_id: sid, team_id: id, display_name: v("display_name").value, abbr: v("abbr").value.toUpperCase() || null, conference_id: v("conference_id") ? v("conference_id").value || null : inSeason[id]?.conference_id || null, pot: v("pot") ? (+v("pot").value || null) : inSeason[id]?.pot ?? null, coach_name: v("coach_name").value || null, logo: v("logo").value || null })
             else if (inSeason[id]) dels.push(id)
           })
           const used = userUps.map(u => u.user_id).filter(Boolean)
@@ -344,7 +441,8 @@ export async function renderAdmin(P, ui) {
   // ---------- draft y calendario ----------
   function draft() {
     const ds = dsQ.data, ord = (orderQ.data || []).map(o => o.team_id)
-    const inS = st.filter(x => x.conference_id).map(x => x.team_id)
+    const fmt = settings.season_format || "conferences"
+    const inS = st.filter(x => fmt !== "conferences" || x.conference_id).map(x => x.team_id)
     const list = ord.length ? ord.filter(id => inS.includes(id)).concat(inS.filter(id => !ord.includes(id))) : inS.slice()
     const nMatches = 0
     body.innerHTML = `<div class="adm">
@@ -357,8 +455,8 @@ export async function renderAdmin(P, ui) {
           <button class="btn" data-rpc="start_draft">Iniciar</button><button class="btn ghost" data-rpc="pause_draft">Pausar</button><button class="btn ghost" data-rpc="resume_draft">Reanudar</button>
           <button class="btn ghost" data-rpc="force_auto_pick">Forzar autopick</button><button class="btn ghost" data-rpc="undo_last_pick">Deshacer ultimo pick</button><button class="btn ghost" data-rpc="finish_draft">Terminar</button>
           <button class="btn" data-rpc="export_draft_to_rosters">Pasar picks a rosters</button><button class="btn danger" data-rpc="reset_draft">Reiniciar draft</button></div></div>
-      <div class="card-a"><h3>Calendario</h3><p class="hint">Genera un round robin dentro de cada conferencia con los equipos asignados. Si un equipo queda impar, descansa por semana.</p>
-        <div class="acts"><button class="btn" id="gSched">Generar calendario</button><button class="btn ghost" id="gRe">Regenerar (borra series sin jugar)</button></div></div></div>`
+      <div class="card-a"><h3>Calendario</h3><p class="hint">Formato: <b>${{ conferences: "Conferencias (round robin en cada una)", table: "Tabla general (todos contra todos)", pots: `Bombos (${settings.pots_count || 3} bombos)` }[fmt]}</b> · ${settings.regular_weeks || "?"} jornadas. Se cambia en "Reglas y puntos". Primero se genera una vista previa; nada se guarda hasta que le das Guardar. Si un equipo queda impar, descansa esa jornada.${settings.reveal_weekly ? " Los jugadores veran cada jornada hasta su fecha de revelado." : ""}</p>
+        <div class="acts"><button class="btn" id="gPrev">Generar vista previa</button><button class="btn ghost" id="gSave" disabled>Guardar calendario</button></div><div id="gOut"></div></div></div>`
     const ol = body.querySelector("#dOrd")
     body.onclick = async e => {
       const b = e.target.closest("button"); if (!b) return
@@ -372,13 +470,91 @@ export async function renderAdmin(P, ui) {
           if (["reset_draft", "export_draft_to_rosters"].includes(b.dataset.rpc) && !confirm(b.dataset.rpc === "reset_draft" ? "Esto borra todos los picks. ¿Seguir?" : "Esto reemplaza los rosters de la temporada con los picks. ¿Seguir?")) return
           const r = await rpc(b.dataset.rpc, {}); toast(b.dataset.rpc === "undo_last_pick" ? `Se deshizo el pick de ${r}. El draft quedo en pausa: reanudalo cuando quieras.` : "Listo."); reload()
         }
-        if (b.id === "gSched" || b.id === "gRe") {
-          if (b.id === "gRe" && !confirm("Se borran las series sin jugar y se vuelve a sortear. ¿Seguir?")) return
-          const n = await rpc("generate_schedule", { p_season_id: sid, p_replace: b.id === "gRe" }); toast(`${n} series creadas.`)
+        if (b.id === "gPrev") {
+          draft.plan = buildSchedule(fmt, st, settings)
+          const byW = {}; draft.plan.forEach(m => { (byW[m.week] = byW[m.week] || []).push(m) })
+          body.querySelector("#gOut").innerHTML = `<p class="hint" style="margin-top:12px">${draft.plan.length} series en ${Object.keys(byW).length} jornadas.</p><div class="sched-prev">${Object.entries(byW).map(([w, l]) => `<div><b>Jornada ${w}</b>${l.map(m => `<span>${esc(tname(m.a))} <i>vs</i> ${esc(tname(m.b))}</span>`).join("")}</div>`).join("")}</div>`
+          body.querySelector("#gSave").disabled = false
+        }
+        if (b.id === "gSave" && draft.plan) {
+          const { count } = await supabase.from("matches").select("id", { count: "exact", head: true }).eq("season_id", sid).eq("stage", "regular")
+          if (count && !confirm(`Ya hay ${count} series de fase regular. Se borran (si ninguna se ha jugado) y se reemplazan. ¿Seguir?`)) return
+          const n = await rpc("save_schedule", { p_season_id: sid, p_matches: draft.plan.map(m => ({ week: m.week, a: m.a, b: m.b, conference_id: m.conference_id || null })), p_replace: !!count })
+          toast(`${n} series guardadas.`); draft.plan = null; reload()
         }
       } catch (err) { fail(err) }
     }
     void nMatches
+  }
+
+  // ---------- tarjetas ----------
+  async function cardsTab() {
+    body.innerHTML = "<p>Cargando tarjetas…</p>"
+    const [defsQ, grQ] = await Promise.all([
+      supabase.from("card_defs").select("*").order("sort"),
+      supabase.from("card_grants").select("*").eq("season_id", sid).order("week", { ascending: false })
+    ])
+    const defs = defsQ.data || [], grants = grQ.data || []
+    const CATN = { info: "Informacion", limit: "Limitar al rival", own: "Ventaja propia", market: "Mercado", table: "Tabla y pronosticos", special: "Especiales" }
+    const dn = id => defs.find(d => d.id === id)?.name || id
+    const ST = { offered: ["Por elegir", ""], chosen: ["Elegida", "ok"], void: ["Anulada", "bad"] }
+    const fmt = settings.season_format || "conferences"
+    body.innerHTML = `<div class="adm">
+      <div class="card-a" style="border-color:var(--volt)"><h3>Reglas de las tarjetas</h3>
+        <p class="hint">Al aprobar el resultado de una serie de fase regular, el que pierde recibe 3 tarjetas al azar (si cumple la regla de abajo) y elige 1 para la siguiente jornada. Bono de remontada, Seguro y Pronostico doble se aplican solos en la tabla y en pronosticos; las demas las aplicas tu o los jugadores al jugar.</p>
+        <div class="fgrid">
+          <label class="fld chk"><input name="cards_enabled" type="checkbox" ${settings.cards_enabled ? "checked" : ""}><span>Tarjetas activas en esta temporada</span></label>
+          <label class="fld"><span>Reciben del lugar N hacia abajo (vacio = todo el que pierda)</span><input name="cards_cutoff" type="number" min="1" value="${settings.cards_cutoff ?? ""}"></label>
+          <label class="fld"><span>El lugar se cuenta en</span><select name="cards_scope" ${fmt !== "conferences" ? "disabled" : ""}><option value="conference" ${settings.cards_scope !== "overall" ? "selected" : ""}>Su conferencia</option><option value="overall" ${settings.cards_scope === "overall" ? "selected" : ""}>La tabla general</option></select></label>
+          <label class="fld chk"><input name="cards_block_after_use" type="checkbox" ${settings.cards_block_after_use !== false ? "checked" : ""}><span>Si uso tarjeta y perdio, esa semana no recibe</span></label>
+        </div>${fmt !== "conferences" ? '<p class="hint">Con tabla general o bombos el lugar siempre se cuenta en la tabla general.</p>' : ""}
+        <div class="acts"><button class="btn" id="kSave">Guardar reglas</button></div></div>
+      <div class="card-a"><h3>Tarjetas de la temporada (${grants.length})</h3>
+        ${grants.length ? `<div class="atbl-w"><table class="atbl"><thead><tr><th>Equipo</th><th>Perdio</th><th>Para</th><th>Estado</th><th>Tarjeta</th><th>Opciones</th><th></th></tr></thead><tbody>
+        ${grants.map(g => `<tr><td>${esc(tname(g.team_id))}${g.manual ? ' <span class="pill">Manual</span>' : ""}</td><td>J${g.week}</td><td>J${g.for_week}</td><td><span class="pill ${ST[g.status][1]}">${ST[g.status][0]}</span></td>
+          <td>${g.chosen ? esc(dn(g.chosen)) : "—"}</td><td style="color:var(--mute)">${g.offered.map(dn).map(esc).join(" · ")}${g.mulligan_used ? " (tras Mulligan)" : ""}</td>
+          <td>${g.status !== "void" ? `<button class="btn ghost sm" data-kvoid="${g.id}">Anular</button>` : ""}</td></tr>`).join("")}</tbody></table></div>` : "<p>Todavia no se ha repartido ninguna tarjeta.</p>"}
+        <h3 style="margin-top:18px">Dar tarjeta a mano</h3><p class="hint">Le salen 3 al azar para elegir, sin revisar la regla. Si ya tenia una de esa jornada, se reemplaza.</p>
+        <div class="fgrid"><label class="fld"><span>Equipo</span><select id="kTeam">${st.map(x => `<option value="${x.team_id}">${esc(x.display_name || tname(x.team_id))}</option>`).join("")}</select></label>
+          <label class="fld"><span>Jornada que perdio</span><input id="kWeek" type="number" min="0" value="1"></label></div>
+        <div class="acts"><button class="btn ghost" id="kGrant">Dar tarjeta</button></div></div>
+      <div class="card-a"><h3>Catalogo (${defs.filter(d => d.active).length} activas de ${defs.length})</h3>
+        <p class="hint">Edita el nombre, el efecto y la letra chica. Las inactivas no salen en los sorteos.</p>
+        <div class="atbl-w"><table class="atbl"><thead><tr><th>Activa</th><th>#</th><th>Tipo</th><th>Nombre</th><th>Efecto</th><th>Letra chica</th></tr></thead><tbody>
+        ${defs.map(d => `<tr data-kd="${esc(d.id)}"><td><input type="checkbox" data-k="active" ${d.active ? "checked" : ""}></td><td>${d.sort}</td><td>${CATN[d.category] || d.category}</td>
+          <td><input class="inp" data-k="name" value="${esc(d.name)}"></td><td><textarea class="inp" data-k="effect" rows="2" style="min-width:260px">${esc(d.effect)}</textarea></td><td><textarea class="inp" data-k="rule" rows="2" style="min-width:220px">${esc(d.rule || "")}</textarea></td></tr>`).join("")}
+        </tbody></table></div><div class="acts"><button class="btn" id="kDefs">Guardar catalogo</button></div></div></div>`
+    body.onclick = async e => {
+      const b = e.target.closest("button"); if (!b) return
+      try {
+        if (b.id === "kSave") {
+          const f = n => body.querySelector(`[name="${n}"]`)
+          const row = { cards_enabled: f("cards_enabled").checked, cards_cutoff: f("cards_cutoff").value === "" ? null : +f("cards_cutoff").value, cards_scope: f("cards_scope").value, cards_block_after_use: f("cards_block_after_use").checked }
+          const { error } = settings.id ? await supabase.from("league_settings").update(row).eq("id", settings.id) : await supabase.from("league_settings").insert({ ...row, season_id: sid })
+          if (error) throw error
+          refreshSite("Reglas de tarjetas guardadas.")
+        }
+        if (b.dataset.kvoid) {
+          if (!confirm("¿Anular esta tarjeta? Deja de contar y desaparece del perfil.")) return
+          const { error } = await supabase.from("card_grants").update({ status: "void" }).eq("id", b.dataset.kvoid); if (error) throw error
+          toast("Tarjeta anulada."); cardsTab()
+        }
+        if (b.id === "kGrant") {
+          await rpc("admin_grant_card", { p_season: sid, p_team: body.querySelector("#kTeam").value, p_week: +body.querySelector("#kWeek").value || 0 })
+          toast("Tarjeta dada: le saldran 3 opciones al entrar."); cardsTab()
+        }
+        if (b.id === "kDefs") {
+          b.disabled = true
+          for (const tr of body.querySelectorAll("tr[data-kd]")) {
+            const id = tr.dataset.kd, d = defs.find(x => x.id === id), v = k => tr.querySelector(`[data-k="${k}"]`)
+            const row = { active: v("active").checked, name: v("name").value.trim(), effect: v("effect").value.trim(), rule: v("rule").value.trim() || null }
+            if (row.active === d.active && row.name === d.name && row.effect === d.effect && row.rule === (d.rule || null)) continue
+            const { error } = await supabase.from("card_defs").update({ ...row, updated_at: new Date().toISOString() }).eq("id", id); if (error) throw error
+          }
+          toast("Catalogo guardado."); cardsTab()
+        }
+      } catch (err) { b.disabled = false; fail(err) }
+    }
   }
 
   // ---------- roles y usuarios ----------

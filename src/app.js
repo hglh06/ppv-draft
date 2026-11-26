@@ -3,7 +3,8 @@
 const PPV=window.PPV;
 const safe=(f,name)=>{try{return f();}catch(e){console.warn("[PPV] seccion "+(name||"")+":",e);}};
 const SEASON_N=PPV.SEASON.number,SEASON_LABEL=`Temporada ${PPV.SEASON.number}${PPV.SEASON.subtitle?" · "+PPV.SEASON.subtitle:""}`;
-const MAXP=PPV.RULES.max_points,PO_PER_CONF=Math.max(1,Math.round((PPV.RULES.playoff_teams||8)/2));
+const CKEYS=PPV.CKEYS||["rojo", "azul"];
+const MAXP=PPV.RULES.max_points,PO_PER_CONF=CKEYS.length===1?Math.max(1,PPV.RULES.playoff_teams||8):Math.max(1,Math.round((PPV.RULES.playoff_teams||8)/2));
 // Datos reales de la fase regular (ppvdraftleague.com/standings).
 const TEAMS=PPV.TEAMS;
 const MONS=PPV.MONS;
@@ -15,6 +16,8 @@ const spr=(n,cls="spr")=>SPR_IDS[n]?`<img class="${cls}" src="${SPR_BASE}${SPR_I
 const BOX_BASE="https://raw.githubusercontent.com/Autumnchi/coloured-box-sprites/main/";
 const BOX={"Charizard":"charizard","Floette":"floette","Gengar":"gengar","Incineroar":"incineroar","Tyranitar":"tyranitar","Whimsicott":"whimsicott","Dragonite":"dragonite","Garchomp":"garchomp","Gardevoir":"gardevoir","Kangaskhan":"kangaskhan","Kingambit":"kingambit","Pelipper":"pelipper","Sinistcha":"sinistcha","Sneasler":"sneasler","Volcarona":"volcarona","Aegislash":"aegislash","Aerodactyl":"aerodactyl","Archaludon":"archaludon","Clefable":"clefable","Excadrill":"excadrill","Farigiraf":"farigiraf","Froslass":"froslass","Gallade":"gallade","Glimmora":"glimmora","Gyarados":"gyarados","Starmie":"starmie","Venusaur":"venusaur","Alolan Ninetales":"ninetales-alola","Arcanine":"arcanine","Basculegion-Male":"basculegion","Dragapult":"dragapult","Hisuian Typhlosion":"typhlosion-hisui","Maushold":"maushold","Meganium":"meganium","Palafin":"palafin","Primarina":"primarina","Talonflame":"talonflame","Banette":"banette","Blastoise":"blastoise","Chandelure":"chandelure","Delphox":"delphox","Drampa":"drampa","Feraligatr":"feraligatr","Greninja":"greninja","Heracross":"heracross","Hisuian Zoroark":"zoroark-hisui","Lopunny":"lopunny","Lucario":"lucario","Manectric":"manectric","Medicham":"medicham","Milotic":"milotic","Politoed":"politoed","Rotom-Wash":"rotom-wash","Scizor":"scizor","Sharpedo":"sharpedo","Slowbro":"slowbro","Torkoal":"torkoal","Corviknight":"corviknight","Hatterene":"hatterene","Hisuian Arcanine":"arcanine-hisui","Mamoswine":"mamoswine","Meowscarada":"meowscarada","Mimikyu":"mimikyu","Rotom-Heat":"rotom-heat","Sylveon":"sylveon","Vivillon":"vivillon","Abomasnow":"abomasnow","Aggron":"aggron","Alakazam":"alakazam","Altaria":"altaria","Ampharos":"ampharos","Azumarill":"azumarill","Beedrill":"beedrill","Camerupt":"camerupt","Conkeldurr":"conkeldurr","Crabominable":"crabominable","Ditto":"ditto","Empoleon":"empoleon","Galarian Slowbro":"slowbro-galar","Galarian Slowking":"slowking-galar","Garganacl":"garganacl","Golurk":"golurk","Hawlucha":"hawlucha","Hippowdon":"hippowdon","Hisuian Goodra":"goodra-hisui","Houndoom":"houndoom","Hydreigon":"hydreigon","Klefki":"klefki","Liepard":"liepard","Meowstic Male":"meowstic","Oranguru":"oranguru","Orthworm":"orthworm","Pinsir":"pinsir","Sableye":"sableye","Serperior":"serperior","Weavile":"weavile","Araquanid":"araquanid","Armarouge":"armarouge","Basculegion-Female":"basculegion-f","Kommo-o":"kommo-o","Meowstic Female":"meowstic-f","Paldean Tauros Aqua":"tauros-paldea-water","Paldean Tauros Blaze":"tauros-paldea-fire","Scovillain":"scovillain","Slowking":"slowking","Snorlax":"snorlax","Tsareena":"tsareena","Umbreon":"umbreon","Wyrdeer":"wyrdeer","Absol":"absol","Alcremie":"alcremie","Beartic":"beartic","Ceruledge":"ceruledge","Chesnaught":"chesnaught","Chimecho":"chimecho","Clawitzer":"clawitzer","Emboar":"emboar","Espathra":"espathra","Glalie":"glalie","Goodra":"goodra","Hisuian Decidueye":"decidueye-hisui","Hydrapple":"hydrapple","Infernape":"infernape","Kleavor":"kleavor","Krookodile":"krookodile","Machamp":"machamp","Ninetales":"ninetales","Noivern":"noivern","Pidgeot":"pidgeot","Raichu":"raichu","Reuniclus":"reuniclus","Rhyperior":"rhyperior","Rotom-Mow":"rotom-mow","Salazzle":"salazzle","Skarmory":"skarmory","Skeledirge":"skeledirge","Steelix":"steelix","Tinkaton":"tinkaton","Toxicroak":"toxicroak","Vanilluxe":"vanilluxe","Victreebel":"victreebel","Zoroark":"zoroark","Alolan Raichu":"raichu-alola","Audino":"audino","Diggersby":"diggersby","Glaceon":"glaceon","Hisuian Samurott":"samurott-hisui","Leafeon":"leafeon","Mudsdale":"mudsdale","Pangoro":"pangoro","Passimian":"passimian","Quaquaval":"quaquaval","Rotom-Frost":"rotom-frost","Toxapex":"toxapex","Typhlosion":"typhlosion","Aromatisse":"aromatisse","Hisuian Avalugg":"avalugg-hisui","Jolteon":"jolteon","Luxray":"luxray","Lycanroc (Midday)":"lycanroc","Lycanroc (Midnight)":"lycanroc-midnight","Pikachu":"pikachu","Polteageist":"polteageist","Runerigus":"runerigus","Simipour":"simipour","Simisage":"simisage","Simisear":"simisear","Toucannon":"toucannon","Trevenant":"trevenant","Vaporeon":"vaporeon","Appletun":"appletun","Arbok":"arbok","Aurorus":"aurorus","Avalugg":"avalugg","Bastiodon":"bastiodon","Bellibolt":"bellibolt","Cofagrigus":"cofagrigus","Decidueye":"decidueye","Espeon":"espeon","Flapple":"flapple","Flareon":"flareon","Florges":"florges","Furfrou":"furfrou","Gliscor":"gliscor","Gourgeist":"gourgeist","Heliolisk":"heliolisk","Lycanroc (Dusk)":"lycanroc-dusk","Morpeko":"morpeko","Mr. Rime":"mr-rime","Rampardos":"rampardos","Roserade":"roserade","Rotom-Fan":"rotom-fan","Samurott":"samurott","Sandaconda":"sandaconda","Tauros":"tauros","Torterra":"torterra","Tyrantrum":"tyrantrum","Ariados":"ariados","Castform":"castform","Dedenne":"dedenne","Emolga":"emolga","Forretress":"forretress","Galarian Stunfisk":"stunfisk-galar","Garbodor":"garbodor","Rotom":"rotom","Slurpuff":"slurpuff","Spiritomb":"spiritomb","Stunfisk":"stunfisk","Watchog":"watchog"};
 const BOX_DATA={};
+const sprShiny=(n,cls="spr")=>SPR_IDS[n]?`<img class="${cls} shiny" src="${SPR_BASE}shiny/${SPR_IDS[n]}.png" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${SPR_IDS[n]}.png'">`:spr(n,cls);
+const SHINY_TAG='<span class="shiny-tag" title="Repetido: esta copia es shiny">✦ Shiny</span>';
 const box=(n,cls="")=>BOX[n]?`<img class="${cls} boxi" src="${BOX_DATA[BOX[n]]||BOX_BASE+BOX[n]+".png"}" alt="" loading="lazy" decoding="async">`:spr(n,cls);
 document.addEventListener("error",e=>{const t=e.target;if(t&&t.tagName==="IMG"&&/spr|mvp-art|boxi/.test(t.className))t.remove();},true);
 const CONF=PPV.CONF;
@@ -24,7 +27,7 @@ if(ME<0)TEAMS[-1]={n:"Invitado",c:"rojo",w:0,l:0,d:0,h:[0,0],ph:true,id:null};
 // abreviaciones: primeras 3 consonantes; si el nombre empieza con vocal, esa vocal es la inicial (de palabras cortas como Los/La/Di solo la inicial; si se repite, se usa la siguiente consonante)
 const ABBR=PPV.ABBR;
 TEAMS.forEach((t,i)=>{t.pts=t.w*PPV.RULES.points_win+t.l*PPV.RULES.points_loss;t.ab=ABBR[i];});if(ME<0){TEAMS[-1].pts=0;TEAMS[-1].ab="";}
-["rojo","azul"].forEach(c=>TEAMS.filter(t=>t.c===c).forEach((t,i)=>{t.rank=i+1;t.q=PPV.HAS_GAMES&&i<PO_PER_CONF;}));
+CKEYS.forEach(c=>TEAMS.filter(t=>t.c===c).forEach((t,i)=>{t.rank=i+1;t.q=PPV.HAS_GAMES&&i<PO_PER_CONF;}));
 
 const esc=s=>s.replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 const initials=n=>n.ph?"?":n.n.replace(/^(Los|Las|La|El)\s+/i,"").split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase();
@@ -77,12 +80,12 @@ const tkE=PPV.IS_ARCHIVE?"":`<span>Proximo · <b>${esc(NEXT_EVENT.label)}</b> ·
 
 
 /* standings */
-document.getElementById("tables").innerHTML=["rojo","azul"].map(c=>`
+document.getElementById("tables").innerHTML=CKEYS.map(c=>`
  <div class="table" style="--c:${CONF[c].v}">
   <div class="th"><h3>${CONF[c].name}</h3><span class="label">Conferencia</span></div>
   <div class="rows">
    <div class="row hd"><span>#</span><span>Equipo</span><span data-tip="wl" tabindex="0">W-L</span><span data-tip="diff" tabindex="0">Diff</span><span style="text-align:right"><span data-tip="pts" tabindex="0">Pts</span></span></div>
-   ${by(c).map(t=>`<div class="row ${t.q?"in":"out"} ${t.rank===5?"cut":""}">
+   ${by(c).map(t=>`<div class="row ${t.q?"in":"out"} ${t.rank===PO_PER_CONF+1?"cut":""}">
      <span class="pos num">${t.rank}</span>
      <span class="tm">${crest(t)}<span class="full">${esc(t.n)}</span><span class="short">#${t.ab}</span></span>
      <span class="num">${t.w}-${t.l}</span>
@@ -95,7 +98,7 @@ const max=(MONS[0]||[0,1])[1]||1;
 document.getElementById("bars").innerHTML=MONS.map((m,i)=>`<div class="bar ${i===0?"top":""}"><span class="i num">${i+1}</span><span class="p">${box(m[0],"spr-s")}${m[0]}</span><span class="t"><i style="width:${m[1]/max*100}%;animation-delay:${i*.06}s"></i></span><span class="v num">${m[1]}</span></div>`).join("")+`<div class="note">Mejor K/D de la temporada: <strong style="color:var(--volt)">Ceruledge, 8.00</strong> (16 KOs, 2 caidas)</div>`;
 
 /* teams page */
-safe(()=>document.getElementById("confsum").innerHTML=["rojo","azul"].map(c=>{const l=by(c)[0]||{n:"Por definir",w:0,l:0,pts:0,d:0,ph:true,h:[0,0]};return `<div class="cs" style="--c:${CONF[c].v}"><div><span class="label">Conferencia</span><b style="color:${CONF[c].v}">${CONF[c].name}</b></div><div class="lead-t"><span class="label">${by(c).length} equipos · Lider</span><div>${esc(l.n)} ${l.w}-${l.l}</div></div></div>`}).join(""),"confsum");
+safe(()=>document.getElementById("confsum").innerHTML=CKEYS.map(c=>{const l=by(c)[0]||{n:"Por definir",w:0,l:0,pts:0,d:0,ph:true,h:[0,0]};return `<div class="cs" style="--c:${CONF[c].v}"><div><span class="label">Conferencia</span><b style="color:${CONF[c].v}">${CONF[c].name}</b></div><div class="lead-t"><span class="label">${by(c).length} equipos · Lider</span><div>${esc(l.n)} ${l.w}-${l.l}</div></div></div>`}).join(""),"confsum");
 
 let filter="all";
 const q=document.getElementById("q"),sortSel=document.getElementById("sort");
@@ -111,7 +114,7 @@ function renderTeams(){
   const term=q.value.trim().toLowerCase();
   const s=sortSel.value;
   const sorter=s==="az"?(a,b)=>a.n.localeCompare(b.n):s==="diff"?(a,b)=>b.d-a.d:(a,b)=>a.rank-b.rank;
-  const confs=filter==="all"?["rojo","azul"]:[filter];
+  const confs=filter==="all"?CKEYS:[filter];
   let total=0;
   const html=confs.map(c=>{
     const list=by(c).filter(t=>t.n.toLowerCase().includes(term)).sort(sorter);
@@ -155,7 +158,7 @@ const sth=(k,label,cls="")=>SDEF[k]?`<th class="${cls}"${STIP[k]?` data-tip="${S
 const shead=()=>`<thead><tr>${sth("rank","#","l")}${sth("n","Equipo","l")}${sth("pj","PJ")}${sth("w","W")}${sth("l","L")}${sth("d","Diff")}${sth("wp","% Victorias")}${sth("pts","Pts")}${sth("st","Estado")}</tr></thead>`;
 function srow(t,cut){
   const pj=t.w+t.l,pct=pj?Math.round(t.w/pj*100):0;
-  return `<tr class="${t.q?"in":"out"}${cut&&t.rank===5?" cut":""}${t.n===TEAMS[ME].n?" mine":""}" style="--c:${CONF[t.c].v}">
+  return `<tr class="${t.q?"in":"out"}${cut&&t.rank===PO_PER_CONF+1?" cut":""}${t.n===TEAMS[ME].n?" mine":""}" style="--c:${CONF[t.c].v}">
    <td class="pos l">${sView==="conf"?t.rank:t.gr}</td>
    <td class="l"><span class="tm">${crest(t)}<a class="nm" href="#team-${slug(t)}"><span class="full">${esc(t.n)}</span><span class="short">#${t.ab}</span></a>${t.n===TEAMS[ME].n?'<span class="you">Tu</span>':""}${sView==="all"?`<span class="chip cf" style="--cc:${CONF[t.c].v}"><i>${CONF[t.c].name} #${t.rank}</i></span>`:""}</span></td>
    <td>${pj}</td><td>${t.w}</td><td>${t.l}</td>
@@ -172,8 +175,8 @@ function renderStandings(){
   const tbl=(title,sub,color,l,cut)=>`<div class="table" style="--c:${color}"><div class="th"><h3>${title}</h3><span class="label">${sub}</span></div><div class="rows"><table class="st">${shead()}<tbody>${list(l).map(t=>srow(t,cut)).join("")}</tbody></table></div></div>`;
   const cut=sKey==="rank"&&sDir===1;
   box.innerHTML=sView==="conf"
-    ?["rojo","azul"].map(c=>tbl(CONF[c].name,`${by(c).length} equipos · 4 a playoffs`,CONF[c].v,by(c),cut)).join("")
-    :tbl("General","18 equipos · ambas conferencias","var(--volt)",TEAMS,false);
+    ?CKEYS.map(c=>tbl(CONF[c].name,`${by(c).length} equipos · ${PO_PER_CONF} a playoffs`,CONF[c].v,by(c),cut)).join("")
+    :tbl("General",`${TEAMS.length} equipos${CKEYS.length>1?" · ambas conferencias":""}`,"var(--volt)",TEAMS,false);
 }
 document.getElementById("stables").addEventListener("click",e=>{
   const b=e.target.closest("button[data-k]");if(!b)return;
@@ -191,8 +194,7 @@ document.getElementById("toMons").addEventListener("click",()=>document.getEleme
 
 const bestDiff=TEAMS.slice().sort((a,b)=>b.d-a.d)[0];
 safe(()=>document.getElementById("leaders").innerHTML=[
-  [`Lider ${CONF.rojo.name}`,by("rojo")[0],`${by("rojo")[0].pts}`,CONF.rojo.v],
-  [`Lider ${CONF.azul.name}`,by("azul")[0],`${by("azul")[0].pts}`,CONF.azul.v],
+  ...CKEYS.filter(c=>by(c)[0]).map(c=>[`Lider ${CONF[c].name}`,by(c)[0],`${by(c)[0].pts}`,CONF[c].v]),
   ["Mejor diff",bestDiff,sign(bestDiff.d),CONF[bestDiff.c].v]
 ].map(([lab,t,val,c])=>`<div class="ld" style="--c:${c}">${crest(t)}<div><span class="label">${lab}</span><strong>${esc(t.n)}</strong></div><b class="num">${val}</b></div>`).join(""),"leaders");
 
@@ -246,7 +248,7 @@ function mcard(m,top){
 }
 document.getElementById("weeks").innerHTML=Array.from({length:WEEKS},(_,i)=>`<button type="button" data-w="${i+1}"><small>Semana</small>${i+1}</button>`).join("");
 const mteam=document.getElementById("mteam");
-mteam.innerHTML+=["rojo","azul"].map(c=>`<optgroup label="${CONF[c].name}">${TEAMS.map((t,i)=>[t,i]).filter(([t])=>t.c===c).sort((x,y)=>x[0].n.localeCompare(y[0].n)).map(([t,i])=>`<option value="${i}">${esc(t.n)}</option>`).join("")}</optgroup>`).join("");
+mteam.innerHTML+=CKEYS.map(c=>`<optgroup label="${CONF[c].name}">${TEAMS.map((t,i)=>[t,i]).filter(([t])=>t.c===c).sort((x,y)=>x[0].n.localeCompare(y[0].n)).map(([t,i])=>`<option value="${i}">${esc(t.n)}</option>`).join("")}</optgroup>`).join("");
 function renderMatches(){
   const box=document.getElementById("mbody"),cnt=document.getElementById("mcount");
   document.querySelectorAll("#weeks button").forEach(b=>b.setAttribute("aria-pressed",mTeam===""&&+b.dataset.w===mWeek));
@@ -266,7 +268,7 @@ function renderMatches(){
     return;
   }
   const wk=MATCHES.filter(m=>m.w===mWeek);
-  const confs=mConf==="all"?["rojo","azul"]:[mConf];
+  const confs=mConf==="all"?CKEYS:[mConf];
   const shown=wk.filter(m=>confs.includes(m.c));
   const three=shown.filter(m=>m.seq.length===3).length;
   const games=shown.reduce((s,m)=>s+m.seq.length,0);
@@ -299,7 +301,7 @@ if(ME<0)PROFILES[-1]=["Invitado","-",`0/${MAXP}`,0,"-",[]];
 const CHAMPIONS_ID=PPV.CHAMPIONS_ID;
 const fmtCid=id=>id.replace(/(\d{4})(?=\d)/g,"$1 ");
 const TYPE={normal:["Normal","#A8A77A"],fire:["Fuego","#EE8130"],water:["Agua","#6390F0"],electric:["Electrico","#F7D02C"],grass:["Planta","#7AC74C"],ice:["Hielo","#96D9D6"],fighting:["Lucha","#D04A44"],poison:["Veneno","#B159AF"],ground:["Tierra","#E2BF65"],flying:["Volador","#A98FF3"],psychic:["Psiquico","#F95587"],bug:["Bicho","#A6B91A"],rock:["Roca","#B6A136"],ghost:["Fantasma","#8C6DB8"],dragon:["Dragon","#8A5CFF"],dark:["Siniestro","#9A7C68"],steel:["Acero","#B7B7CE"],fairy:["Hada","#E39BC0"]};
-const PROFILE_ORDER=["rojo","azul"].flatMap(c=>TEAMS.map((t,i)=>[t,i]).filter(([t])=>t.c===c).sort((a,b)=>a[0].rank-b[0].rank).map(([,i])=>i));
+const PROFILE_ORDER=CKEYS.flatMap(c=>TEAMS.map((t,i)=>[t,i]).filter(([t])=>t.c===c).sort((a,b)=>a[0].rank-b[0].rank).map(([,i])=>i));
 function seriesFor(ti){
   return MATCHES.filter(m=>m.a===ti||m.b===ti).sort((x,y)=>x.w-y.w)
     .map(m=>m.a===ti?m:{...m,a:m.b,b:m.a,ga:m.gb,gb:m.ga,seq:[...m.seq].map(x=>x==="a"?"b":"a").join("")});
@@ -391,16 +393,18 @@ function renderProfile(ti){
   const mvp=roster.length?roster.reduce((a,b)=>b[6]>a[6]?b:a):null;
   const pos=PROFILE_ORDER.indexOf(ti),L=PROFILE_ORDER.length;
   const prev=TEAMS[PROFILE_ORDER[(pos-1+L)%L]],next=TEAMS[PROFILE_ORDER[(pos+1)%L]];
-  const path=Array.from({length:WEEKS},(_,i)=>{
+  const path=Array.from({length:Math.max(WEEKS,PPV.TOTAL_WEEKS||0)},(_,i)=>{
     const w=i+1,m=ms.find(x=>x.w===w);
-    if(!m)return `<div class="wk b"><span class="label">Sem ${w}</span><span class="r">—</span><span class="op">Descanso</span></div>`;
+    if(!m){const pm=PPV.PENDING.find(p=>p.w===w&&(p.a===ti||p.b===ti));if(pm){const o=TEAMS[pm.a===ti?pm.b:pm.a];return `<div class="wk p"><span class="label">Sem ${w}</span><span class="r">vs</span><a class="op" href="#team-${slug(o)}"><span class="full">${esc(o.n)}</span><span class="short">#${o.ab}</span></a><span class="s num">Por jugar</span></div>`;}
+      if(PPV.weekHidden&&PPV.weekHidden(w))return `<div class="wk h"><span class="label">Sem ${w}</span><span class="r">?</span><span class="op">Por revelar</span><span class="s">${PPV.revealLabel(w)}</span></div>`;
+      return `<div class="wk b"><span class="label">Sem ${w}</span><span class="r">—</span><span class="op">Descanso</span></div>`;}
     const won=m.ga>m.gb,o=TEAMS[m.b];
     return `<div class="wk ${won?"w":"l"}" title="vs ${esc(o.n)}"><span class="label">Sem ${w}</span><span class="r">${won?"W":"L"}</span><a class="op" href="#team-${slug(o)}"><span class="full">${esc(o.n)}</span><span class="short">#${o.ab}</span></a><span class="s num">${m.ga}-${m.gb}</span></div>`;
   }).join("");
   const pk=r=>{
-    const [n,cost,types,ab,obt,g,k,d]=r,ts=types.split("/"),c1=TYPE[ts[0]][1],c2=TYPE[ts[1]||ts[0]][1];
+    const [n,cost,types,ab,obt,g,k,d]=r,shiny=!!r[10],ts=types.split("/"),c1=TYPE[ts[0]][1],c2=TYPE[ts[1]||ts[0]][1];
     return `<article class="pk ${r===mvp?"star":""}" data-mon="${esc(n)}" style="--t1:${c1};--t2:${c2}">${r===mvp?`<span class="tag">MVP del equipo</span>`:""}
-      <div class="hd"><div><h3>${getNick(ti,n)?esc(getNick(ti,n)):esc(n)}</h3>${getNick(ti,n)?`<span class="species">${esc(n)}</span>`:""}<div class="cost num">${cost}<small>pts de draft</small></div></div>${spr(n)}</div>
+      <div class="hd"><div><h3>${getNick(ti,n)?esc(getNick(ti,n)):esc(n)}</h3>${getNick(ti,n)?`<span class="species">${esc(n)}</span>`:""}<div class="cost num">${cost}<small>pts de draft</small></div>${shiny?SHINY_TAG:""}</div>${shiny?sprShiny(n):spr(n)}</div>
       <div class="types">${ts.map(x=>`<span class="ty" style="--tc:${TYPE[x][1]}"><i>${TYPE[x][0]}</i></span>`).join("")}</div>
       <p class="ab">${esc(ab)}</p>${ti===ME?`<button type="button" class="nick-btn" data-nick="${esc(n)}">✎ ${getNick(ti,n)?"Editar apodo":"Poner apodo"}</button>`:""}
       <div class="gkd"><div><b class="num">${g}</b><span>Partidas</span></div><div><b class="num">${k}</b><span>Kills</span></div><div><b class="num">${d}</b><span>Deaths</span></div><div><b class="num">${d?(k/d).toFixed(2):k?"∞":"—"}</b><span data-tip="kd">K/D</span></div></div>
@@ -419,7 +423,7 @@ function renderProfile(ti){
           <div class="p-coach"><span class="label">Trainer</span><strong>${esc(coach)}</strong>${title&&title!=="-"?`<span class="p-title">“${esc(title)}”</span>`:""}</div>
           <div class="p-cid"><span class="label">Champions ID</span>${CHAMPIONS_ID[ti]?`<code class="cid num">${fmtCid(CHAMPIONS_ID[ti])}</code><button type="button" class="cid-copy" data-cid="${CHAMPIONS_ID[ti]}">Copiar</button>`:`<span class="cid none">Por registrar</span>`}</div>
           <div class="p-cid"><span class="label">Pokemon favorito</span><span class="cid fav-up">${fav&&fav!=="-"?esc(fav):"Sin definir"}</span></div>
-          <div class="p-share"><button type="button" class="btn" data-share="${ti}">⤴ Compartir perfil</button><a class="btn ghost" href="#h2h-${ti===ME?ME+"-9":ME+"-"+ti}">⚔ ${ti===ME?"Cara a cara":"Comparar con mi equipo"}</a></div>
+          <div class="p-share"><button type="button" class="btn" data-share="${ti}">⤴ Compartir perfil</button><a class="btn ghost" href="#h2h-${ti===ME?ME+"-9":ME+"-"+ti}">⚔ ${ti===ME?"Cara a cara":"Comparar con mi equipo"}</a></div>${window.__cardSlot?window.__cardSlot(ti):""}
         </div>
       </div>
     </div>
@@ -605,7 +609,7 @@ function renderDraft(){
   // tablero
   document.getElementById("drBoard").innerHTML=`<table class="db v"><colgroup><col class="c-tm">${DRAFT_ROUNDS.map(()=>"<col>").join("")}</colgroup>
     <thead><tr><th class="tmh" scope="col">Equipo</th>${DRAFT_ROUNDS.map((_,ri)=>`<th scope="col">Ronda ${ri+1}<span aria-label="${ri%2?"de abajo hacia arriba":"de arriba hacia abajo"}">${ri%2?"↑":"↓"}</span></th>`).join("")}</tr></thead>
-    <tbody>${DRAFT_ORDER.map((ti,ci)=>{const T=TEAMS[ti];return `<tr class="${ti===ME?"mine":""}" style="--c:${CONF[T.c].v}"><th class="tm" scope="row"><a href="#team-${slug(T)}"><span class="dpos num">${ci+1}</span>${crest(T)}<span class="tn"><b class="ab">#${T.ab}</b><small>${esc(T.n)}</small></span>${ti===ME?'<span class="you">Tu</span>':""}</a></th>${DRAFT_ROUNDS.map((row,ri)=>{const n=row[ci];return `<td><div class="${n?"":"empty"}">${n?`${box(n,"db-spr")}<b>${esc(n)}</b><small>${PTS[n]??"?"} pts · ${ri+1}.${pickNo(ri,ci)}</small>`:`<b>Sin pick</b><small>${ri+1}.${pickNo(ri,ci)}</small>`}</div></td>`;}).join("")}</tr>`;}).join("")}</tbody></table>`;
+    <tbody>${DRAFT_ORDER.map((ti,ci)=>{const T=TEAMS[ti];return `<tr class="${ti===ME?"mine":""}" style="--c:${CONF[T.c].v}"><th class="tm" scope="row"><a href="#team-${slug(T)}"><span class="dpos num">${ci+1}</span>${crest(T)}<span class="tn"><b class="ab">#${T.ab}</b><small>${esc(T.n)}</small></span>${ti===ME?'<span class="you">Tu</span>':""}</a></th>${DRAFT_ROUNDS.map((row,ri)=>{const n=row[ci];return `<td><div class="${n?"":"empty"}">${n?`${(PPV.DRAFT_SHINY||{})[(ri+1)+"|"+ti]?sprShiny(n,"db-spr"):box(n,"db-spr")}<b>${esc(n)}${(PPV.DRAFT_SHINY||{})[(ri+1)+"|"+ti]?' <i class="shiny-star" title="Repetido: copia shiny">✦</i>':""}</b><small>${PTS[n]??"?"} pts · ${ri+1}.${pickNo(ri,ci)}</small>`:`<b>Sin pick</b><small>${ri+1}.${pickNo(ri,ci)}</small>`}</div></td>`;}).join("")}</tr>`;}).join("")}</tbody></table>`;
   // free agency
   const free=POOL.filter(p=>dxFree(p[0])&&!ownersOf(p[0]).includes(ME)).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
   const left=MAXP-PROFILES[ME][5].reduce((s,r)=>s+r[1],0);
@@ -703,7 +707,7 @@ function renderMine(){
     </section>
     <section>
       <div class="sec-head"><div><div class="label">Preparate para tu rival</div><h2><em>Scouting</em></h2></div></div>
-      <div class="sc-bar"><label class="label" for="scRival">Rival</label><select id="scRival">${["rojo","azul"].map(c=>`<optgroup label="${CONF[c].name}">${TEAMS.map((x,i)=>[x,i]).filter(([x,i])=>x.c===c&&i!==ME).map(([x,i])=>`<option value="${i}" ${i===lastOpp?"selected":""}>${esc(x.n)}</option>`).join("")}</optgroup>`).join("")}</select>${lastOpp!=null?`<span class="sc-note">Seleccionado: tu ultimo rival en playoffs.</span>`:""}</div>
+      <div class="sc-bar"><label class="label" for="scRival">Rival</label><select id="scRival">${CKEYS.map(c=>`<optgroup label="${CONF[c].name}">${TEAMS.map((x,i)=>[x,i]).filter(([x,i])=>x.c===c&&i!==ME).map(([x,i])=>`<option value="${i}" ${i===lastOpp?"selected":""}>${esc(x.n)}</option>`).join("")}</optgroup>`).join("")}</select>${lastOpp!=null?`<span class="sc-note">Seleccionado: tu ultimo rival en playoffs.</span>`:""}</div>
       <div id="scOut"></div>
     </section>
   </div>`;
@@ -996,7 +1000,7 @@ async function drawTable(fmt,view){
     x.fillStyle=P.RO;x.fillRect(W/2-(story?250:220),y-(story?8:6),16,16);x.fillStyle=P.VE;x.fillRect(W/2-(story?230:200),y-(story?8:6),16,16);
     txt(x,"color de conferencia · en blanco: clasificados a playoffs",`600 ${story?24:20}px ${FB}`,P.MU,"left",W/2-(story?200:172),y+(story?6:5));
   }else{
-    ["rojo","azul"].forEach(c=>{const C=confHex(c);head(CONF[c].name.toUpperCase(),C,"#16161a");by(c).forEach((t,k)=>row(t,k,t.rank,t.rank===5,C));y+=story?36:22;});
+    CKEYS.forEach(c=>{const C=confHex(c);head(CONF[c].name.toUpperCase(),C,"#16161a");by(c).forEach((t,k)=>row(t,k,t.rank,t.rank===PO_PER_CONF+1,C));y+=story?36:22;});
     txt(x,"- - -  linea de playoffs: top 4 de cada conferencia",`600 ${story?24:20}px ${FB}`,P.MU,"center",W/2,y+(story?10:4));
   }
   return f.cv;
@@ -1095,7 +1099,7 @@ async function drawWeek(w,fmt,sched){
   const sweeps=wk.filter(m=>m.seq.length===2).length;
   txt(x,sched?`SEMANA ${w} · ${wk.length} SERIES AL MEJOR DE 3`:`${wk.length} SERIES · ${sweeps} EN 2-0 · ${wk.length-sweeps} A 3 JUEGOS`,`700 ${story?32:26}px ${FL}`,P.VO,"center",W/2,y);y+=story?30:20;
   const hh=story?56:44,rh=story?124:92,L=80,R=W-80;
-  ["rojo","azul"].forEach(c=>{const C=confHex(c),list=wk.filter(m=>m.c===c);
+  CKEYS.forEach(c=>{const C=confHex(c),list=wk.filter(m=>m.c===c);
     x.fillStyle=C;x.fillRect(L,y,R-L,hh);txt(x,CONF[c].name.toUpperCase(),`900 ${story?38:30}px ${FD}`,"#16161a","left",L+20,y+hh*.72);y+=hh;
     list.forEach((m,k)=>{x.fillStyle=k%2?P.INK2:P.INK3;x.fillRect(L,y,R-L,rh);const cy=y+rh/2,wA=m.ga>m.gb,ls=rh-(story?30:22);
       const side=(ti,won,left)=>{const t=TEAMS[ti];x.save();if(!won)x.globalAlpha=.45;const lx=left?L+20+ls/2:R-20-ls/2;fit(x,imgs[ti],lx,cy,ls);
@@ -1210,7 +1214,7 @@ async function drawPickTable(fmt){
 
 /* 14. equipos por conferencia */
 async function drawConfs(fmt,view){
-  const confs=view==="all"?["rojo","azul"]:[view],one=confs.length===1;
+  const confs=view==="all"?CKEYS:[view],one=confs.length===1;
   const f=await shareFrame(fmt,one?confHex(confs[0]):(cssVar("--volt")||"#FFB62E"),one?CONF[confs[0]].name.toUpperCase():"CONFERENCIAS");const {x,W,story,P}=f;let y=f.y0;
   const imgs=await Promise.all(TEAMS.map(teamImg));
   txt(x,one?`CONFERENCIA · ${by(confs[0]).length} EQUIPOS`:`${TEAMS.length} EQUIPOS · DOS CONFERENCIAS`,`700 ${story?32:26}px ${FL}`,P.VO,"center",W/2,y);y+=story?36:22;
@@ -1491,7 +1495,7 @@ function renderH2H(){const [a,b]=h2,A=TEAMS[a],B=TEAMS[b],H=h2hData(a,b),CA=CONF
   <section><div class="sec-head"><div><div class="label">Calculado solo por tipos, sin movimientos ni habilidades</div><h2>Ventaja de <em>tipos</em></h2></div></div><p class="h2-verdict">${verdict}</p><div class="h2-adv">${adv(A,H.adA,CA,B)}${adv(B,H.adB,CB,A)}</div></section>
   <section><div class="sec-head"><div><div class="label">Ordenados por costo de draft</div><h2>Los <em>rosters</em></h2></div></div><div class="h2-ros">${ros(a,CA)}${ros(b,CB)}</div></section>`;
 }
-(()=>{const opts=["rojo","azul"].map(c=>`<optgroup label="${CONF[c].name}">${TEAMS.map((t,i)=>[t,i]).filter(([t])=>t.c===c).sort((x,y)=>x[0].rank-y[0].rank).map(([t,i])=>`<option value="${i}">${esc(t.n)}</option>`).join("")}</optgroup>`).join("");
+(()=>{const opts=CKEYS.map(c=>`<optgroup label="${CONF[c].name}">${TEAMS.map((t,i)=>[t,i]).filter(([t])=>t.c===c).sort((x,y)=>x[0].rank-y[0].rank).map(([t,i])=>`<option value="${i}">${esc(t.n)}</option>`).join("")}</optgroup>`).join("");
   const sA=document.getElementById("h2A"),sB=document.getElementById("h2B");sA.innerHTML=opts;sB.innerHTML=opts;
   const go=()=>{history.replaceState(null,"",`#h2h-${h2[0]}-${h2[1]}`);renderH2H();};
   sA.addEventListener("change",()=>{const v=+sA.value;h2=[v,v===h2[1]?h2[0]:h2[1]];go();});
@@ -1599,10 +1603,10 @@ let mdWeek=WEEKS,mdFmt="post",mdJob=0,mdItems=[],mdFiles=[];
 function mediaItems(w){return [
   {tag:`Semana ${w}`,t:"Calendario de la semana",d:`Los cruces de la semana ${w}, sin resultados.`,o:()=>SHARE_KINDS.schedule(w)},
   {tag:`Semana ${w}`,t:"Resultados de la semana",d:`Las series de la semana ${w} con su marcador.`,o:()=>SHARE_KINDS.week(w)},
-  {tag:`Semana ${w}`,t:"Power ranking",d:`Los 18 equipos despues de la semana ${w}.`,o:()=>SHARE_KINDS.power(w)},
+  {tag:`Semana ${w}`,t:"Power ranking",d:`Los ${TEAMS.length} equipos despues de la semana ${w}.`,o:()=>SHARE_KINDS.power(w)},
   {tag:`Semana ${w}`,t:"Pokemon de la semana",d:"El Pokemon con mas victorias de la semana.",o:()=>SHARE_KINDS.potw(w)},
   {tag:"Temporada",t:"Standings por conferencia",d:"Las dos tablas con la linea de playoffs.",o:()=>({kind:"Tabla",title:"Standings por conferencia",file:"tabla-conferencias",accent:"var(--volt)",draw:f=>drawTable(f,"conf")})},
-  {tag:"Temporada",t:"Tabla general",d:"Los 18 equipos en una sola tabla.",o:()=>({kind:"Tabla",title:"Tabla general",file:"tabla-general",accent:"var(--volt)",draw:f=>drawTable(f,"all")})},
+  {tag:"Temporada",t:"Tabla general",d:`Los ${TEAMS.length} equipos en una sola tabla.`,o:()=>({kind:"Tabla",title:"Tabla general",file:"tabla-general",accent:"var(--volt)",draw:f=>drawTable(f,"all")})},
   {tag:"Temporada",t:"Lideres en KOs",d:"El leaderboard de Pokemon.",o:()=>SHARE_KINDS.leaders()},
   {tag:"Mercado",t:"Trades y fichajes",d:"Los movimientos de la temporada.",o:()=>SHARE_KINDS.market()},
   {tag:"Playoffs",t:"Bracket",d:"El cuadro de playoffs con resultados.",o:()=>SHARE_KINDS.bracket()}];}
@@ -1642,7 +1646,7 @@ safe(()=>refreshLeaderNicks(),"refreshLeaderNicks");
 /* routing */
 function route(){
   const h=location.hash.slice(1);
-  const PAGES=["home","teams","standings","matches","h2h","pronosticos","playoffs","draft","pokedex","mi-equipo","salon","media","admin","login","temporadas"];
+  const PAGES=["home","teams","standings","matches","h2h","pronosticos","playoffs","draft","pokedex","mi-equipo","salon","media","admin","login","temporadas","tarjetas"];
   const ti=h.startsWith("team-")?TEAMS.findIndex(t=>"team-"+slug(t)===h):-1;
   const hm=h.match(/^h2h-(\d+)-(\d+)$/);if(hm&&TEAMS[+hm[1]]&&TEAMS[+hm[2]]&&hm[1]!==hm[2])h2=[+hm[1],+hm[2]];
   const p=ti>=0?"profile":hm?"h2h":PAGES.includes(h)?h:"home";

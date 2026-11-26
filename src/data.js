@@ -38,16 +38,16 @@ export function pickSeason(seasons) {
 
 export async function loadSeason(season, session) {
   const sid = season.id
-  const [settingsQ, confsQ, stQ, matchesQ, stats, rosters, pool, orderQ, picksQ, txQ, waiversQ, escQ, seasonsAll, nickQ, postsQ, predQ, predTabQ, repPendQ] = await Promise.all([
+  const [settingsQ, confsQ, stQ, matchesQ, stats, rosters, pool, orderQ, picksQ, txQ, waiversQ, escQ, seasonsAll, nickQ, postsQ, predQ, predTabQ, repPendQ, cardDefsQ, cardBoardQ, myCardsQ] = await Promise.all([
     supabase.from("league_settings").select("*").eq("season_id", sid).maybeSingle(),
     supabase.from("conferences").select("*").eq("season_id", sid).order("sort"),
     supabase.from("season_teams").select("*, team:team_id(id,name,user_id,coach_title,favorite_pokemon,logo,champions_id)").eq("season_id", sid),
     supabase.from("matches").select("*").eq("season_id", sid).order("week", { ascending: true }),
     fetchAll(() => supabase.from("pokemon_stats").select("match_id,team_id,pokemon_name,game,kills,deaths,stage,week").eq("season_id", sid).order("id")),
-    fetchAll(() => supabase.from("rosters").select("id,team_id,obtained_method,obtained_week,created_at,points_paid,is_starter,pokemon:pokemon_id(name,type1,type2,ability1,ability2,hiddenability,sprite)").eq("season_id", sid).order("id")),
+    fetchAll(() => supabase.from("rosters").select("id,team_id,obtained_method,obtained_week,created_at,points_paid,is_starter,is_copy,pokemon:pokemon_id(name,type1,type2,ability1,ability2,hiddenability,sprite)").eq("season_id", sid).order("id")),
     fetchAll(() => supabase.from("season_pokemon").select("points,available,max_copies,copy_surcharge,pokemon:pokemon_id(id,name,type1,type2,sprite)").eq("season_id", sid).order("id")),
     supabase.from("draft_order").select("team_id,draft_position").eq("season_id", sid).order("draft_position"),
-    supabase.from("draft_picks").select("team_id,round,pick_number,pokemon:pokemon_id(name)").eq("season_id", sid).order("pick_number"),
+    supabase.from("draft_picks").select("team_id,round,pick_number,is_copy,pokemon:pokemon_id(name)").eq("season_id", sid).order("pick_number"),
     supabase.from("transactions").select("*").eq("season_id", sid).order("created_at", { ascending: false }),
     supabase.from("waiver_order").select("*").eq("season_id", sid).order("position"),
     supabase.from("pokemon_escapes").select("*, pokemon:pokemon_id(name)").eq("season_id", sid).order("created_at", { ascending: false }),
@@ -56,24 +56,32 @@ export async function loadSeason(season, session) {
     supabase.from("posts").select("*").or(`season_id.is.null,season_id.eq.${sid}`).order("pinned", { ascending: false }).order("created_at", { ascending: false }).limit(12),
     supabase.from("predictions").select("match_id,user_id,pick").eq("season_id", sid),
     supabase.rpc("prediction_table", { p_season: sid }),
-    supabase.from("reports").select("match_id").eq("season_id", sid).eq("status", "pending")
+    supabase.from("reports").select("match_id").eq("season_id", sid).eq("status", "pending"),
+    supabase.from("card_defs").select("*").order("sort"),
+    supabase.rpc("card_board", { p_season: sid }),
+    session?.user ? supabase.from("card_grants").select("*").eq("season_id", sid).order("week") : Promise.resolve({ data: [] })
   ])
-  const RULES = Object.assign({ roster_size: 8, max_points: 60, points_win: 3, points_loss: 0, playoff_teams: 8, max_fa: 10, faint_limit: null, trade_max_diff: 3, best_of: 3, allow_duplicates: false, starters_per_team: 0 }, settingsQ.data || {})
+  const RULES = Object.assign({ roster_size: 8, max_points: 60, points_win: 3, points_loss: 0, playoff_teams: 8, max_fa: 10, faint_limit: null, trade_max_diff: 3, best_of: 3, allow_duplicates: false, starters_per_team: 0, season_format: "conferences", pots_count: 3, max_copies_per_team: 1, reveal_weekly: false, schedule_start: null, cards_enabled: false, cards_cutoff: null, cards_scope: "conference", cards_block_after_use: true }, settingsQ.data || {})
   const confs = confsQ.data || []
-  const KEYS = ["rojo", "azul"]
-  const confKey = {}; confs.slice(0, 2).forEach((c, i) => { confKey[c.id] = KEYS[i] })
+  const FORMAT = RULES.season_format || "conferences", ONE = FORMAT !== "conferences"
+  const KEYS = ONE ? ["rojo"] : ["rojo", "azul"]
+  const confKey = {}; confs.slice(0, 2).forEach((c, i) => { confKey[c.id] = KEYS[i] || "azul" })
   const CONF = {
-    rojo: { name: confs[0]?.name || "Conferencia 1", v: "var(--rojo)", hex: confs[0]?.color || "#FF4B2B", id: confs[0]?.id },
+    rojo: { name: ONE ? (FORMAT === "pots" ? "Fase de liga" : "Tabla general") : confs[0]?.name || "Conferencia 1", v: "var(--rojo)", hex: ONE ? (season.theme?.accent || confs[0]?.color || "#FF4B2B") : confs[0]?.color || "#FF4B2B", id: ONE ? null : confs[0]?.id },
     azul: { name: confs[1]?.name || "Conferencia 2", v: "var(--verde)", hex: confs[1]?.color || "#7ED13A", id: confs[1]?.id }
   }
 
   // ---------- equipos y standings ----------
-  const st = (stQ.data || []).filter(x => confKey[x.conference_id])
-  const unassigned = (stQ.data || []).filter(x => !confKey[x.conference_id])
+  const teamKey = x => ONE ? "rojo" : confKey[x.conference_id]
+  const st = (stQ.data || []).filter(x => teamKey(x))
+  const unassigned = (stQ.data || []).filter(x => !teamKey(x))
   const regular = (matchesQ.data || []).filter(m => (m.stage || "regular") === "regular")
   const done = regular.filter(m => m.status === "completed")
   const tally = {}
   st.forEach(x => { tally[x.team_id] = { w: 0, l: 0, d: 0 } })
+  const CARD_BOARD = cardBoardQ.data || []
+  const cardFor = (tid, w) => CARD_BOARD.find(c => c.team_id === tid && c.for_week === w)?.card_id
+  const cardAdj = (tid, w, won, dd) => { const c = cardFor(tid, w); return c === "bono-remontada" && won ? 1 : c === "seguro" && !won && dd <= -2 ? 1 : 0 }
   const gamesOf = m => {
     const g = Array.isArray(m.games) ? m.games : []
     return g.map(x => x?.winner === "teamA" ? "a" : x?.winner === "teamB" ? "b" : "").filter(Boolean).join("")
@@ -84,12 +92,12 @@ export async function loadSeason(season, session) {
     if (!A || !B) return
     const aWon = m.winner ? m.winner === "teamA" : ga > gb
     if (aWon) { A.w++; B.l++ } else { B.w++; A.l++ }
-    A.d += ga - gb; B.d += gb - ga
+    A.d += ga - gb + cardAdj(m.team_a, m.week, aWon, ga - gb); B.d += gb - ga + cardAdj(m.team_b, m.week, !aWon, gb - ga)
   })
   const pts = t => t.w * RULES.points_win + t.l * RULES.points_loss
   const TEAMS = []
   KEYS.forEach(k => {
-    st.filter(x => confKey[x.conference_id] === k).map(x => {
+    st.filter(x => teamKey(x) === k).map(x => {
       const name = x.display_name || x.team?.name || "Equipo"
       const s = slug(name), h = hue(name)
       return {
@@ -150,7 +158,7 @@ export async function loadSeason(season, session) {
       SPRITE[n] = SPRITE[n] || p.sprite
       const ab = [p.ability1, p.ability2, p.hiddenability].filter(a => a && a !== "None").join(" / ")
       const s = byTeamMon[t.id + "|" + n] || { g: 0, k: 0, d: 0 }
-      return [n, r.points_paid ?? POINTS[n] ?? 0, typesOf(p), ab, OBT[r.obtained_method] || "Draft", s.g, s.k, s.d, r.id, !!r.is_starter]
+      return [n, r.points_paid ?? POINTS[n] ?? 0, typesOf(p), ab, OBT[r.obtained_method] || "Draft", s.g, s.k, s.d, r.id, !!r.is_starter, !!r.is_copy]
     })
     const used = roster.reduce((s, r) => s + r[1], 0)
     const fa = waiverBy[t.id]?.fa_used ?? (txQ.data || []).filter(x => x.type === "free_agent" && x.status === "approved" && x.team_a === t.id).length
@@ -181,6 +189,7 @@ export async function loadSeason(season, session) {
   const DRAFT_ORDER = order.map(o => IDX[o.team_id])
   const picks = picksQ.data || []
   const rounds = Math.max(RULES.roster_size || 0, ...picks.map(p => p.round || 0))
+  const DRAFT_SHINY = {}; picks.forEach(p => { if (p.is_copy && IDX[p.team_id] != null) DRAFT_SHINY[p.round + "|" + IDX[p.team_id]] = true })
   const DRAFT_ROUNDS = Array.from({ length: DRAFT_ORDER.length ? rounds : 0 }, (_, ri) =>
     DRAFT_ORDER.map(ti => picks.find(p => p.round === ri + 1 && IDX[p.team_id] === ti)?.pokemon?.name || null))
 
@@ -201,7 +210,7 @@ export async function loadSeason(season, session) {
     final: slot("FINAL")
   }
   let SEEDS = [...new Set(po.flatMap(m => [IDX[m.team_a], IDX[m.team_b]]).filter(x => x != null))]
-  if (!SEEDS.length && TEAMS.length) SEEDS = KEYS.flatMap(k => TEAMS.map((t, i) => [t, i]).filter(([t]) => t.c === k).slice(0, 4).map(([, i]) => i))
+  if (!SEEDS.length && TEAMS.length) SEEDS = KEYS.flatMap(k => TEAMS.map((t, i) => [t, i]).filter(([t]) => t.c === k).slice(0, ONE ? (RULES.playoff_teams || 8) : 4).map(([, i]) => i))
 
   // ---------- salon de la fama ----------
   const byName = n => TEAMS.findIndex(t => t.n === n)
@@ -226,7 +235,14 @@ export async function loadSeason(season, session) {
   }
 
   const theme = season.theme || {}
+  const revealAt = w => RULES.reveal_weekly && RULES.schedule_start ? new Date(new Date(RULES.schedule_start).getTime() + 7 * 864e5 * (Math.max(1, w) - 1)) : null
+  const weekHidden = w => { const d = revealAt(w); return !!d && d > new Date() }
+  const revealLabel = w => { const d = revealAt(w); return d ? d.toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short", timeZone: "America/Mexico_City" }) : "" }
+  const TOTAL_WEEKS = Math.max(WEEKS, RULES.regular_weeks || 0)
+  const CARD_DEFS = cardDefsQ.data || []
+  const MY_CARDS = (myCardsQ.data || []).filter(g => g.team_id === TEAMS[ME]?.id)
   return {
+    FORMAT, CKEYS: KEYS, TOTAL_WEEKS, weekHidden, revealLabel, revealAt, DRAFT_SHINY, CARD_DEFS, CARD_BOARD, MY_CARDS,
     SEASON: season, RULES, CONF, CONFS: confs, TEAMS, ABBR, UNASSIGNED: unassigned,
     RAW_MATCHES, MATCH_IDS, GAMES, PENDING, WEEKS, PROFILES, CHAMPIONS_ID,
     MONS, MONS_FULL, POOL, SPRITE, POINTS, TYPES, DRAFT_ORDER, DRAFT_ROUNDS, PLAYOFFS, SEEDS, HOF,

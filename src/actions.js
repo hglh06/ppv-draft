@@ -2,6 +2,7 @@
 // sala del draft, archivo de temporadas y mecanica de escape.
 import { supabase, rpc } from "./supabase.js"
 import { renderAdmin } from "./admin.js"
+import { setupCards, renderCardsPage, autoOffer } from "./cards.js"
 
 export const esc = s => String(s ?? "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]))
 export const toast = m => { const t = document.getElementById("toast"); if (!t) return; t.textContent = m; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 3600) }
@@ -137,7 +138,10 @@ function requestFA(name) {
   if (P.ME < 0) { location.hash = "#login"; return toast("Inicia sesion con tu cuenta de trainer.") }
   const mine = roster(P.ME), cost = P.COPIES[name]?.next ?? P.POINTS[name] ?? 0
   const used = mine.reduce((s, r) => s + r[1], 0)
-  const m = modal(`<div class="label">Free agency · waivers</div><h2>Fichar a ${esc(name)}</h2>
+  const isCopy = (P.COPIES[name]?.taken || 0) > 0, cap = P.RULES.max_copies_per_team
+  const myCopies = mine.filter(r => r[10]).length
+  if (isCopy && cap != null && myCopies >= cap) return toast(`${name} ya tiene dueño: seria una copia shiny y ya tienes el maximo de repetidos (${cap}).`)
+  const m = modal(`<div class="label">Free agency · waivers</div><h2>Fichar a ${esc(name)}${isCopy ? ' <span class="shiny-tag">✦ Shiny</span>' : ""}</h2>
     <p>Cuesta <b>${cost} pts</b>${(P.COPIES[name]?.taken || 0) > 0 ? ` (copia ${P.COPIES[name].taken + 1} de ${P.COPIES[name].max}, con sobrecosto)` : ""}. Usas ${used}/${P.RULES.max_points} pts y tienes ${mine.length}/${P.RULES.roster_size} Pokemon.</p>
     <div class="card-a"><h3>¿A quien sueltas?</h3><p class="hint">Opcional si tienes lugar y puntos.</p>
     <div class="fgrid">${mine.map(r => `<label class="fld chk"><input type="checkbox" value="${esc(r[0])}"><span>${esc(r[0])} · ${r[1]} pts</span></label>`).join("") || "<p>Roster vacio</p>"}</div></div>
@@ -253,7 +257,7 @@ async function draftRoom() {
   const { data: ds } = await supabase.from("draft_state").select("*").eq("season_id", P.SEASON.id).maybeSingle()
   if (!ds || (!ds.is_active && !ds.is_finished)) { box.innerHTML = P.DRAFT_ORDER.length ? "" : `<div class="dr-room"><div class="label">Draft</div><h3 style="margin:.2em 0">El draft aun no empieza</h3><p style="color:var(--mute)">${esc(P.NEXT_EVENT?.label || "")}</p></div>`; return }
   if (ds.is_finished) { box.innerHTML = ""; return }
-  const { data: picks } = await supabase.from("draft_picks").select("pokemon_id,team_id,points_paid,pokemon:pokemon_id(name)").eq("season_id", P.SEASON.id)
+  const { data: picks } = await supabase.from("draft_picks").select("pokemon_id,team_id,points_paid,is_copy,pokemon:pokemon_id(name)").eq("season_id", P.SEASON.id)
   const takenN = {}; (picks || []).forEach(p => { const n = p.pokemon?.name; takenN[n] = (takenN[n] || 0) + 1 })
   const cur = P.TEAMS.find(t => t.id === ds.current_team_id)
   const myTurn = cur && ((cur.id === myTeam()?.id && can("team.play")) || can("draft.manage"))
@@ -261,13 +265,15 @@ async function draftRoom() {
   const myPicks = curPicks.map(p => p.pokemon?.name)
   const used = curPicks.reduce((s, p) => s + (p.points_paid ?? P.POINTS[p.pokemon?.name] ?? 0), 0), left = P.RULES.max_points - used
   const costOf = n => (P.POINTS[n] ?? 0) + (P.COPIES[n]?.surcharge || 0) * (takenN[n] || 0)
+  const capCopies = P.RULES.max_copies_per_team, myCopies = curPicks.filter(p => p.is_copy).length
+  const copyBlocked = n => (takenN[n] || 0) > 0 && capCopies != null && myCopies >= capCopies
   const free = P.POOL.filter(p => (takenN[p[0]] || 0) < (P.COPIES[p[0]]?.max || 1) && !myPicks.includes(p[0]))
   box.innerHTML = `<div class="dr-room"><div class="now">${cur ? window.__crest(cur) : ""}<div><div class="label">Ronda ${ds.current_round} · Pick #${ds.current_pick}${ds.is_paused ? " · PAUSADO" : ""}</div>
       <h3 style="margin:.1em 0;font-family:var(--f-display);text-transform:uppercase;font-size:1.8rem">Turno de ${esc(cur?.n || "?")}</h3>
       <span style="color:var(--mute)">${used}/${P.RULES.max_points} pts usados · ${myPicks.length}/${P.RULES.roster_size} Pokemon</span></div>
       <div class="timer" id="drTimer">--</div></div>
     ${myTurn && !ds.is_paused ? `<input class="inp" id="drQ" placeholder="Buscar Pokemon libre…" style="margin-top:12px">
-      <div class="pick-list" id="drList">${free.map(p => `<button type="button" data-pk="${esc(p[0])}" ${costOf(p[0]) > left ? "disabled" : ""}>${p[3] ? `<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/${p[3]}.png" alt="">` : P.SPRITE[p[0]] ? `<img src="${P.SPRITE[p[0]]}" alt="">` : ""}<span>${esc(p[0])}<br><small>${costOf(p[0])} pts${(P.COPIES[p[0]]?.max || 1) > 1 ? ` · copia ${(takenN[p[0]] || 0) + 1}/${P.COPIES[p[0]].max}` : ""}</small></span></button>`).join("")}</div>
+      <div class="pick-list" id="drList">${free.map(p => `<button type="button" data-pk="${esc(p[0])}" ${costOf(p[0]) > left || copyBlocked(p[0]) ? "disabled" : ""} class="${(takenN[p[0]] || 0) > 0 ? "is-shiny" : ""}" title="${copyBlocked(p[0]) ? "Ya tienes el maximo de repetidos" : (takenN[p[0]] || 0) > 0 ? "Seria una copia shiny" : ""}">${p[3] ? `<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/${p[3]}.png" alt="">` : P.SPRITE[p[0]] ? `<img src="${P.SPRITE[p[0]]}" alt="">` : ""}<span>${esc(p[0])}<br><small>${costOf(p[0])} pts${(P.COPIES[p[0]]?.max || 1) > 1 ? ` · copia ${(takenN[p[0]] || 0) + 1}/${P.COPIES[p[0]].max}` : ""}${(takenN[p[0]] || 0) > 0 ? " · ✦ shiny" : ""}</small></span></button>`).join("")}</div>
       ${cur.id === myTeam()?.id ? `<div class="acts"><button class="btn ghost sm" id="drPass">Pasar turno</button></div>` : ""}` : ""}
   </div>`
   const q = box.querySelector("#drQ")
@@ -344,16 +350,27 @@ export function installHooks(ppv) {
   P.hooks = {
     logout, requestFA, pendingCard, nextSeries, pendingSummary, savePick, saveNick, recovery: () => renderLogin("recovery"),
     pages: {
-      login: () => renderLogin(), mine: minePage, temporadas: seasonsPage,
+      login: () => renderLogin(), mine: minePage, temporadas: seasonsPage, tarjetas: renderCardsPage,
       admin: () => renderAdmin(P, { modal, toast, esc })
     }
   }
+  setupCards(P, { modal, toast, esc })
 }
 
 export function afterApp(ppv) {
   P = ppv
   document.addEventListener("click", e => { const b = e.target.closest("[data-report]"); if (b) openReport(b.dataset.report) })
-  safeRun(mineExtras); safeRun(draftRoom); safeRun(renderPosts)
-  if (location.hash === "#login" || location.hash === "#admin" || location.hash === "#temporadas") window.PPV_ROUTE?.()
+  safeRun(mineExtras); safeRun(draftRoom); safeRun(renderPosts); safeRun(revealNote); safeRun(autoOffer)
+  if (["#login", "#admin", "#temporadas", "#tarjetas"].includes(location.hash)) window.PPV_ROUTE?.()
+}
+// calendario con revelado semanal: aviso en Matches con la siguiente fecha
+function revealNote() {
+  if (!P.weekHidden || P.IS_ARCHIVE) return
+  const next = Array.from({ length: P.TOTAL_WEEKS }, (_, i) => i + 1).find(w => P.weekHidden(w))
+  if (!next) return
+  const host = document.querySelector("#page-matches .s-body") || document.getElementById("page-matches"); if (!host) return
+  const n = document.createElement("div"); n.className = "reveal-note"
+  n.innerHTML = `<span class="label">Calendario</span><b>La jornada ${next} se revela el ${esc(P.revealLabel(next))}</b><span>Los enfrentamientos se publican cada lunes.</span>`
+  host.prepend(n)
 }
 function safeRun(f) { Promise.resolve().then(f).catch(e => console.warn("[PPV]", e)) }

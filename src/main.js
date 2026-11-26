@@ -21,6 +21,7 @@ function applyTheme(P) {
 function setText(sel, txt) { const el = document.querySelector(sel); if (el) el.textContent = txt }
 
 function applyChrome(P) {
+  const nc = document.getElementById("navCards"); if (nc) nc.hidden = !P.RULES?.cards_enabled
   const S = P.SEASON, st = STATUS[S.status] || ""
   const label = `Temporada ${S.number}${S.subtitle ? " · " + S.subtitle : ""}`
   document.title = `PPV Draft League · Temporada ${S.number}`
@@ -80,12 +81,18 @@ function applyChrome(P) {
     }
   }
   setText("#fTeams", String(P.TEAMS.length || "—"))
+  // formato de temporada: textos de playoffs y de la tabla
+  const one = (P.CKEYS || []).length === 1, po = P.RULES.playoff_teams || 8
+  setText("#page-standings .label.count", one ? `Top ${po} de la tabla van a playoffs · Victoria = ${P.RULES.points_win} pts` : `Top ${Math.round(po / 2)} de cada conferencia van a playoffs · Victoria = ${P.RULES.points_win} pts`)
+  const cv = document.querySelector('#sview [data-v="conf"]'); if (cv && one) cv.textContent = P.FORMAT === "pots" ? "Fase de liga" : "Tabla"
+  if (one && lede) lede.textContent = `${n || "Los"} entrenadores, una sola tabla y un solo campeon. Cada draft construye historias, cada trade redefine destinos y cada batalla acerca al titulo.`
   setText("#fWeeks", P.WEEKS ? `${P.WEEKS} semanas` : "Por definir")
   fitNav()
   const dms = document.getElementById("drMineSec")
   if (dms) { if (P.ME < 0 || !P.DRAFT_ORDER.includes(P.ME)) dms.hidden = true; else setText("#drMineTeam", P.TEAMS[P.ME].n) }
   const has = x => P.PERMS.includes("all") || P.PERMS.includes(x)
   if (["admin.access","season.manage","pool.manage","draft.manage","results.approve","market.approve","roles.manage","content.manage"].some(has)) document.getElementById("navAdmin").hidden = false
+  fitNav()
 }
 
 // barra de un solo renglon: si las secciones no caben, las ultimas pasan a "Mas"
@@ -111,7 +118,7 @@ function fitNav() {
   if (getComputedStyle(nav).position === "absolute") return // menu movil
   nav.style.justifyContent = "flex-start"
   nav.style.flex = "1000 1 0" // medir contra todo el espacio libre, no contra el ancho del contenido
-  const ORDER = ["media", "salon", "pokedex", "h2h", "draft", "admin", "playoffs", "teams", "matches", "standings", "home"]
+  const ORDER = ["media", "salon", "tarjetas", "pokedex", "h2h", "draft", "admin", "playoffs", "teams", "matches", "standings", "home"]
   const all = [...nav.querySelectorAll(":scope > a[data-page]")]
   const idx = a => all.indexOf(a)
   const nextOut = () => { const vis = [...nav.children].filter(x => x !== more && !x.hidden && x.tagName === "A"); return ORDER.map(k => vis.find(a => a.dataset.page === k)).find(Boolean) || vis[vis.length - 1] }
