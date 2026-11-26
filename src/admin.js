@@ -143,7 +143,7 @@ export async function renderAdmin(P, ui) {
   const fail = e => toast(e.message || String(e))
   const reload = () => renderAdmin(P, ui)
 
-  const TABS = [["pend", "Pendientes", reports.length + txs.length], ["season", "Temporada"], ["rules", "Reglas y puntos"], ["teams", "Conferencias y equipos"], ["pool", "Pool y precios"], ["draft", "Draft y calendario"], ["cards", "Tarjetas"], ["roles", "Roles y usuarios"], ["content", "Contenido"]].filter(([k]) => allowed.includes(k))
+  const TABS = [["pend", "Pendientes", reports.length + txs.length], ["season", "Temporada"], ["rules", "Reglas y puntos"], ["teams", "Conferencias y equipos"], ["pool", "Pool y precios"], ["draft", "Draft y calendario"], ["cards", "Emporio"], ["roles", "Roles y usuarios"], ["content", "Contenido"]].filter(([k]) => allowed.includes(k))
   const tabs = el.querySelector("#admTabs")
   tabs.innerHTML = TABS.map(([k, l, n]) => `<button type="button" data-t="${k}" aria-pressed="${tab === k}">${l}${n ? `<span class="bdg">${n}</span>` : ""}</button>`).join("")
   tabs.onclick = e => { const b = e.target.closest("[data-t]"); if (!b) return; tab = b.dataset.t; try { sessionStorage.setItem("ppvAdmTab", tab) } catch (e) { } tabs.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); draw() }
@@ -487,61 +487,95 @@ export async function renderAdmin(P, ui) {
     void nMatches
   }
 
-  // ---------- tarjetas ----------
+  // ---------- Emporio (cartas) ----------
   async function cardsTab() {
-    body.innerHTML = "<p>Cargando tarjetas…</p>"
-    const [defsQ, grQ] = await Promise.all([
+    body.innerHTML = "<p>Cargando el Emporio…</p>"
+    const [defsQ, handQ, ledQ] = await Promise.all([
       supabase.from("card_defs").select("*").order("sort"),
-      supabase.from("card_grants").select("*").eq("season_id", sid).order("week", { ascending: false })
+      supabase.from("card_hand").select("*").eq("season_id", sid).order("created_at"),
+      supabase.from("card_ledger").select("*").eq("season_id", sid).order("created_at", { ascending: false })
     ])
-    const defs = defsQ.data || [], grants = grQ.data || []
-    const CATN = { info: "Informacion", limit: "Limitar al rival", own: "Ventaja propia", market: "Mercado", table: "Tabla y pronosticos", special: "Especiales" }
+    const defs = defsQ.data || [], hand = handQ.data || [], led = ledQ.data || []
+    const CATN = { info: "Informacion", limit: "Limitar al rival", own: "Ventaja propia", market: "Mercado", chaos: "Caos" }
     const dn = id => defs.find(d => d.id === id)?.name || id
-    const ST = { offered: ["Por elegir", ""], chosen: ["Elegida", "ok"], void: ["Anulada", "bad"] }
-    const fmt = settings.season_format || "conferences"
+    const bal = tid => led.filter(l => l.team_id === tid).reduce((x, l) => x + l.delta, 0)
+    const SRC = { start: "Inicial", shop: "Comprada", admin: "Dada por admin" }
+    const num = (n, v, min = 0) => `<input name="${n}" type="number" min="${min}" value="${v ?? ""}">`
     body.innerHTML = `<div class="adm">
-      <div class="card-a" style="border-color:var(--volt)"><h3>Reglas de las tarjetas</h3>
-        <p class="hint">Al aprobar el resultado de una serie de fase regular, el que pierde recibe 3 tarjetas al azar (si cumple la regla de abajo) y elige 1 para la siguiente jornada. Bono de remontada, Seguro y Pronostico doble se aplican solos en la tabla y en pronosticos; las demas las aplicas tu o los jugadores al jugar.</p>
+      <div class="card-a" style="border-color:var(--volt)"><h3>Reglas del Emporio</h3>
+        <p class="hint">Cada derrota da monedas (se suman solas al aprobar el resultado). Con ellas se compra a ciegas: el jugador elige tipo y tier y le toca una carta al azar de las activas. Los efectos los aplican tú y los jugadores al jugar.</p>
         <div class="fgrid">
-          <label class="fld chk"><input name="cards_enabled" type="checkbox" ${settings.cards_enabled ? "checked" : ""}><span>Tarjetas activas en esta temporada</span></label>
-          <label class="fld"><span>Reciben del lugar N hacia abajo (vacio = todo el que pierda)</span><input name="cards_cutoff" type="number" min="1" value="${settings.cards_cutoff ?? ""}"></label>
-          <label class="fld"><span>El lugar se cuenta en</span><select name="cards_scope" ${fmt !== "conferences" ? "disabled" : ""}><option value="conference" ${settings.cards_scope !== "overall" ? "selected" : ""}>Su conferencia</option><option value="overall" ${settings.cards_scope === "overall" ? "selected" : ""}>La tabla general</option></select></label>
-          <label class="fld chk"><input name="cards_block_after_use" type="checkbox" ${settings.cards_block_after_use !== false ? "checked" : ""}><span>Si uso tarjeta y perdio, esa semana no recibe</span></label>
-        </div>${fmt !== "conferences" ? '<p class="hint">Con tabla general o bombos el lugar siempre se cuenta en la tabla general.</p>' : ""}
-        <div class="acts"><button class="btn" id="kSave">Guardar reglas</button></div></div>
-      <div class="card-a"><h3>Tarjetas de la temporada (${grants.length})</h3>
-        ${grants.length ? `<div class="atbl-w"><table class="atbl"><thead><tr><th>Equipo</th><th>Perdio</th><th>Para</th><th>Estado</th><th>Tarjeta</th><th>Opciones</th><th></th></tr></thead><tbody>
-        ${grants.map(g => `<tr><td>${esc(tname(g.team_id))}${g.manual ? ' <span class="pill">Manual</span>' : ""}</td><td>J${g.week}</td><td>J${g.for_week}</td><td><span class="pill ${ST[g.status][1]}">${ST[g.status][0]}</span></td>
-          <td>${g.chosen ? esc(dn(g.chosen)) : "—"}</td><td style="color:var(--mute)">${g.offered.map(dn).map(esc).join(" · ")}${g.mulligan_used ? " (tras Mulligan)" : ""}</td>
-          <td>${g.status !== "void" ? `<button class="btn ghost sm" data-kvoid="${g.id}">Anular</button>` : ""}</td></tr>`).join("")}</tbody></table></div>` : "<p>Todavia no se ha repartido ninguna tarjeta.</p>"}
-        <h3 style="margin-top:18px">Dar tarjeta a mano</h3><p class="hint">Le salen 3 al azar para elegir, sin revisar la regla. Si ya tenia una de esa jornada, se reemplaza.</p>
+          <label class="fld chk"><input name="cards_enabled" type="checkbox" ${settings.cards_enabled ? "checked" : ""}><span>Emporio abierto en esta temporada</span></label>
+          <label class="fld"><span>Precio tier I (basica)</span>${num("card_price_t1", settings.card_price_t1 ?? 2)}</label>
+          <label class="fld"><span>Precio tier II (intermedia)</span>${num("card_price_t2", settings.card_price_t2 ?? 4)}</label>
+          <label class="fld"><span>Precio tier III (dura)</span>${num("card_price_t3", settings.card_price_t3 ?? 7)}</label>
+          <label class="fld"><span>Monedas por serie perdida</span>${num("coins_per_series_loss", settings.coins_per_series_loss ?? 2)}</label>
+          <label class="fld"><span>Monedas por cada game perdido (0 = no)</span>${num("coins_per_game_loss", settings.coins_per_game_loss ?? 0)}</label>
+          <label class="fld chk"><input name="coins_in_playoffs" type="checkbox" ${settings.coins_in_playoffs ? "checked" : ""}><span>Tambien se ganan monedas en playoffs</span></label>
+          <label class="fld"><span>Maximo de cartas en la mano</span>${num("cards_max_hand", settings.cards_max_hand ?? 3, 1)}</label>
+          <label class="fld"><span>Cartas basicas al empezar</span>${num("cards_starting", settings.cards_starting ?? 2)}</label>
+        </div>
+        <div class="acts"><button class="btn" id="kSave">Guardar reglas</button><button class="btn ghost" id="kDeal">Repartir cartas iniciales</button></div>
+        <p class="hint">"Repartir cartas iniciales" da a cada equipo inscrito ${settings.cards_starting ?? 2} cartas tier I al azar. A quien ya recibio las suyas no le vuelve a dar.</p></div>
+      <div class="card-a"><h3>Equipos</h3>
+        <div class="atbl-w"><table class="atbl"><thead><tr><th>Equipo</th><th>Monedas</th><th>En la mano</th><th>Usadas</th><th>Ajustar monedas</th></tr></thead><tbody>
+        ${st.map(x => { const tid = x.team_id, h = hand.filter(c => c.team_id === tid)
+          return `<tr><td>${esc(x.display_name || tname(tid))}</td><td class="num"><b>${bal(tid)}</b></td>
+            <td>${h.filter(c => c.status === "held").map(c => `<span class="pill" title="${SRC[c.source] || c.source}">${esc(dn(c.card_id))} <button class="btn ghost sm" data-kdis="${c.id}" title="Quitar de la mano">×</button></span>`).join(" ") || "—"}</td>
+            <td style="color:var(--mute)">${h.filter(c => c.status === "used").map(c => `${esc(dn(c.card_id))} (J${c.used_week}) <button class="btn ghost sm" data-kundo="${c.id}" title="Devolver a la mano">↺</button>`).join(" · ") || "—"}</td>
+            <td><input class="inp" style="width:70px" type="number" data-kcoins="${tid}" placeholder="+/-"> <button class="btn ghost sm" data-kadj="${tid}">Aplicar</button></td></tr>` }).join("")}
+        </tbody></table></div>
+        <h3 style="margin-top:18px">Dar una carta</h3><p class="hint">Sin cobrar monedas. Si eliges una carta exacta, se ignoran tipo y tier.</p>
         <div class="fgrid"><label class="fld"><span>Equipo</span><select id="kTeam">${st.map(x => `<option value="${x.team_id}">${esc(x.display_name || tname(x.team_id))}</option>`).join("")}</select></label>
-          <label class="fld"><span>Jornada que perdio</span><input id="kWeek" type="number" min="0" value="1"></label></div>
-        <div class="acts"><button class="btn ghost" id="kGrant">Dar tarjeta</button></div></div>
-      <div class="card-a"><h3>Catalogo (${defs.filter(d => d.active).length} activas de ${defs.length})</h3>
-        <p class="hint">Edita el nombre, el efecto y la letra chica. Las inactivas no salen en los sorteos.</p>
-        <div class="atbl-w"><table class="atbl"><thead><tr><th>Activa</th><th>#</th><th>Tipo</th><th>Nombre</th><th>Efecto</th><th>Letra chica</th></tr></thead><tbody>
-        ${defs.map(d => `<tr data-kd="${esc(d.id)}"><td><input type="checkbox" data-k="active" ${d.active ? "checked" : ""}></td><td>${d.sort}</td><td>${CATN[d.category] || d.category}</td>
+          <label class="fld"><span>Tipo</span><select id="kCat">${Object.entries(CATN).map(([k, l]) => `<option value="${k}">${l}</option>`).join("")}</select></label>
+          <label class="fld"><span>Tier</span><select id="kTier"><option value="1">I</option><option value="2">II</option><option value="3">III</option></select></label>
+          <label class="fld"><span>Carta exacta (opcional)</span><select id="kCard"><option value="">Al azar</option>${defs.map(d => `<option value="${esc(d.id)}">${esc(d.name)} · ${CATN[d.category]} ${d.tier}</option>`).join("")}</select></label></div>
+        <div class="acts"><button class="btn ghost" id="kGive">Dar carta</button></div></div>
+      <div class="card-a"><h3>Movimientos de monedas</h3>
+        ${led.length ? `<div class="atbl-w" style="max-height:320px;overflow:auto"><table class="atbl"><thead><tr><th>Fecha</th><th>Equipo</th><th>Monedas</th><th>Motivo</th></tr></thead><tbody>
+        ${led.slice(0, 200).map(l => `<tr><td>${new Date(l.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "short" })}</td><td>${esc(tname(l.team_id))}</td><td class="num" style="color:${l.delta < 0 ? "var(--rojo)" : "var(--verde)"}">${l.delta > 0 ? "+" : ""}${l.delta}</td><td>${esc(l.note || l.reason)}</td></tr>`).join("")}</tbody></table></div>` : "<p>Sin movimientos todavia.</p>"}</div>
+      <div class="card-a"><h3>Mazo (${defs.filter(d => d.active).length} activas de ${defs.length})</h3>
+        <p class="hint">Edita nombre, efecto y letra chica. Las inactivas no salen en las compras.</p>
+        <div class="atbl-w"><table class="atbl"><thead><tr><th>Activa</th><th>Tipo</th><th>Tier</th><th>Nombre</th><th>Efecto</th><th>Letra chica</th></tr></thead><tbody>
+        ${defs.map(d => `<tr data-kd="${esc(d.id)}"><td><input type="checkbox" data-k="active" ${d.active ? "checked" : ""}></td><td>${CATN[d.category] || d.category}</td><td>${d.tier}</td>
           <td><input class="inp" data-k="name" value="${esc(d.name)}"></td><td><textarea class="inp" data-k="effect" rows="2" style="min-width:260px">${esc(d.effect)}</textarea></td><td><textarea class="inp" data-k="rule" rows="2" style="min-width:220px">${esc(d.rule || "")}</textarea></td></tr>`).join("")}
-        </tbody></table></div><div class="acts"><button class="btn" id="kDefs">Guardar catalogo</button></div></div></div>`
+        </tbody></table></div><div class="acts"><button class="btn" id="kDefs">Guardar mazo</button></div></div></div>`
     body.onclick = async e => {
       const b = e.target.closest("button"); if (!b) return
       try {
         if (b.id === "kSave") {
-          const f = n => body.querySelector(`[name="${n}"]`)
-          const row = { cards_enabled: f("cards_enabled").checked, cards_cutoff: f("cards_cutoff").value === "" ? null : +f("cards_cutoff").value, cards_scope: f("cards_scope").value, cards_block_after_use: f("cards_block_after_use").checked }
+          const f = n => body.querySelector(`[name="${n}"]`), n = k => Math.max(0, parseInt(f(k).value, 10) || 0)
+          const row = { cards_enabled: f("cards_enabled").checked, coins_in_playoffs: f("coins_in_playoffs").checked,
+            card_price_t1: n("card_price_t1"), card_price_t2: n("card_price_t2"), card_price_t3: n("card_price_t3"),
+            coins_per_series_loss: n("coins_per_series_loss"), coins_per_game_loss: n("coins_per_game_loss"),
+            cards_max_hand: Math.max(1, n("cards_max_hand")), cards_starting: n("cards_starting") }
           const { error } = settings.id ? await supabase.from("league_settings").update(row).eq("id", settings.id) : await supabase.from("league_settings").insert({ ...row, season_id: sid })
           if (error) throw error
-          refreshSite("Reglas de tarjetas guardadas.")
+          refreshSite("Reglas del Emporio guardadas.")
         }
-        if (b.dataset.kvoid) {
-          if (!confirm("¿Anular esta tarjeta? Deja de contar y desaparece del perfil.")) return
-          const { error } = await supabase.from("card_grants").update({ status: "void" }).eq("id", b.dataset.kvoid); if (error) throw error
-          toast("Tarjeta anulada."); cardsTab()
+        if (b.id === "kDeal") {
+          if (!confirm("¿Repartir las cartas iniciales a todos los equipos inscritos?")) return
+          const n = await rpc("deal_starting_cards", { p_season: sid }); toast(n ? `${n} cartas repartidas.` : "Todos ya tenian sus cartas iniciales."); cardsTab()
         }
-        if (b.id === "kGrant") {
-          await rpc("admin_grant_card", { p_season: sid, p_team: body.querySelector("#kTeam").value, p_week: +body.querySelector("#kWeek").value || 0 })
-          toast("Tarjeta dada: le saldran 3 opciones al entrar."); cardsTab()
+        if (b.dataset.kadj) {
+          const v = parseInt(body.querySelector(`[data-kcoins="${b.dataset.kadj}"]`).value, 10); if (!v) return toast("Escribe cuantas monedas (+ o -).")
+          const nota = prompt("Motivo (opcional):", "") ?? ""
+          const n = await rpc("admin_adjust_coins", { p_season: sid, p_team: b.dataset.kadj, p_delta: v, p_note: nota }); toast(`Ahora tiene ${n} monedas.`); cardsTab()
+        }
+        if (b.dataset.kdis) {
+          if (!confirm("¿Quitar esta carta de su mano? No se devuelven monedas.")) return
+          const { error } = await supabase.from("card_hand").update({ status: "discarded" }).eq("id", b.dataset.kdis); if (error) throw error
+          toast("Carta quitada."); cardsTab()
+        }
+        if (b.dataset.kundo) {
+          if (!confirm("¿Devolver esta carta a su mano (como si no la hubiera usado)?")) return
+          const { error } = await supabase.from("card_hand").update({ status: "held", used_week: null, used_at: null }).eq("id", b.dataset.kundo); if (error) throw error
+          toast("Carta devuelta a la mano."); cardsTab()
+        }
+        if (b.id === "kGive") {
+          const card = body.querySelector("#kCard").value || null
+          const r = await rpc("admin_give_card", { p_season: sid, p_team: body.querySelector("#kTeam").value, p_category: body.querySelector("#kCat").value, p_tier: +body.querySelector("#kTier").value, p_card: card })
+          toast(`Le diste: ${dn(r)}.`); cardsTab()
         }
         if (b.id === "kDefs") {
           b.disabled = true
@@ -551,7 +585,7 @@ export async function renderAdmin(P, ui) {
             if (row.active === d.active && row.name === d.name && row.effect === d.effect && row.rule === (d.rule || null)) continue
             const { error } = await supabase.from("card_defs").update({ ...row, updated_at: new Date().toISOString() }).eq("id", id); if (error) throw error
           }
-          toast("Catalogo guardado."); cardsTab()
+          toast("Mazo guardado."); cardsTab()
         }
       } catch (err) { b.disabled = false; fail(err) }
     }

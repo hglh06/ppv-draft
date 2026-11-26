@@ -2,7 +2,7 @@
 // sala del draft, archivo de temporadas y mecanica de escape.
 import { supabase, rpc } from "./supabase.js"
 import { renderAdmin } from "./admin.js"
-import { setupCards, renderCardsPage, autoOffer } from "./cards.js"
+import { setupCards, renderEmporio, emporioNotice } from "./emporio.js"
 
 export const esc = s => String(s ?? "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]))
 export const toast = m => { const t = document.getElementById("toast"); if (!t) return; t.textContent = m; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 3600) }
@@ -350,7 +350,7 @@ export function installHooks(ppv) {
   P.hooks = {
     logout, requestFA, pendingCard, nextSeries, pendingSummary, savePick, saveNick, recovery: () => renderLogin("recovery"),
     pages: {
-      login: () => renderLogin(), mine: minePage, temporadas: seasonsPage, tarjetas: renderCardsPage,
+      login: () => renderLogin(), mine: minePage, temporadas: seasonsPage, emporio: renderEmporio,
       admin: () => renderAdmin(P, { modal, toast, esc })
     }
   }
@@ -360,8 +360,8 @@ export function installHooks(ppv) {
 export function afterApp(ppv) {
   P = ppv
   document.addEventListener("click", e => { const b = e.target.closest("[data-report]"); if (b) openReport(b.dataset.report) })
-  safeRun(mineExtras); safeRun(draftRoom); safeRun(renderPosts); safeRun(revealNote); safeRun(autoOffer)
-  if (["#login", "#admin", "#temporadas", "#tarjetas"].includes(location.hash)) window.PPV_ROUTE?.()
+  safeRun(mineExtras); safeRun(draftRoom); safeRun(renderPosts); safeRun(revealNote); safeRun(emporioNotice)
+  if (["#login", "#admin", "#temporadas", "#emporio"].includes(location.hash)) window.PPV_ROUTE?.()
 }
 // calendario con revelado semanal: aviso en Matches con la siguiente fecha
 function revealNote() {

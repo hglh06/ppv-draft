@@ -118,7 +118,7 @@ function fitNav() {
   if (getComputedStyle(nav).position === "absolute") return // menu movil
   nav.style.justifyContent = "flex-start"
   nav.style.flex = "1000 1 0" // medir contra todo el espacio libre, no contra el ancho del contenido
-  const ORDER = ["media", "salon", "tarjetas", "pokedex", "h2h", "draft", "admin", "playoffs", "teams", "matches", "standings", "home"]
+  const ORDER = ["media", "salon", "emporio", "pokedex", "h2h", "draft", "admin", "playoffs", "teams", "matches", "standings", "home"]
   const all = [...nav.querySelectorAll(":scope > a[data-page]")]
   const idx = a => all.indexOf(a)
   const nextOut = () => { const vis = [...nav.children].filter(x => x !== more && !x.hidden && x.tagName === "A"); return ORDER.map(k => vis.find(a => a.dataset.page === k)).find(Boolean) || vis[vis.length - 1] }

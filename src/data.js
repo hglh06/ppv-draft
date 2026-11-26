@@ -38,7 +38,7 @@ export function pickSeason(seasons) {
 
 export async function loadSeason(season, session) {
   const sid = season.id
-  const [settingsQ, confsQ, stQ, matchesQ, stats, rosters, pool, orderQ, picksQ, txQ, waiversQ, escQ, seasonsAll, nickQ, postsQ, predQ, predTabQ, repPendQ, cardDefsQ, cardBoardQ, myCardsQ] = await Promise.all([
+  const [settingsQ, confsQ, stQ, matchesQ, stats, rosters, pool, orderQ, picksQ, txQ, waiversQ, escQ, seasonsAll, nickQ, postsQ, predQ, predTabQ, repPendQ, cardDefsQ, cardTableQ, myLedgerQ] = await Promise.all([
     supabase.from("league_settings").select("*").eq("season_id", sid).maybeSingle(),
     supabase.from("conferences").select("*").eq("season_id", sid).order("sort"),
     supabase.from("season_teams").select("*, team:team_id(id,name,user_id,coach_title,favorite_pokemon,logo,champions_id)").eq("season_id", sid),
@@ -58,8 +58,8 @@ export async function loadSeason(season, session) {
     supabase.rpc("prediction_table", { p_season: sid }),
     supabase.from("reports").select("match_id").eq("season_id", sid).eq("status", "pending"),
     supabase.from("card_defs").select("*").order("sort"),
-    supabase.rpc("card_board", { p_season: sid }),
-    session?.user ? supabase.from("card_grants").select("*").eq("season_id", sid).order("week") : Promise.resolve({ data: [] })
+    supabase.rpc("card_table", { p_season: sid }),
+    session?.user ? supabase.from("card_ledger").select("team_id,delta,reason,note,created_at").eq("season_id", sid).order("created_at", { ascending: false }) : Promise.resolve({ data: [] })
   ])
   const RULES = Object.assign({ roster_size: 8, max_points: 60, points_win: 3, points_loss: 0, playoff_teams: 8, max_fa: 10, faint_limit: null, trade_max_diff: 3, best_of: 3, allow_duplicates: false, starters_per_team: 0, season_format: "conferences", pots_count: 3, max_copies_per_team: 1, reveal_weekly: false, schedule_start: null, cards_enabled: false, cards_cutoff: null, cards_scope: "conference", cards_block_after_use: true }, settingsQ.data || {})
   const confs = confsQ.data || []
@@ -79,9 +79,6 @@ export async function loadSeason(season, session) {
   const done = regular.filter(m => m.status === "completed")
   const tally = {}
   st.forEach(x => { tally[x.team_id] = { w: 0, l: 0, d: 0 } })
-  const CARD_BOARD = cardBoardQ.data || []
-  const cardFor = (tid, w) => CARD_BOARD.find(c => c.team_id === tid && c.for_week === w)?.card_id
-  const cardAdj = (tid, w, won, dd) => { const c = cardFor(tid, w); return c === "bono-remontada" && won ? 1 : c === "seguro" && !won && dd <= -2 ? 1 : 0 }
   const gamesOf = m => {
     const g = Array.isArray(m.games) ? m.games : []
     return g.map(x => x?.winner === "teamA" ? "a" : x?.winner === "teamB" ? "b" : "").filter(Boolean).join("")
@@ -92,7 +89,7 @@ export async function loadSeason(season, session) {
     if (!A || !B) return
     const aWon = m.winner ? m.winner === "teamA" : ga > gb
     if (aWon) { A.w++; B.l++ } else { B.w++; A.l++ }
-    A.d += ga - gb + cardAdj(m.team_a, m.week, aWon, ga - gb); B.d += gb - ga + cardAdj(m.team_b, m.week, !aWon, gb - ga)
+    A.d += ga - gb; B.d += gb - ga
   })
   const pts = t => t.w * RULES.points_win + t.l * RULES.points_loss
   const TEAMS = []
@@ -240,9 +237,11 @@ export async function loadSeason(season, session) {
   const revealLabel = w => { const d = revealAt(w); return d ? d.toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short", timeZone: "America/Mexico_City" }) : "" }
   const TOTAL_WEEKS = Math.max(WEEKS, RULES.regular_weeks || 0)
   const CARD_DEFS = cardDefsQ.data || []
-  const MY_CARDS = (myCardsQ.data || []).filter(g => g.team_id === TEAMS[ME]?.id)
+  const CARD_TABLE = cardTableQ.data || []
+  const MY_LEDGER = (myLedgerQ.data || []).filter(l => l.team_id === TEAMS[ME]?.id)
+  const MY_COINS = MY_LEDGER.reduce((s, l) => s + (l.delta || 0), 0)
   return {
-    FORMAT, CKEYS: KEYS, TOTAL_WEEKS, weekHidden, revealLabel, revealAt, DRAFT_SHINY, CARD_DEFS, CARD_BOARD, MY_CARDS,
+    FORMAT, CKEYS: KEYS, TOTAL_WEEKS, weekHidden, revealLabel, revealAt, DRAFT_SHINY, CARD_DEFS, CARD_TABLE, MY_LEDGER, MY_COINS,
     SEASON: season, RULES, CONF, CONFS: confs, TEAMS, ABBR, UNASSIGNED: unassigned,
     RAW_MATCHES, MATCH_IDS, GAMES, PENDING, WEEKS, PROFILES, CHAMPIONS_ID,
     MONS, MONS_FULL, POOL, SPRITE, POINTS, TYPES, DRAFT_ORDER, DRAFT_ROUNDS, PLAYOFFS, SEEDS, HOF,

@@ -1646,7 +1646,7 @@ safe(()=>refreshLeaderNicks(),"refreshLeaderNicks");
 /* routing */
 function route(){
   const h=location.hash.slice(1);
-  const PAGES=["home","teams","standings","matches","h2h","pronosticos","playoffs","draft","pokedex","mi-equipo","salon","media","admin","login","temporadas","tarjetas"];
+  const PAGES=["home","teams","standings","matches","h2h","pronosticos","playoffs","draft","pokedex","mi-equipo","salon","media","admin","login","temporadas","emporio"];
   const ti=h.startsWith("team-")?TEAMS.findIndex(t=>"team-"+slug(t)===h):-1;
   const hm=h.match(/^h2h-(\d+)-(\d+)$/);if(hm&&TEAMS[+hm[1]]&&TEAMS[+hm[2]]&&hm[1]!==hm[2])h2=[+hm[1],+hm[2]];
   const p=ti>=0?"profile":hm?"h2h":PAGES.includes(h)?h:"home";
