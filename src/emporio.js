@@ -71,22 +71,24 @@ const myHand = () => P.CARD_TABLE.filter(c => c.team_id === myTeamId() && c.stat
 const myUsed = () => P.CARD_TABLE.filter(c => c.team_id === myTeamId() && c.status === "used")
 const open = () => !!P.RULES.cards_enabled && !P.IS_ARCHIVE
 
+const pips = t => `<span class="pc-pips" title="Tier ${t}">${[1, 2, 3].map(i => `<i class="${i <= t ? "on" : ""}"></i>`).join("")}</span>`
+const seasonTag = () => `T${P.SEASON.number}${P.SEASON.subtitle ? " · " + P.SEASON.subtitle : ""}`
 export function cardFace(d, extra = "") {
   if (!d) return ""
   const c = CATS[d.category] || CATS.chaos
-  return `<article class="pcard" style="--cc:${c.color}" data-card="${esc(d.id)}" ${extra}>
-    <header><span class="pc-cat">${catIcon(d.category)}${esc(c.short)}</span><span class="pc-tier" title="Tier ${d.tier}">${ROMAN[d.tier] || ""}</span></header>
-    <div class="pc-art">${svg(ART[d.id] || c.icon, 58, 1.7)}</div>
-    <h4>${esc(d.name)}</h4>
-    <p class="pc-eff">${esc(d.effect)}</p>
-    ${d.rule ? `<p class="pc-rule">${esc(d.rule)}</p>` : ""}
-    <footer><span>Tier ${d.tier} · ${TIER_NAME[d.tier] || ""}</span><span>PPV · T${P.SEASON.number}</span></footer>
+  return `<article class="pcard" style="--cc:${c.color}" data-card="${esc(d.id)}" data-cat="${d.category}" data-tier="${d.tier}" ${extra}>
+    <div class="pc-band"><span class="pc-cat">${catIcon(d.category, 12)}${esc(c.short)}</span>${pips(d.tier)}</div>
+    <div class="pc-art">${svg(ART[d.id] || c.icon, 40, 1.6)}</div>
+    <div class="pc-body"><span class="pc-tier">Tier ${ROMAN[d.tier]} · ${TIER_NAME[d.tier]}</span><h4>${esc(d.name)}</h4>
+    <p class="pc-eff">${esc(d.effect)}</p>${d.rule ? `<p class="pc-rule">${esc(d.rule)}</p>` : ""}</div>
+    <footer><span>Emporio</span><span>${esc(seasonTag())}</span></footer>
   </article>`
 }
 export function cardBack(cat, tier, label = "") {
   const c = CATS[cat] || { name: "Carta", color: "#55555e" }
   return `<article class="pcard back" style="--cc:${c.color}"><div class="pc-back">
-    <span class="pc-back-ico">${cat ? catIcon(cat, 40) : "?"}</span><b>${esc(c.name)}</b>${tier ? `<span class="pc-back-tier">Tier ${ROMAN[tier]}</span>` : ""}${label ? `<small>${esc(label)}</small>` : ""}<span class="pc-back-brand">Emporio · PPV</span></div></article>`
+    <span class="pc-back-ico">${cat ? catIcon(cat, 28) : "?"}</span><b>${esc(c.name)}</b>${tier ? pips(tier) : ""}${label ? `<small>${esc(label)}</small>` : ""}
+    <span class="pc-back-brand">Emporio · ${esc(seasonTag())}</span></div></article>`
 }
 
 // jornada en la que se usaria una carta hoy: la de mi siguiente serie por jugar
@@ -115,11 +117,16 @@ export function cardSlot(ti) {
     ${mine ? `<a class="btn sm" href="#emporio">Ir al Emporio</a>` : `<small>Todos ven el tipo y el tier; la carta se revela cuando la juega.</small>`}</div>`
 }
 
-function rulesLine() {
-  const R = P.RULES
-  const bits = [`Ganas <b>${R.coins_per_series_loss}</b> moneda${R.coins_per_series_loss === 1 ? "" : "s"} por serie perdida`]
-  if (R.coins_per_game_loss) bits.push(`<b>${R.coins_per_game_loss}</b> por cada game perdido`)
-  return `${bits.join(" y ")}${R.coins_in_playoffs ? " (también en playoffs)" : ""}. Compras a ciegas por tipo y tier: te toca una carta al azar de las que hay. Máximo <b>${R.cards_max_hand}</b> cartas en la mano y <b>1</b> por jornada.${R.cards_starting ? ` Cada equipo empieza con ${R.cards_starting} cartas básicas.` : ""}`
+let FILTER = { cat: "all", tier: "all" }
+function applyFilter(root) {
+  root.querySelectorAll("[data-fcat]").forEach(el => {
+    const ok = (FILTER.cat === "all" || el.dataset.fcat === FILTER.cat) && (FILTER.tier === "all" || el.dataset.ftier === FILTER.tier)
+    el.hidden = !ok
+  })
+  root.querySelectorAll("[data-fsec]").forEach(sec => { sec.hidden = !sec.querySelector("[data-fcat]:not([hidden])") })
+  root.querySelectorAll("[data-fchip]").forEach(b => { const [k, v] = b.dataset.fchip.split(":"); b.setAttribute("aria-pressed", String(FILTER[k] === v)) })
+  const n = root.querySelectorAll(".emp-catalog [data-fcat]:not([hidden])").length
+  const cnt = root.querySelector("#empCount"); if (cnt) cnt.textContent = `${n} carta${n === 1 ? "" : "s"}`
 }
 
 export function renderEmporio() {
@@ -127,30 +134,42 @@ export function renderEmporio() {
   const R = P.RULES, me = P.TEAMS[P.ME], hand = myHand(), max = R.cards_max_hand || 3
   const inPlayWeek = weekInPlay()
   const inPlay = P.CARD_TABLE.filter(c => c.status === "used" && c.used_week === inPlayWeek)
-  const shop = open() && me ? `<section class="emp-shop"><div class="sec-head"><div><div class="label">Tienda</div><h2>Compra a <em>ciegas</em></h2></div>
-      <div class="emp-wallet"><span class="label">Tus monedas</span><b class="num">${P.MY_COINS}</b><span>${hand.length}/${max} cartas</span></div></div>
-      <div class="emp-grid">${ORDER.map(k => `<div class="emp-col" style="--cc:${CATS[k].color}"><h3>${catIcon(k, 20)} ${CATS[k].name}</h3>
-        ${[1, 2, 3].map(t => { const n = P.CARD_DEFS.filter(d => d.active && d.category === k && d.tier === t).length, p = price(t)
-          const why = !n ? "Sin cartas" : hand.length >= max ? "Mano llena" : P.MY_COINS < p ? "No te alcanza" : ""
-          return `<button type="button" class="emp-buy" data-buy="${k}|${t}" ${why ? "disabled" : ""} title="${why}"><span class="emp-t">Tier ${ROMAN[t]}<small>${TIER_NAME[t]}</small></span><span class="emp-p num">${p}<small>monedas</small></span><span class="emp-n">${n} posible${n === 1 ? "" : "s"}</span></button>` }).join("")}</div>`).join("")}</div></section>` : ""
-  el.innerHTML = `<section class="t-hero"><div class="wrap"><div class="label">Temporada ${P.SEASON.number} · Cartas de la liga</div>
-      <h1 class="cards-h1">Emporio</h1><p class="cards-lede">${R.cards_enabled ? rulesLine() : "El Emporio está cerrado en esta temporada."}</p>
-      <div class="cards-legend">${ORDER.map(k => `<span style="--cc:${CATS[k].color}">${catIcon(k)}${CATS[k].name}</span>`).join("")}</div></div></section>
-    <div class="wrap s-body">
-      ${open() && !me && P.USER ? `<p class="hint">Tu cuenta no tiene equipo en esta temporada, así que no puedes comprar.</p>` : ""}
-      ${open() && !P.USER ? `<p class="hint"><a href="#login">Inicia sesión</a> para ver tus monedas y comprar.</p>` : ""}
-      ${shop}
-      ${me && (hand.length || myUsed().length) ? `<section><div class="sec-head"><div><div class="label">Tu mano</div><h2>Mis <em>cartas</em></h2></div></div>
-        <div class="cards-grid">${hand.map(c => `<div class="hand-c">${cardFace(def(c.card_id))}<button type="button" class="btn sm" data-use="${c.hand_id}">Usar en J${nextWeek()}</button></div>`).join("")}
-        ${myUsed().sort((a, b) => b.used_week - a.used_week).map(c => `<div class="hand-c used">${cardFace(def(c.card_id))}<span class="label">Usada en J${c.used_week}</span></div>`).join("")}</div></section>` : ""}
-      ${inPlay.length ? `<section><div class="sec-head"><div><div class="label">Jornada ${inPlayWeek}</div><h2>Cartas en <em>juego</em></h2></div></div>
-        <div class="cards-board">${inPlay.map(c => { const t = teamOf(c.team_id), d = def(c.card_id)
-          return `<div class="cb-item">${cardFace(d)}<a href="#team-${slug(t)}">${t ? window.__crest(t) : ""}<span>${esc(t?.n || "?")}</span></a></div>` }).join("")}</div></section>` : ""}
-      <section class="emp-cat"><div class="sec-head"><div><div class="label">${P.CARD_DEFS.filter(d => d.active).length} cartas en el mazo</div><h2>Lo que te puede <em>tocar</em></h2></div></div>
-      ${ORDER.map(k => { const list = P.CARD_DEFS.filter(d => d.category === k && d.active); if (!list.length) return ""
-        return `<div class="cards-cat" style="--cc:${CATS[k].color}"><div class="conf-title"><h2>${catIcon(k, 26)} ${CATS[k].name}</h2><span class="label">${list.length} cartas</span><span class="rule"></span></div>
-          ${[1, 2, 3].map(t => { const tl = list.filter(d => d.tier === t); return tl.length ? `<div class="emp-tier"><span class="label">Tier ${ROMAN[t]} · ${TIER_NAME[t]} · ${price(t)} monedas</span><div class="cards-grid">${tl.map(d => cardFace(d)).join("")}</div></div>` : "" }).join("")}</div>` }).join("")}</section>
+  const active = P.CARD_DEFS.filter(d => d.active)
+  const coins = n => `${n} moneda${n === 1 ? "" : "s"}`
+  const chip = (k, v, label, color) => `<button type="button" class="emp-chip" data-fchip="${k}:${v}" ${color ? `style="--cc:${color}"` : ""}>${label}</button>`
+  const earn = `${coins(R.coins_per_series_loss)} por serie perdida${R.coins_per_game_loss ? ` + ${coins(R.coins_per_game_loss)} por game perdido` : ""}`
+  const products = ORDER.flatMap(k => [1, 2, 3].map(t => {
+    const n = active.filter(d => d.category === k && d.tier === t).length; if (!n) return ""
+    const p = price(t), why = !me ? "" : hand.length >= max ? "Mano llena" : P.MY_COINS < p ? "No te alcanza" : ""
+    return `<div class="emp-prod" data-fcat="${k}" data-ftier="${t}" style="--cc:${CATS[k].color}">
+      <div class="emp-prod-art"><div class="emp-stack">${cardBack(k, t)}</div></div>
+      <div class="emp-prod-info"><span class="label">${CATS[k].name}</span><h3>Tier ${ROMAN[t]}</h3><small class="emp-tn">${TIER_NAME[t]}</small>
+        <span class="emp-prod-n">1 al azar de ${n} carta${n === 1 ? "" : "s"}</span></div>
+      <div class="emp-prod-buy"><span class="emp-price num">${p}<small>monedas</small></span>
+        ${open() && me ? (why ? `<span class="emp-why">${why}</span>` : `<button type="button" class="btn sm" data-buy="${k}|${t}">Comprar</button>`) : ""}</div></div>`
+  })).join("")
+  el.innerHTML = `<section class="t-hero emp-hero"><div class="wrap"><div class="emp-hero-row"><div>
+      <div class="label">Temporada ${P.SEASON.number} · ${esc(P.SEASON.subtitle || "")}</div><h1 class="cards-h1">Emporio</h1>
+      <p class="cards-lede">${R.cards_enabled ? `Ganas ${earn}${R.coins_in_playoffs ? ", también en playoffs" : ""}. Compras a ciegas: eliges tipo y tier y te toca una carta al azar. Máximo ${max} en la mano y 1 por jornada.` : "El Emporio está cerrado en esta temporada."}</p></div>
+      ${me && open() ? `<div class="emp-wallet"><span class="label">Tu saldo</span><b class="num">${P.MY_COINS}</b><span>monedas</span><div class="emp-handbar">${Array.from({ length: max }, (_, i) => `<i class="${i < hand.length ? "on" : ""}"></i>`).join("")}<em>${hand.length}/${max} cartas</em></div></div>` : ""}
+      ${open() && !P.USER ? `<a class="btn" href="#login">Inicia sesión para comprar</a>` : ""}</div></div></section>
+    <div class="emp-filters"><div class="wrap"><div class="emp-fgroup"><span class="label">Tipo</span>${chip("cat", "all", "Todos")}${ORDER.map(k => chip("cat", k, `${catIcon(k, 14)}${CATS[k].short}`, CATS[k].color)).join("")}</div>
+      <div class="emp-fgroup"><span class="label">Tier</span>${chip("tier", "all", "Todos")}${[1, 2, 3].map(t => chip("tier", String(t), `Tier ${ROMAN[t]}`)).join("")}</div></div></div>
+    <div class="wrap s-body emp-body">
+      ${open() && P.USER && !me ? `<p class="hint">Tu cuenta no tiene equipo en esta temporada, así que no puedes comprar.</p>` : ""}
+      <section class="emp-sec" data-fsec><div class="emp-sec-h"><h2>Sobres</h2><span class="label">Precio por tier: I ${price(1)} · II ${price(2)} · III ${price(3)}</span></div>
+        <div class="emp-prods">${products}</div></section>
+      ${me && (hand.length || myUsed().length) ? `<section class="emp-sec"><div class="emp-sec-h"><h2>Tu mano</h2><span class="label">Usa 1 por jornada · todos la verán</span></div>
+        <div class="emp-hand">${hand.map(c => `<div class="hand-c">${cardFace(def(c.card_id))}<button type="button" class="btn sm" data-use="${c.hand_id}">Usar en J${nextWeek()}</button></div>`).join("")}
+        ${myUsed().sort((a, b) => b.used_week - a.used_week).slice(0, 4).map(c => `<div class="hand-c used">${cardFace(def(c.card_id))}<span class="label">Usada en J${c.used_week}</span></div>`).join("")}</div></section>` : ""}
+      ${inPlay.length ? `<section class="emp-sec"><div class="emp-sec-h"><h2>En juego · Jornada ${inPlayWeek}</h2></div>
+        <div class="emp-cards">${inPlay.map(c => { const t = teamOf(c.team_id); return `<div class="cb-item">${cardFace(def(c.card_id))}<a href="#team-${slug(t)}">${t ? window.__crest(t) : ""}<span>${esc(t?.n || "?")}</span></a></div>` }).join("")}</div></section>` : ""}
+      <section class="emp-sec emp-catalog" data-fsec><div class="emp-sec-h"><h2>Catálogo</h2><span class="label" id="empCount"></span></div>
+        <div class="emp-cards">${ORDER.flatMap(k => [1, 2, 3].flatMap(t => active.filter(d => d.category === k && d.tier === t).map(d => `<div class="emp-cwrap" data-fcat="${k}" data-ftier="${t}">${cardFace(d)}</div>`))).join("")}</div></section>
     </div>`
+  const hd = document.querySelector("header.nav"); if (hd) el.style.setProperty("--nav-h", ((parseFloat(getComputedStyle(hd).top) || 0) + hd.offsetHeight) + "px")
+  applyFilter(el)
+  el.onclick = e => { const b = e.target.closest("[data-fchip]"); if (!b) return; const [k, v] = b.dataset.fchip.split(":"); FILTER[k] = v; applyFilter(el) }
 }
 
 async function buy(cat, tier) {
