@@ -535,11 +535,23 @@ export async function renderAdmin(P, ui) {
         ${led.length ? `<div class="atbl-w" style="max-height:320px;overflow:auto"><table class="atbl"><thead><tr><th>Fecha</th><th>Equipo</th><th>Monedas</th><th>Motivo</th></tr></thead><tbody>
         ${led.slice(0, 200).map(l => `<tr><td>${new Date(l.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "short" })}</td><td>${esc(tname(l.team_id))}</td><td class="num" style="color:${l.delta < 0 ? "var(--rojo)" : "var(--verde)"}">${l.delta > 0 ? "+" : ""}${l.delta}</td><td>${esc(l.note || l.reason)}</td></tr>`).join("")}</tbody></table></div>` : "<p>Sin movimientos todavia.</p>"}</div>
       <div class="card-a"><h3>Mazo (${defs.filter(d => d.active).length} activas de ${defs.length})</h3>
-        <p class="hint">Edita nombre, efecto y letra chica. Las inactivas no salen en las compras.</p>
-        <div class="atbl-w"><table class="atbl"><thead><tr><th>Activa</th><th>Tipo</th><th>Tier</th><th>Nombre</th><th>Efecto</th><th>Letra chica</th></tr></thead><tbody>
-        ${defs.map(d => `<tr data-kd="${esc(d.id)}"><td><input type="checkbox" data-k="active" ${d.active ? "checked" : ""}></td><td>${CATN[d.category] || d.category}</td><td>${d.tier}</td>
-          <td><input class="inp" data-k="name" value="${esc(d.name)}"></td><td><textarea class="inp" data-k="effect" rows="2" style="min-width:260px">${esc(d.effect)}</textarea></td><td><textarea class="inp" data-k="rule" rows="2" style="min-width:220px">${esc(d.rule || "")}</textarea></td></tr>`).join("")}
-        </tbody></table></div><div class="acts"><button class="btn" id="kDefs">Guardar mazo</button></div></div></div>`
+        <p class="hint">Cambia tipo, tier, nombre y textos y dale Guardar mazo. Quita la palomita de "En venta" para dar de baja una carta: deja de salir en las compras, pero quien ya la tiene la conserva. "Borrar" la elimina para siempre (solo si nadie la ha tenido).</p>
+        <div class="atbl-w"><table class="atbl"><thead><tr><th>En venta</th><th>Tipo</th><th>Tier</th><th>Nombre</th><th>Efecto</th><th>Letra chica</th><th></th></tr></thead><tbody>
+        ${defs.map(d => `<tr data-kd="${esc(d.id)}" style="${d.active ? "" : "opacity:.55"}"><td><input type="checkbox" data-k="active" ${d.active ? "checked" : ""}></td>
+          <td><select class="inp" data-k="category">${Object.entries(CATN).map(([k, l]) => `<option value="${k}" ${d.category === k ? "selected" : ""}>${l}</option>`).join("")}</select></td>
+          <td><select class="inp" data-k="tier">${[1, 2, 3].map(t => `<option value="${t}" ${d.tier === t ? "selected" : ""}>${["", "I", "II", "III"][t]}</option>`).join("")}</select></td>
+          <td><input class="inp" data-k="name" value="${esc(d.name)}"></td><td><textarea class="inp" data-k="effect" rows="2" style="min-width:260px">${esc(d.effect)}</textarea></td><td><textarea class="inp" data-k="rule" rows="2" style="min-width:220px">${esc(d.rule || "")}</textarea></td>
+          <td><button class="btn ghost sm" data-kdel="${esc(d.id)}" ${hand.some(h => h.card_id === d.id) ? 'disabled title="Ya la tiene o la tuvo algun equipo: mejor dala de baja"' : ""}>Borrar</button></td></tr>`).join("")}
+        </tbody></table></div><div class="acts"><button class="btn" id="kDefs">Guardar mazo</button></div>
+        <h3 style="margin-top:22px">Agregar carta</h3>
+        <div class="fgrid">
+          <label class="fld"><span>Nombre</span><input id="nkName" class="inp" maxlength="40"></label>
+          <label class="fld"><span>Tipo</span><select id="nkCat" class="inp">${Object.entries(CATN).map(([k, l]) => `<option value="${k}">${l}</option>`).join("")}</select></label>
+          <label class="fld"><span>Tier</span><select id="nkTier" class="inp"><option value="1">I · basica</option><option value="2">II · intermedia</option><option value="3">III · dura</option></select></label>
+          <label class="fld" style="grid-column:1/-1"><span>Efecto</span><textarea id="nkEff" class="inp" rows="2"></textarea></label>
+          <label class="fld" style="grid-column:1/-1"><span>Letra chica (opcional)</span><input id="nkRule" class="inp"></label>
+        </div>
+        <div class="acts"><button class="btn ghost" id="kAdd">Agregar al mazo</button></div></div></div>`
     body.onclick = async e => {
       const b = e.target.closest("button"); if (!b) return
       try {
@@ -577,12 +589,30 @@ export async function renderAdmin(P, ui) {
           const r = await rpc("admin_give_card", { p_season: sid, p_team: body.querySelector("#kTeam").value, p_category: body.querySelector("#kCat").value, p_tier: +body.querySelector("#kTier").value, p_card: card })
           toast(`Le diste: ${dn(r)}.`); cardsTab()
         }
+        if (b.dataset.kdel) {
+          const d = defs.find(x => x.id === b.dataset.kdel)
+          if (!confirm(`¿Borrar "${d?.name}" del mazo para siempre?`)) return
+          const { error } = await supabase.from("card_defs").delete().eq("id", b.dataset.kdel)
+          if (error) throw new Error(/foreign key|violates/i.test(error.message) ? "Algun equipo ya tiene o tuvo esa carta: dala de baja en lugar de borrarla." : error.message)
+          toast("Carta borrada."); cardsTab()
+        }
+        if (b.id === "kAdd") {
+          const name = body.querySelector("#nkName").value.trim(), effect = body.querySelector("#nkEff").value.trim()
+          if (!name || !effect) return toast("Ponle nombre y efecto.")
+          let id = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "carta"
+          if (defs.some(d => d.id === id)) id += "-" + Date.now().toString(36).slice(-4)
+          const { error } = await supabase.from("card_defs").insert({ id, name, effect, rule: body.querySelector("#nkRule").value.trim() || null,
+            category: body.querySelector("#nkCat").value, tier: +body.querySelector("#nkTier").value, sort: Math.max(0, ...defs.map(d => d.sort || 0)) + 1, active: true })
+          if (error) throw error
+          toast(`"${name}" agregada al mazo.`); cardsTab()
+        }
         if (b.id === "kDefs") {
           b.disabled = true
           for (const tr of body.querySelectorAll("tr[data-kd]")) {
             const id = tr.dataset.kd, d = defs.find(x => x.id === id), v = k => tr.querySelector(`[data-k="${k}"]`)
-            const row = { active: v("active").checked, name: v("name").value.trim(), effect: v("effect").value.trim(), rule: v("rule").value.trim() || null }
-            if (row.active === d.active && row.name === d.name && row.effect === d.effect && row.rule === (d.rule || null)) continue
+            const row = { active: v("active").checked, category: v("category").value, tier: +v("tier").value, name: v("name").value.trim(), effect: v("effect").value.trim(), rule: v("rule").value.trim() || null }
+            if (!row.name || !row.effect) throw new Error("Cada carta necesita nombre y efecto")
+            if (row.active === d.active && row.category === d.category && row.tier === d.tier && row.name === d.name && row.effect === d.effect && row.rule === (d.rule || null)) continue
             const { error } = await supabase.from("card_defs").update({ ...row, updated_at: new Date().toISOString() }).eq("id", id); if (error) throw error
           }
           toast("Mazo guardado."); cardsTab()
